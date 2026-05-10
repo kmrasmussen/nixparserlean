@@ -86,6 +86,10 @@ private def hasDynamicBinding : List Binding -> Bool
   | .dynamicAssign _ _ :: _ => true
   | .staticAssign _ _ :: bindings => hasDynamicBinding bindings
 
+private def attrEnv : List (String × Value) -> Env
+  | [] => []
+  | (name, value) :: attrs => (name, .value value) :: attrEnv attrs
+
 partial def evalUnary : UnaryOp -> Value -> M Value
   | .not, .bool value => pure (.bool (!value))
   | .not, _ => throw "eval error: boolean negation expects a bool"
@@ -141,7 +145,10 @@ partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Valu
       | .bool true => eval fuel stack env body
       | .bool false => throw "eval error: assertion failed"
       | _ => throw "eval error: assertion condition must be a bool"
-  | .withExpr _ _ => unsupported "with evaluation"
+  | .withExpr scope body => do
+      match ← eval fuel stack env scope with
+      | .attrset attrs => eval fuel stack (env ++ attrEnv attrs) body
+      | _ => throw "eval error: with scope must be an attrset"
   | .select base path none => do
       let names ← evalStaticPath path
       selectPath (← eval fuel stack env base) names
