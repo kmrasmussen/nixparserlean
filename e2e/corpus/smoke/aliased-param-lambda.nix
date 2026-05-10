@@ -1,0 +1,1 @@
+args@{ pkgs, ... }: pkgs.hello

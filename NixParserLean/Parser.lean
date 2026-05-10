@@ -452,10 +452,24 @@ partial def parseLambda (s : ParserState) : ParserM (Expr × ParserState) := do
     match curr? s with
     | some '{' =>
         let (paramSet, s) ← parseParamSet s
-        pure (LambdaParam.attrset paramSet, s)
+        let s' := skipSpace s
+        if curr? s' == some '@' then
+          let (name, s) ← ident (bump s')
+          pure (LambdaParam.alias name (LambdaParam.attrset paramSet), s)
+        else
+          pure (LambdaParam.attrset paramSet, s)
     | _ =>
         let (name, s) ← ident s
-        pure (LambdaParam.ident name, s)
+        let s' := skipSpace s
+        if curr? s' == some '@' then
+          let s := bump s'
+          match curr? (skipSpace s) with
+          | some '{' =>
+              let (paramSet, s) ← parseParamSet s
+              pure (LambdaParam.alias name (LambdaParam.attrset paramSet), s)
+          | _ => failAt s "expected function parameter set after '@'"
+        else
+          pure (LambdaParam.ident name, s)
   let s ← char ':' s
   let (body, s) ← parseExpr s
   pure (.lambda param body, s)

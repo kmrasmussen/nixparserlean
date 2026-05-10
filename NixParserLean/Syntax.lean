@@ -12,6 +12,7 @@ structure ParamSet where
 inductive LambdaParam where
   | ident : String -> LambdaParam
   | attrset : ParamSet -> LambdaParam
+  | alias : String -> LambdaParam -> LambdaParam
   deriving Repr, BEq, Inhabited
 
 inductive BinaryOp where
