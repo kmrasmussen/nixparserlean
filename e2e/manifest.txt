@@ -14,6 +14,7 @@ e2e/corpus/smoke/default-param-lambda.nix	pass	attrset lambda parameter default
 e2e/corpus/smoke/duplicate-attr.nix	validation-fail	duplicate attr binding should fail validation
 e2e/corpus/smoke/duplicate-inherit.nix	validation-fail	duplicate inherit binding should fail validation
 e2e/corpus/smoke/duplicate-let.nix	validation-fail	duplicate let binding should fail validation
+e2e/corpus/smoke/duplicate-param-lambda.nix	validation-fail	duplicate lambda parameter should fail validation
 e2e/corpus/smoke/identity-lambda.nix	pass	identifier lambda parameter
 e2e/corpus/smoke/if-then-else.nix	pass	conditional expression
 e2e/corpus/smoke/has-attr.nix	pass	attribute existence test

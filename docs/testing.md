@@ -43,6 +43,7 @@ Current smoke fixtures:
 | `duplicate-attr.nix` | validation-fail | duplicate key in attribute set |
 | `duplicate-inherit.nix` | validation-fail | duplicate name in `inherit` |
 | `duplicate-let.nix` | validation-fail | duplicate binding in `let` |
+| `duplicate-param-lambda.nix` | validation-fail | duplicate destructured lambda parameter |
 | `prefix-attr-conflict.nix` | validation-fail | `a.b = 1; a = 2;` prefix conflict |
 | `reverse-prefix-attr-conflict.nix` | validation-fail | same conflict, reversed order |
 | `missing-equals.nix` | parse-fail | binding without `=` |

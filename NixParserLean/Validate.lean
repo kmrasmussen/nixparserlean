@@ -57,6 +57,23 @@ private def validateBindingPaths (context : String) (bindings : List Binding) :
   | some (left, right) => throw (bindingConflictMessage context left right)
   | none => pure ()
 
+private def findDuplicateString? (seen : List String) : List String -> Option String
+  | [] => none
+  | name :: names =>
+      if seen.contains name then
+        some name
+      else
+        findDuplicateString? (name :: seen) names
+
+private def paramEntryNames : List ParamEntry -> List String
+  | [] => []
+  | entry :: entries => entry.name :: paramEntryNames entries
+
+private def validateParamEntryNames (entries : List ParamEntry) : Except String Unit :=
+  match findDuplicateString? [] (paramEntryNames entries) with
+  | some name => throw s!"semantic error: duplicate lambda parameter '{name}'"
+  | none => pure ()
+
 mutual
 partial def validateExpr : Expr -> Except String Unit
   | .int _ | .bool _ | .null | .ident _ | .path _ => pure ()
@@ -114,12 +131,17 @@ partial def validateLambdaParam : LambdaParam -> Except String Unit
   | .alias _ param => validateLambdaParam param
 
 partial def validateParamEntries : List ParamEntry -> Except String Unit
+  | entries => do
+      validateParamEntryNames entries
+      validateParamEntryDefaults entries
+
+partial def validateParamEntryDefaults : List ParamEntry -> Except String Unit
   | [] => pure ()
   | entry :: entries => do
       match entry.default? with
       | none => pure ()
       | some expr => validateExpr expr
-      validateParamEntries entries
+      validateParamEntryDefaults entries
 
 partial def validateBindings : List Binding -> Except String Unit
   | [] => pure ()
