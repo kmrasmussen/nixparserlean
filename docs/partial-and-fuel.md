@@ -26,10 +26,15 @@ The simple attrpath helpers are now total definitions:
 - `bindingFromPath`
 - `inheritBindings`
 - `inheritFromBindings`
+- `mergeStaticAttrsets`
+- `mergeBindingInto`
+- `mergeBindings`
 
-The remaining `partial` desugaring cluster is the real recursive surface-to-core
-walk plus the static-attrset merge helpers. Those should be handled separately
-because they interact with mutual AST recursion and merge invariants.
+The merge helpers are total through an explicit internal fuel bound. This makes
+small merge invariants proof-visible while avoiding the older opaque `partial`
+definitions. The remaining `partial` desugaring cluster is the real recursive
+surface-to-core walk; it should be handled separately because it follows the
+mutual AST recursion rather than list-shaped merge recursion.
 
 ## Evaluation
 

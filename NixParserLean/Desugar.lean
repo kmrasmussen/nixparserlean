@@ -31,6 +31,12 @@ def bindingStaticName? : Core.Binding -> Option String
   | .inheritAssign name => some name
   | .dynamicAssign _ _ => none
 
+def staticBindingNames : List Core.Binding -> List String
+  | [] => []
+  | .staticAssign name _ :: bindings => name :: staticBindingNames bindings
+  | .inheritAssign name :: bindings => name :: staticBindingNames bindings
+  | .dynamicAssign _ _ :: bindings => staticBindingNames bindings
+
 theorem bindingFromPath_static_top_name
     {path : List Core.AttrPathPart} {value : Core.Expr} {name : String} {names : List String}
     (h : staticNames? path = some (name :: names)) :
@@ -62,36 +68,70 @@ def inheritFromBindings (scope : Core.Expr) : List String -> List Core.Binding
       .staticAssign name selected :: inheritFromBindings scope names
 
 mutual
-partial def mergeStaticAttrsets (left right : Core.Expr) : Option Core.Expr :=
-  match left, right with
-  | .attrset false leftBindings, .attrset false rightBindings =>
-      some (.attrset false (mergeBindings leftBindings rightBindings))
-  | _, _ => none
+def mergeStaticAttrsetsFuel : Nat -> Core.Expr -> Core.Expr -> Option Core.Expr
+  | 0, _, _ => none
+  | fuel + 1, .attrset false leftBindings, .attrset false rightBindings =>
+      some (.attrset false (mergeBindingsFuel fuel leftBindings rightBindings))
+  | _, _, _ => none
 
-partial def mergeBindingInto (binding : Core.Binding) : List Core.Binding -> List Core.Binding
-  | [] => [binding]
-  | existing :: rest =>
+def mergeBindingIntoFuel : Nat -> Core.Binding -> List Core.Binding -> List Core.Binding
+  | 0, binding, bindings => binding :: bindings
+  | _ + 1, binding, [] => [binding]
+  | fuel + 1, binding, existing :: rest =>
       match binding, existing with
       | .staticAssign name value, .staticAssign existingName existingValue =>
           if name == existingName then
-            match mergeStaticAttrsets value existingValue with
+            match mergeStaticAttrsetsFuel fuel value existingValue with
             | some value => .staticAssign name value :: rest
             | none => binding :: existing :: rest
           else
-            existing :: mergeBindingInto binding rest
+            existing :: mergeBindingIntoFuel fuel binding rest
       | .inheritAssign name, .staticAssign existingName _
       | .staticAssign name _, .inheritAssign existingName
       | .inheritAssign name, .inheritAssign existingName =>
           if name == existingName then
             binding :: existing :: rest
           else
-            existing :: mergeBindingInto binding rest
-      | _, _ => existing :: mergeBindingInto binding rest
+            existing :: mergeBindingIntoFuel fuel binding rest
+      | _, _ => existing :: mergeBindingIntoFuel fuel binding rest
 
-partial def mergeBindings : List Core.Binding -> List Core.Binding -> List Core.Binding
-  | [], into => into
-  | binding :: bindings, into => mergeBindings bindings (mergeBindingInto binding into)
+def mergeBindingsFuel : Nat -> List Core.Binding -> List Core.Binding -> List Core.Binding
+  | 0, bindings, into => bindings ++ into
+  | _ + 1, [], into => into
+  | fuel + 1, binding :: bindings, into =>
+      mergeBindingsFuel fuel bindings (mergeBindingIntoFuel fuel binding into)
 end
+
+def mergeFuel : Nat := 100000
+
+def mergeStaticAttrsets (left right : Core.Expr) : Option Core.Expr :=
+  mergeStaticAttrsetsFuel mergeFuel left right
+
+def mergeBindingInto (binding : Core.Binding) (bindings : List Core.Binding) :
+    List Core.Binding :=
+  mergeBindingIntoFuel mergeFuel binding bindings
+
+def mergeBindings (bindings into : List Core.Binding) : List Core.Binding :=
+  mergeBindingsFuel mergeFuel bindings into
+
+theorem mergeBindingInto_static_attrset_collision_preserves_single_name
+    {name : String} {leftBindings rightBindings : List Core.Binding} :
+    staticBindingNames
+      (mergeBindingInto
+        (.staticAssign name (.attrset false leftBindings))
+        [.staticAssign name (.attrset false rightBindings)]) =
+      [name] := by
+  simp [mergeBindingInto, mergeFuel, mergeBindingIntoFuel, mergeStaticAttrsetsFuel,
+    staticBindingNames]
+
+theorem mergeBindingIntoFuel_static_unmergeable_collision_exposes_duplicate_name
+    {fuel : Nat} {name : String} {left right : Core.Expr}
+    (h : mergeStaticAttrsetsFuel fuel left right = none) :
+    staticBindingNames
+      (mergeBindingIntoFuel (fuel + 1) (.staticAssign name left)
+        [.staticAssign name right]) =
+      [name, name] := by
+  simp [mergeBindingIntoFuel, h, staticBindingNames]
 
 mutual
 partial def stringParts : List StringPart -> M (List Core.StringPart)
