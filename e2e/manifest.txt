@@ -1,12 +1,13 @@
 # format: path<TAB>expectation<TAB>note
+# expectations: pass, parse-fail, validation-fail
 e2e/corpus/smoke/addition.nix	pass	addition operator
 e2e/corpus/smoke/angle-path.nix	pass	angle-bracket path
 e2e/corpus/smoke/attrset.nix	pass	basic attrset with comments
 e2e/corpus/smoke/application.nix	pass	function application
 e2e/corpus/smoke/boolean-operators.nix	pass	boolean and equality operators
-e2e/corpus/smoke/duplicate-attr.nix	fail	duplicate attr binding should fail validation
-e2e/corpus/smoke/duplicate-inherit.nix	fail	duplicate inherit binding should fail validation
-e2e/corpus/smoke/duplicate-let.nix	fail	duplicate let binding should fail validation
+e2e/corpus/smoke/duplicate-attr.nix	validation-fail	duplicate attr binding should fail validation
+e2e/corpus/smoke/duplicate-inherit.nix	validation-fail	duplicate inherit binding should fail validation
+e2e/corpus/smoke/duplicate-let.nix	validation-fail	duplicate let binding should fail validation
 e2e/corpus/smoke/identity-lambda.nix	pass	identifier lambda parameter
 e2e/corpus/smoke/if-then-else.nix	pass	conditional expression
 e2e/corpus/smoke/inherit-from.nix	pass	scoped inherit binding
@@ -14,6 +15,7 @@ e2e/corpus/smoke/import-path.nix	pass	import path application
 e2e/corpus/smoke/let-application.nix	pass	let-bound lambda application
 e2e/corpus/smoke/let-list.nix	pass	let expression and list
 e2e/corpus/smoke/lambda.nix	pass	attrset lambda parameter
+e2e/corpus/smoke/missing-equals.nix	parse-fail	missing equals should fail parsing
 e2e/corpus/smoke/open-param-lambda.nix	pass	open attrset lambda parameter
 e2e/corpus/smoke/parenthesized.nix	pass	parenthesized expression
 e2e/corpus/smoke/relative-path.nix	pass	relative path literal

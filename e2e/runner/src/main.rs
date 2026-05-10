@@ -5,7 +5,16 @@ use std::process::Command;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Expectation {
     Pass,
-    Fail,
+    ParseFail,
+    ValidationFail,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum Outcome {
+    Pass,
+    ParseFail,
+    ValidationFail,
+    OtherFail,
 }
 
 #[derive(Debug)]
@@ -18,7 +27,8 @@ struct Case {
 #[derive(Default)]
 struct Summary {
     passed: usize,
-    expected_failures: usize,
+    expected_parse_failures: usize,
+    expected_validation_failures: usize,
     unexpected_failures: Vec<String>,
     unexpected_successes: Vec<String>,
 }
@@ -72,7 +82,8 @@ fn parse_manifest(path: &Path) -> Result<Vec<Case>, String> {
             .ok_or_else(|| format!("{}:{}: missing expectation", path.display(), line_idx + 1))?
         {
             "pass" => Expectation::Pass,
-            "fail" => Expectation::Fail,
+            "parse-fail" => Expectation::ParseFail,
+            "validation-fail" => Expectation::ValidationFail,
             other => {
                 return Err(format!(
                     "{}:{}: unknown expectation {other:?}",
@@ -93,7 +104,7 @@ fn parse_manifest(path: &Path) -> Result<Vec<Case>, String> {
     Ok(cases)
 }
 
-fn run_parser(command: &str, path: &Path) -> Result<bool, String> {
+fn run_parser(command: &str, path: &Path) -> Result<Outcome, String> {
     let mut parts = command.split_whitespace();
     let program = parts
         .next()
@@ -107,12 +118,18 @@ fn run_parser(command: &str, path: &Path) -> Result<bool, String> {
         .map_err(|err| format!("could not run parser command {command:?}: {err}"))?;
 
     if output.status.success() {
-        Ok(true)
+        Ok(Outcome::Pass)
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
         let first_line = stderr.lines().next().unwrap_or("parser failed without stderr");
         eprintln!("{}: {}", path.display(), first_line);
-        Ok(false)
+        if first_line.starts_with("parse error") {
+            Ok(Outcome::ParseFail)
+        } else if first_line.starts_with("semantic error") {
+            Ok(Outcome::ValidationFail)
+        } else {
+            Ok(Outcome::OtherFail)
+        }
     }
 }
 
@@ -136,30 +153,41 @@ fn main() {
     let mut summary = Summary::default();
 
     for case in &cases {
-        let parsed = match run_parser(&parser, &case.path) {
-            Ok(parsed) => parsed,
+        let outcome = match run_parser(&parser, &case.path) {
+            Ok(outcome) => outcome,
             Err(err) => {
                 eprintln!("{err}");
                 std::process::exit(2);
             }
         };
 
-        match (case.expectation, parsed) {
-            (Expectation::Pass, true) => summary.passed += 1,
-            (Expectation::Fail, false) => summary.expected_failures += 1,
-            (Expectation::Pass, false) => summary
+        match (case.expectation, outcome) {
+            (Expectation::Pass, Outcome::Pass) => summary.passed += 1,
+            (Expectation::ParseFail, Outcome::ParseFail) => summary.expected_parse_failures += 1,
+            (Expectation::ValidationFail, Outcome::ValidationFail) => {
+                summary.expected_validation_failures += 1
+            }
+            (Expectation::Pass, _) => summary
                 .unexpected_failures
                 .push(format!("{} ({})", case.path.display(), case.note)),
-            (Expectation::Fail, true) => summary
+            (_, Outcome::Pass) => summary
                 .unexpected_successes
                 .push(format!("{} ({})", case.path.display(), case.note)),
+            _ => summary.unexpected_failures.push(format!(
+                "{} ({}) expected {:?}, got {:?}",
+                case.path.display(),
+                case.note,
+                case.expectation,
+                outcome
+            )),
         }
     }
 
     println!(
-        "e2e: {} passed, {} expected failures, {} unexpected failures, {} unexpected successes",
+        "e2e: {} passed, {} expected parse failures, {} expected validation failures, {} unexpected failures, {} unexpected successes",
         summary.passed,
-        summary.expected_failures,
+        summary.expected_parse_failures,
+        summary.expected_validation_failures,
         summary.unexpected_failures.len(),
         summary.unexpected_successes.len()
     );
