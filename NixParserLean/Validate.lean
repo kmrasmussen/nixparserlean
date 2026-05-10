@@ -74,6 +74,9 @@ partial def validateExpr : Expr -> Except String Unit
       validateExpr condition
       validateExpr thenBranch
       validateExpr elseBranch
+  | .assertExpr condition body => do
+      validateExpr condition
+      validateExpr body
   | .withExpr scope body => do
       validateExpr scope
       validateExpr body

@@ -243,6 +243,8 @@ partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
     parseLet s
   | .ok ("if", _) =>
     parseIf s
+  | .ok ("assert", _) =>
+    parseAssert s
   | .ok ("with", _) =>
     parseWith s
   | _ =>
@@ -567,6 +569,13 @@ partial def parseIf (s : ParserState) : ParserM (Expr × ParserState) := do
   let s ← keyword "else" s
   let (elseBranch, s) ← parseExpr s
   pure (.ifThenElse condition thenBranch elseBranch, s)
+
+partial def parseAssert (s : ParserState) : ParserM (Expr × ParserState) := do
+  let s ← keyword "assert" s
+  let (condition, s) ← parseExpr s
+  let s ← char ';' s
+  let (body, s) ← parseExpr s
+  pure (.assertExpr condition body, s)
 
 partial def parseWith (s : ParserState) : ParserM (Expr × ParserState) := do
   let s ← keyword "with" s

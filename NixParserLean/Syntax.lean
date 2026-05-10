@@ -52,6 +52,7 @@ inductive Expr where
   | letIn : (bindings : List Binding) -> (body : Expr) -> Expr
   | lambda : (param : LambdaParam) -> (body : Expr) -> Expr
   | ifThenElse : (condition : Expr) -> (thenBranch : Expr) -> (elseBranch : Expr) -> Expr
+  | assertExpr : (condition : Expr) -> (body : Expr) -> Expr
   | withExpr : (scope : Expr) -> (body : Expr) -> Expr
   | select : (base : Expr) -> (path : AttrPath) -> (default? : Option Expr) -> Expr
   | hasAttr : (base : Expr) -> (path : AttrPath) -> Expr
