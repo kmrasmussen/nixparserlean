@@ -7,8 +7,10 @@ inductive OutputFormat where
 
 structure Options where
   input : String
+  filePath? : Option String := none
   desugar : Bool := false
   eval : Bool := false
+  evalImports : Bool := false
   coreValidationSmoke : Bool := false
   fuel : Nat := NixParserLean.Core.Eval.defaultFuel
   format : OutputFormat := .repr
@@ -18,12 +20,13 @@ def defaultInput : String :=
   "{ answer = 42; values = [ true null \"nix\" ]; }"
 
 def helpText : String :=
-  "usage: nixparserlean [--help] [--file PATH] [--desugar] [--eval] [--fuel N] [--format repr|json]\n" ++
+  "usage: nixparserlean [--help] [--file PATH] [--desugar] [--eval|--eval-imports] [--fuel N] [--format repr|json]\n" ++
   "\n" ++
   "Options:\n" ++
   "  --file PATH                 Read Nix source from PATH\n" ++
   "  --desugar                   Print validated core AST\n" ++
   "  --eval                      Evaluate validated core AST\n" ++
+  "  --eval-imports              Evaluate with host IO for relative path imports\n" ++
   "  --fuel N                    Set evaluator thunk-forcing fuel for --eval\n" ++
   "  --format repr|json          Select output format (default: repr)\n" ++
   "  --core-validation-smoke     Internal e2e smoke mode for core validation\n" ++
@@ -52,11 +55,13 @@ partial def parseArgs : List String -> Options -> List String -> IO (Except Stri
       parseArgs rest { options with desugar := true } inlineParts
   | "--eval" :: rest, options, inlineParts =>
       parseArgs rest { options with eval := true } inlineParts
+  | "--eval-imports" :: rest, options, inlineParts =>
+      parseArgs rest { options with eval := true, evalImports := true } inlineParts
   | "--core-validation-smoke" :: rest, options, inlineParts =>
       parseArgs rest { options with coreValidationSmoke := true } inlineParts
   | "--file" :: path :: rest, options, inlineParts => do
       match ← readFile path with
-      | .ok input => parseArgs rest { options with input } inlineParts
+      | .ok input => parseArgs rest { options with input, filePath? := some path } inlineParts
       | .error err => pure (.error err)
   | "--file" :: [], _, _ =>
       pure (.error "missing value for --file")
@@ -290,27 +295,44 @@ partial def evalValueJson : NixParserLean.Core.Eval.Value -> String
       jsonObject [("kind", jsonString "attrset"), ("attrs", jsonArray (attrs.map attrJson))]
   | .closure _ _ _ => jsonObject [("kind", jsonString "closure")]
 
+def sourceBaseDir (options : Options) : String :=
+  match options.filePath? with
+  | none => "."
+  | some path => NixParserLean.HostEval.dirname path
+
+def prepareCoreForEval (options : Options) (coreExpr : NixParserLean.Core.Expr) :
+    IO (Except String NixParserLean.Core.Expr) := do
+  if options.eval && options.evalImports then
+    NixParserLean.HostEval.resolveImports options.fuel (sourceBaseDir options) coreExpr
+  else
+    pure (.ok coreExpr)
+
 def printCoreResult (options : Options) (coreExpr : NixParserLean.Core.Expr) : IO UInt32 := do
-  match NixParserLean.Core.validate coreExpr with
-  | .ok () =>
-      if options.eval then
-        match NixParserLean.Core.evalWithFuel options.fuel coreExpr with
-        | .ok value =>
-            match options.format with
-            | .repr => IO.println (repr value)
-            | .json => IO.println (evalValueJson value)
-            pure 0
-        | .error err =>
-            IO.eprintln err
-            pure 1
-      else
-        match options.format with
-        | .repr => IO.println (repr coreExpr)
-        | .json => IO.println (coreExprJson coreExpr)
-        pure 0
+  match ← prepareCoreForEval options coreExpr with
   | .error err =>
       IO.eprintln err
       pure 1
+  | .ok coreExpr =>
+      match NixParserLean.Core.validate coreExpr with
+      | .ok () =>
+          if options.eval then
+            match NixParserLean.Core.evalWithFuel options.fuel coreExpr with
+            | .ok value =>
+                match options.format with
+                | .repr => IO.println (repr value)
+                | .json => IO.println (evalValueJson value)
+                pure 0
+            | .error err =>
+                IO.eprintln err
+                pure 1
+          else
+            match options.format with
+            | .repr => IO.println (repr coreExpr)
+            | .json => IO.println (coreExprJson coreExpr)
+            pure 0
+      | .error err =>
+          IO.eprintln err
+          pure 1
 
 def printResult (options : Options) (expr : NixParserLean.Expr) : IO UInt32 := do
   match NixParserLean.validate expr with
