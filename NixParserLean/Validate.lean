@@ -87,6 +87,13 @@ private def validateParamEntryNames (entries : List ParamEntry) : Except String 
   | some name => throw s!"semantic error: duplicate lambda parameter '{name}'"
   | none => pure ()
 
+private def validateParamAliasName (aliasName : String) (entries : List ParamEntry) :
+    Except String Unit :=
+  if (paramEntryNames entries).contains aliasName then
+    throw s!"semantic error: lambda alias '{aliasName}' conflicts with parameter entry"
+  else
+    pure ()
+
 private def stringPartExprs : List StringPart -> List Expr
   | [] => []
   | .text _ :: parts => stringPartExprs parts
@@ -162,6 +169,9 @@ partial def validateStringParts : List StringPart -> Except String Unit
 partial def validateLambdaParam : LambdaParam -> Except String Unit
   | .ident _ => pure ()
   | .attrset paramSet => validateParamEntries paramSet.entries
+  | .alias name (.attrset paramSet) => do
+      validateParamEntries paramSet.entries
+      validateParamAliasName name paramSet.entries
   | .alias _ param => validateLambdaParam param
 
 partial def validateParamEntries : List ParamEntry -> Except String Unit

@@ -36,6 +36,13 @@ private def validateParamEntryNames (entries : List ParamEntry) : Except String 
   | some name => throw s!"core error: duplicate lambda parameter '{name}'"
   | none => pure ()
 
+private def validateParamAliasName (aliasName : String) (entries : List ParamEntry) :
+    Except String Unit :=
+  if (paramEntryNames entries).contains aliasName then
+    throw s!"core error: lambda alias '{aliasName}' conflicts with parameter entry"
+  else
+    pure ()
+
 mutual
 partial def validateExpr : Expr -> Except String Unit
   | .int _ | .bool _ | .null | .ident _ | .path _ => pure ()
@@ -108,6 +115,9 @@ partial def validateAttrPathParts : List AttrPathPart -> Except String Unit
 partial def validateLambdaParam : LambdaParam -> Except String Unit
   | .ident _ => pure ()
   | .attrset paramSet => validateParamEntries paramSet.entries
+  | .alias name (.attrset paramSet) => do
+      validateParamEntries paramSet.entries
+      validateParamAliasName name paramSet.entries
   | .alias _ param => validateLambdaParam param
 
 partial def validateParamEntries : List ParamEntry -> Except String Unit
