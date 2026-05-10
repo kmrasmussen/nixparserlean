@@ -20,6 +20,7 @@
               pkgs.lean4
               pkgs.cargo
               pkgs.rustc
+              pkgs.rustfmt
               pkgs.stdenv.cc
             ];
             src = self;
@@ -39,6 +40,7 @@
             pkgs.lean4
             pkgs.cargo
             pkgs.rustc
+            pkgs.rustfmt
             pkgs.curl
             pkgs.git
           ];

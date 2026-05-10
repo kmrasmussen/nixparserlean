@@ -61,14 +61,20 @@ fn parse_args() -> Result<(PathBuf, String, PathBuf), String> {
     while let Some(arg) = args.next() {
         match arg.as_str() {
             "--manifest" => {
-                let value = args.next().ok_or_else(|| format!("missing value\n{}", usage()))?;
+                let value = args
+                    .next()
+                    .ok_or_else(|| format!("missing value\n{}", usage()))?;
                 manifest = PathBuf::from(value);
             }
             "--parser" => {
-                parser = args.next().ok_or_else(|| format!("missing value\n{}", usage()))?;
+                parser = args
+                    .next()
+                    .ok_or_else(|| format!("missing value\n{}", usage()))?;
             }
             "--cache-dir" => {
-                let value = args.next().ok_or_else(|| format!("missing value\n{}", usage()))?;
+                let value = args
+                    .next()
+                    .ok_or_else(|| format!("missing value\n{}", usage()))?;
                 cache_dir = PathBuf::from(value);
             }
             "-h" | "--help" => {
@@ -216,7 +222,10 @@ fn run_parser(command: &str, path: &Path) -> Result<Outcome, String> {
         Ok(Outcome::Pass)
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        let first_line = stderr.lines().next().unwrap_or("parser failed without stderr");
+        let first_line = stderr
+            .lines()
+            .next()
+            .unwrap_or("parser failed without stderr");
         eprintln!("{}: {}", path.display(), first_line);
         if first_line.starts_with("parse error") {
             Ok(Outcome::ParseFail)
@@ -269,12 +278,16 @@ fn main() {
             (Expectation::ValidationFail, Outcome::ValidationFail) => {
                 summary.expected_validation_failures += 1
             }
-            (Expectation::Pass, _) => summary
-                .unexpected_failures
-                .push(format!("{} ({})", case.path.display(), case.note)),
-            (_, Outcome::Pass) => summary
-                .unexpected_successes
-                .push(format!("{} ({})", case.path.display(), case.note)),
+            (Expectation::Pass, _) => {
+                summary
+                    .unexpected_failures
+                    .push(format!("{} ({})", case.path.display(), case.note))
+            }
+            (_, Outcome::Pass) => summary.unexpected_successes.push(format!(
+                "{} ({})",
+                case.path.display(),
+                case.note
+            )),
             _ => summary.unexpected_failures.push(format!(
                 "{} ({}) expected {:?}, got {:?}",
                 case.path.display(),
