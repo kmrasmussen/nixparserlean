@@ -510,7 +510,7 @@ partial def parseLetBindings (bindings : List Binding) (s : ParserState) :
       parseLetBindings (binding :: bindings) s'
 end
 
-def parse (input : String) : Except String Expr := do
+def parse (input : String) : ParserM Expr := do
   let (expr, s) ← parseExpr { remaining := input.toList }
   let s := skipSpace s
   if eof s then

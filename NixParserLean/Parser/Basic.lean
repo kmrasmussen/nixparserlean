@@ -5,9 +5,24 @@ namespace NixParserLean
 structure ParserState where
   remaining : List Char
   offset : Nat := 0
+  line : Nat := 1
+  column : Nat := 1
   deriving Repr, Inhabited
 
-abbrev ParserM := Except String
+structure ParseError where
+  offset : Nat
+  line : Nat
+  column : Nat
+  message : String
+  deriving Repr, BEq, Inhabited
+
+def ParseError.toString (err : ParseError) : String :=
+  s!"parse error at offset {err.offset} (line {err.line}, column {err.column}): {err.message}"
+
+instance : ToString ParseError where
+  toString := ParseError.toString
+
+abbrev ParserM := Except ParseError
 
 def eof (s : ParserState) : Bool :=
   s.remaining.isEmpty
@@ -18,7 +33,11 @@ def curr? (s : ParserState) : Option Char :=
 def bump (s : ParserState) : ParserState :=
   match s.remaining with
   | [] => s
-  | _ :: rest => { s with remaining := rest, offset := s.offset + 1 }
+  | c :: rest =>
+      if c == '\n' then
+        { s with remaining := rest, offset := s.offset + 1, line := s.line + 1, column := 1 }
+      else
+        { s with remaining := rest, offset := s.offset + 1, column := s.column + 1 }
 
 def next? (s : ParserState) : Option Char :=
   curr? (bump s)
@@ -32,7 +51,7 @@ def charAt? (n : Nat) (s : ParserState) : Option Char :=
   listGet? s.remaining n
 
 def failAt (s : ParserState) (msg : String) : ParserM α :=
-  throw s!"parse error at offset {s.offset}: {msg}"
+  throw { offset := s.offset, line := s.line, column := s.column, message := msg }
 
 partial def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : ParserState) :
     String × ParserState :=

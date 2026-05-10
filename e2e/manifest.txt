@@ -39,5 +39,6 @@ e2e/corpus/smoke/reverse-prefix-attr-conflict.nix	validation-fail	reverse attrpa
 e2e/corpus/smoke/select.nix	pass	attribute selection
 e2e/corpus/smoke/select-default.nix	pass	attribute selection default
 e2e/corpus/smoke/string-interpolation.nix	pass	quoted string interpolation
+e2e/corpus/smoke/unterminated-list.nix	parse-fail	unterminated list should report a structured parse error
 e2e/corpus/smoke/update-operator.nix	pass	attrset update operator
 e2e/corpus/smoke/with-expr.nix	pass	with expression
