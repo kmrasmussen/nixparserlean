@@ -22,6 +22,7 @@ NixParserLean is a Nix language parser and semantic model written in Lean 4. The
 | [architecture.md](architecture.md) | Component layout and data flow |
 | [ast.md](ast.md) | AST node reference |
 | [parser.md](parser.md) | Parser internals and operator precedence |
+| [core.md](core.md) | Core AST and surface-to-core desugaring |
 | [testing.md](testing.md) | Testing strategy, manifest format, and e2e runner |
 | [scaling-plan.md](scaling-plan.md) | Roadmap for growing the parser and corpus |
 
@@ -33,6 +34,9 @@ lake build
 
 # Parse a file
 lake exe nixparserlean --file path/to/file.nix
+
+# Print the desugared core AST
+lake exe nixparserlean --desugar --file path/to/file.nix
 
 # Parse an inline expression
 lake exe nixparserlean '{ x = 1; }'

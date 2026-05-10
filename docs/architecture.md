@@ -11,6 +11,8 @@ The project is split into two layers with a clean boundary between them.
 │  Syntax.lean   — AST types  │
 │  Parser.lean   — parser     │
 │  Validate.lean — validator  │
+│  Core.lean     — core AST   │
+│  Desugar.lean  — lowering   │
 │  Main.lean     — CLI        │
 └────────────┬────────────────┘
              │ subprocess (stdin/stdout/exit code)
@@ -24,7 +26,9 @@ The project is split into two layers with a clean boundary between them.
 └─────────────────────────────┘
 ```
 
-**Lean** owns the language model: the AST definition, all parsing logic, and all semantic validation. It is the authoritative source of what is and is not accepted Nix syntax.
+**Lean** owns the language model: the surface AST definition, all parsing logic,
+semantic validation, and the first surface-to-core desugaring pass. It is the
+authoritative source of what is and is not accepted Nix syntax.
 
 **Rust** owns corpus orchestration: reading the manifest, invoking the parser as a subprocess per fixture file, classifying outcomes (pass / parse-fail / validation-fail), and summarizing results. It does not parse Nix itself.
 
@@ -66,13 +70,18 @@ Except String Expr
     ▼
 Except String Unit
     │
-    │ IO.println (repr expr)  on success
+    │ optionally NixParserLean.desugar
+    ▼
+Except String Core.Expr
+    │
+    │ IO.println (repr expr/coreExpr)  on success
     │ IO.eprintln err         on failure
     ▼
 exit 0 / exit 1
 ```
 
-`parse` and `validate` are pure functions. All IO lives in `Main.lean`.
+`parse`, `validate`, and `desugar` are pure functions. All IO lives in
+`Main.lean`.
 
 ## Error classification
 
