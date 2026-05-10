@@ -34,6 +34,22 @@
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/desugar-manifest.txt --parser "lake exe nixparserlean --desugar --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/eval-manifest.txt --parser "lake exe nixparserlean --eval --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/fuel-manifest.txt --parser "lake exe nixparserlean --eval --fuel 0 --file"
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/json-manifest.txt --parser "lake exe nixparserlean --format json --file"
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/json-manifest.txt --parser "lake exe nixparserlean --desugar --format json --file"
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/json-manifest.txt --parser "lake exe nixparserlean --eval --format json --file"
+          lake exe nixparserlean --help > help.txt
+          case "$(cat help.txt)" in
+            *"--format repr|json"* ) ;;
+            * ) echo "help output did not mention --format" >&2; exit 1 ;;
+          esac
+          if lake exe nixparserlean --typo > typo.out 2> typo.err; then
+            echo "unknown flag unexpectedly succeeded" >&2
+            exit 1
+          fi
+          case "$(cat typo.err)" in
+            *"unknown flag: --typo"* ) ;;
+            * ) echo "unknown flag diagnostic was not stable" >&2; cat typo.err >&2; exit 1 ;;
+          esac
           touch "$out"
         '';
       });
