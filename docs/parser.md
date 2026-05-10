@@ -73,6 +73,20 @@ Dispatches on the current character after skipping whitespace:
 
 Angle-bracket paths (`<...>`) are read until `>`. All other paths are read until a whitespace or delimiter character (`)`  `]`  `}`  `;`  `,`).
 
+## Attribute paths
+
+`parseAttrPath` accepts identifier segments and static quoted string segments:
+
+```nix
+a.b
+a."foo-bar"
+"foo-bar".nested
+```
+
+Quoted segments reuse the string parser, but only text-only strings are accepted
+as static attribute names. Interpolated names such as `"${name}"` need a richer
+attribute-path AST and are intentionally left for a later slice.
+
 ## Lambda detection
 
 `parseLambda` is attempted via backtracking inside `parseExpr`. If it fails (no `:` found after the parameter), the parser falls back to `parseOr`. This means lambda syntax is tried speculatively and never consumes input on failure.

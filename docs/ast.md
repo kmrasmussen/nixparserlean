@@ -49,7 +49,9 @@ Returns `some path` for `assign`, `none` for the two `inherit` forms.
 
 ## `AttrPath`
 
-A dot-separated attribute path such as `a.b.c`.
+A dot-separated static attribute path such as `a.b.c` or `a."foo-bar"`.
+Quoted static segments are stored as plain strings. Dynamic/interpolated
+attribute names are not modeled yet.
 
 ```lean
 structure AttrPath where

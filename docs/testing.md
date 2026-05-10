@@ -27,6 +27,7 @@ Current smoke fixtures:
 | `application.nix` | pass | function application |
 | `let-application.nix` | pass | let-bound lambda applied to an argument |
 | `parenthesized.nix` | pass | parenthesized sub-expression |
+| `quoted-attr-names.nix` | pass | quoted static attribute names in binding/select/hasAttr |
 | `relative-path.nix` | pass | relative path literal |
 | `angle-path.nix` | pass | `<nixpkgs>`-style path |
 | `import-path.nix` | pass | `import ./foo.nix` pattern |

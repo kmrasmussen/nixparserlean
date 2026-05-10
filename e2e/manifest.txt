@@ -29,6 +29,7 @@ e2e/corpus/smoke/open-param-lambda.nix	pass	open attrset lambda parameter
 e2e/corpus/smoke/operator-table.nix	pass	expanded binary and unary operator coverage
 e2e/corpus/smoke/parenthesized.nix	pass	parenthesized expression
 e2e/corpus/smoke/prefix-attr-conflict.nix	validation-fail	attrpath prefix conflict should fail validation
+e2e/corpus/smoke/quoted-attr-names.nix	pass	quoted static attribute names
 e2e/corpus/smoke/relative-path.nix	pass	relative path literal
 e2e/corpus/smoke/reverse-aliased-param-lambda.nix	pass	reverse aliased attrset lambda parameter
 e2e/corpus/smoke/reverse-prefix-attr-conflict.nix	validation-fail	reverse attrpath prefix conflict should fail validation

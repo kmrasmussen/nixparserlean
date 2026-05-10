@@ -263,6 +263,23 @@ partial def indentedString (s : ParserState) : ParserM (List StringPart × Parse
   let s ← token "''" s
   indentedStringGo [] [] s
 
+partial def staticStringParts? : List StringPart -> Option String
+  | [] => some ""
+  | .text text :: parts => do
+      let rest ← staticStringParts? parts
+      some (text ++ rest)
+  | .interpolation _ :: _ => none
+
+partial def attrName (s : ParserState) : ParserM (String × ParserState) := do
+  let s := skipSpace s
+  match curr? s with
+  | some '"' =>
+      let (parts, s') ← quotedString s
+      match staticStringParts? parts with
+      | some name => pure (name, s')
+      | none => failAt s "expected static attribute name"
+  | _ => ident s
+
 partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
   match ident s with
@@ -560,11 +577,11 @@ partial def parseParamEntry (s : ParserState) : ParserM (ParamEntry × ParserSta
     pure ({ name }, s)
 
 partial def parseAttrPath (s : ParserState) : ParserM (AttrPath × ParserState) := do
-  let (first, s) ← ident s
+  let (first, s) ← attrName s
   let rec loop (parts : List String) (st : ParserState) := do
     let st := skipSpace st
     if curr? st == some '.' then
-      let (part, st') ← ident (bump st)
+      let (part, st') ← attrName (bump st)
       loop (part :: parts) st'
     else
       pure ({ parts := parts.reverse }, st)
