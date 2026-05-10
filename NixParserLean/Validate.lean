@@ -59,7 +59,8 @@ private def validateBindingPaths (context : String) (bindings : List Binding) :
 
 mutual
 partial def validateExpr : Expr -> Except String Unit
-  | .int _ | .str _ | .bool _ | .null | .ident _ | .path _ => pure ()
+  | .int _ | .bool _ | .null | .ident _ | .path _ => pure ()
+  | .str parts => validateStringParts parts
   | .list items => validateExprs items
   | .attrset _ bindings => do
       validateBindingPaths "attribute set" bindings
@@ -89,6 +90,13 @@ partial def validateExprs : List Expr -> Except String Unit
   | x :: xs => do
       validateExpr x
       validateExprs xs
+
+partial def validateStringParts : List StringPart -> Except String Unit
+  | [] => pure ()
+  | .text _ :: parts => validateStringParts parts
+  | .interpolation expr :: parts => do
+      validateExpr expr
+      validateStringParts parts
 
 partial def validateBindings : List Binding -> Except String Unit
   | [] => pure ()

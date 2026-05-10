@@ -23,9 +23,14 @@ inductive BinaryOp where
   deriving Repr, BEq, Inhabited
 
 mutual
+inductive StringPart where
+  | text : String -> StringPart
+  | interpolation : Expr -> StringPart
+  deriving Repr, BEq, Inhabited
+
 inductive Expr where
   | int : Int -> Expr
-  | str : String -> Expr
+  | str : List StringPart -> Expr
   | bool : Bool -> Expr
   | null : Expr
   | ident : String -> Expr

@@ -162,25 +162,11 @@ private def integer (s : ParserState) : ParserM (Int × ParserState) := do
   else
     pure (sign * digits.toInt!, s')
 
-private partial def quotedStringGo (acc : List Char) (s : ParserState) :
-    ParserM (String × ParserState) := do
-  match curr? s with
-  | none => failAt s "unterminated string"
-  | some '"' => pure (String.ofList acc.reverse, bump s)
-  | some '\\' =>
-      let s := bump s
-      match curr? s with
-      | some 'n' => quotedStringGo ('\n' :: acc) (bump s)
-      | some 't' => quotedStringGo ('\t' :: acc) (bump s)
-      | some '"' => quotedStringGo ('"' :: acc) (bump s)
-      | some '\\' => quotedStringGo ('\\' :: acc) (bump s)
-      | some c => quotedStringGo (c :: acc) (bump s)
-      | none => failAt s "unterminated escape"
-  | some c => quotedStringGo (c :: acc) (bump s)
-
-private def quotedString (s : ParserState) : ParserM (String × ParserState) := do
-  let s ← char '"' s
-  quotedStringGo [] s
+private def flushStringText (text : List Char) (parts : List StringPart) : List StringPart :=
+  if text.isEmpty then
+    parts
+  else
+    .text (String.ofList text.reverse) :: parts
 
 private def isPathTerminator (c : Char) : Bool :=
   c.isWhitespace || c == ')' || c == ']' || c == '}' || c == ';' || c == ','
@@ -207,6 +193,34 @@ private def pathLiteral (s : ParserState) : ParserM (String × ParserState) := d
     pure (path, s')
 
 mutual
+partial def quotedStringGo (text : List Char) (parts : List StringPart) (s : ParserState) :
+    ParserM (List StringPart × ParserState) := do
+  match curr? s with
+  | none => failAt s "unterminated string"
+  | some '"' => pure ((flushStringText text parts).reverse, bump s)
+  | some '$' =>
+      if next? s == some '{' then
+        let parts := flushStringText text parts
+        let (expr, s) ← parseExpr (bump (bump s))
+        let s ← char '}' s
+        quotedStringGo [] (.interpolation expr :: parts) s
+      else
+        quotedStringGo ('$' :: text) parts (bump s)
+  | some '\\' =>
+      let s := bump s
+      match curr? s with
+      | some 'n' => quotedStringGo ('\n' :: text) parts (bump s)
+      | some 't' => quotedStringGo ('\t' :: text) parts (bump s)
+      | some '"' => quotedStringGo ('"' :: text) parts (bump s)
+      | some '\\' => quotedStringGo ('\\' :: text) parts (bump s)
+      | some c => quotedStringGo (c :: text) parts (bump s)
+      | none => failAt s "unterminated escape"
+  | some c => quotedStringGo (c :: text) parts (bump s)
+
+partial def quotedString (s : ParserState) : ParserM (List StringPart × ParserState) := do
+  let s ← char '"' s
+  quotedStringGo [] [] s
+
 partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
   match ident s with
