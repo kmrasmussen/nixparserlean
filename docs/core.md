@@ -81,7 +81,7 @@ is validated before it is printed.
 `NixParserLean/CoreEval.lean` defines a small evaluator for the checked core
 fragment. It currently supports:
 
-- integers, booleans, null, strings, lists, and non-recursive attrsets
+- integers, floats, booleans, null, strings, lists, and non-recursive attrsets
 - recursive `let` bindings through lazy thunks with cycle detection
 - static attribute selection and selection defaults
 - conditionals and assertions
@@ -89,6 +89,7 @@ fragment. It currently supports:
 - attribute-set lambda parameters, including defaults and `...` for extra attrs
 - boolean negation and integer negation
 - integer `+`, `-`, `*`, `/`
+- float literals as explicit values; float and mixed numeric arithmetic are unsupported
 - same-kind equality, same-kind inequality, `&&`, `||`, and implication over supported values
 
 Equality is intentionally strict across value kinds. Comparing two values of
@@ -98,7 +99,7 @@ Function values cannot be compared.
 
 String interpolation coerces only a small documented primitive subset:
 strings, integers, booleans, and null. Attribute sets, lists, closures, paths,
-and floats remain rejected by the evaluator. Dynamic attribute interpolation is
+and floats remain rejected by string interpolation. Dynamic attribute interpolation is
 stricter than string interpolation and still requires an actual string value.
 
 Default parameter expressions are evaluated when the corresponding argument

@@ -7,6 +7,7 @@ namespace Eval
 mutual
 inductive Value where
   | int : Int -> Value
+  | float : String -> Value
   | str : String -> Value
   | bool : Bool -> Value
   | null : Value
@@ -25,6 +26,7 @@ end
 mutual
 partial def beqValue : Value -> Value -> Bool
   | .int left, .int right => left == right
+  | .float left, .float right => left == right
   | .str left, .str right => left == right
   | .bool left, .bool right => left == right
   | .null, .null => true
@@ -129,6 +131,7 @@ partial def evalUnary : UnaryOp -> Value -> M Value
 mutual
 partial def equalValue : Value -> Value -> M Bool
   | .int left, .int right => pure (left == right)
+  | .float left, .float right => pure (left == right)
   | .str left, .str right => pure (left == right)
   | .bool left, .bool right => pure (left == right)
   | .null, .null => pure true
@@ -173,7 +176,7 @@ partial def evalBinary : BinaryOp -> Value -> Value -> M Value
 mutual
 partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Value
   | .int value => pure (.int value)
-  | .float _ => unsupported "float values"
+  | .float value => pure (.float value)
   | .str parts => do
       pure (.str (← evalStringParts fuel stack env "string" parts))
   | .bool value => pure (.bool value)
