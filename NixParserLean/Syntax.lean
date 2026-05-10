@@ -15,6 +15,9 @@ inductive BinaryOp where
   | or
   | implies
   | add
+  | subtract
+  | multiply
+  | divide
   | concat
   | update
   deriving Repr, BEq, Inhabited

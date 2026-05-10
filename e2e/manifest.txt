@@ -7,6 +7,7 @@ e2e/corpus/smoke/angle-path.nix	pass	angle-bracket path
 e2e/corpus/smoke/attrpath-siblings.nix	pass	sibling attrpath bindings
 e2e/corpus/smoke/attrset.nix	pass	basic attrset with comments
 e2e/corpus/smoke/application.nix	pass	function application
+e2e/corpus/smoke/arithmetic-operators.nix	pass	subtract, multiply, and divide operators
 e2e/corpus/smoke/assert.nix	pass	assert expression
 e2e/corpus/smoke/boolean-operators.nix	pass	boolean and equality operators
 e2e/corpus/smoke/default-param-lambda.nix	pass	attrset lambda parameter default

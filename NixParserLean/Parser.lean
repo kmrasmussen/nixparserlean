@@ -96,6 +96,10 @@ private def operatorToken (expected : String) (s : ParserState) : ParserM Parser
   let s' ← token expected s
   if expected == "+" && curr? s' == some '+' then
     failAt s "expected '+'"
+  else if expected == "-" && curr? s' == some '>' then
+    failAt s "expected '-'"
+  else if expected == "/" && curr? s' == some '/' then
+    failAt s "expected '/'"
   else if expected == "<" && curr? s' == some '=' then
     failAt s "expected '<'"
   else if expected == ">" && curr? s' == some '=' then
@@ -133,7 +137,7 @@ private def isPathStart (s : ParserState) : Bool :=
   | some '.', some '/', _ => true
   | some '.', some '.', some '/' => true
   | some '/', some '/', _ => false
-  | some '/', _, _ => true
+  | some '/', some c, _ => !c.isWhitespace
   | some '~', some '/', _ => true
   | some '<', some c, _ => !c.isWhitespace && c != '='
   | _, _, _ => false
@@ -373,14 +377,34 @@ partial def parseConcat (s : ParserState) : ParserM (Expr × ParserState) := do
     | .error _ => pure (expr, st)
   loop left s
 
-partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
+partial def parseMul (s : ParserState) : ParserM (Expr × ParserState) := do
   let (left, s) ← parseUnary s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "*" st with
+    | .ok st =>
+        let (right, st) ← parseUnary st
+        loop (.binary .multiply expr right) st
+    | .error _ =>
+        match operatorToken "/" st with
+        | .ok st =>
+            let (right, st) ← parseUnary st
+            loop (.binary .divide expr right) st
+        | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseMul s
   let rec loop (expr : Expr) (st : ParserState) := do
     match operatorToken "+" st with
     | .ok st =>
-        let (right, st) ← parseUnary st
+        let (right, st) ← parseMul st
         loop (.binary .add expr right) st
-    | .error _ => pure (expr, st)
+    | .error _ =>
+        match operatorToken "-" st with
+        | .ok st =>
+            let (right, st) ← parseMul st
+            loop (.binary .subtract expr right) st
+        | .error _ => pure (expr, st)
   loop left s
 
 partial def parseUnary (s : ParserState) : ParserM (Expr × ParserState) := do
