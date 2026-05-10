@@ -4,6 +4,7 @@ structure Options where
   input : String
   desugar : Bool := false
   eval : Bool := false
+  coreValidationSmoke : Bool := false
 
 def readFile (path : String) : IO (Except String String) := do
   try
@@ -17,6 +18,10 @@ def readInput : List String -> IO (Except String Options)
       pure (.ok { input := "{ answer = 42; values = [ true null \"nix\" ]; }", desugar := true })
   | ["--eval"] =>
       pure (.ok { input := "{ answer = 42; values = [ true null \"nix\" ]; }", eval := true })
+  | ["--core-validation-smoke", "--file", path] => do
+      match ← readFile path with
+      | .ok input => pure (.ok { input, coreValidationSmoke := true })
+      | .error err => pure (.error err)
   | ["--file", path] => do
       match ← readFile path with
       | .ok input => pure (.ok { input })
@@ -38,6 +43,9 @@ def readInput : List String -> IO (Except String Options)
       | .ok input => pure (.ok { input, eval := true })
       | .error err => pure (.error err)
   | args => pure (.ok { input := " ".intercalate args })
+
+def coreValidationSmokeExpr : NixParserLean.Core.Expr :=
+  .select .null [] none
 
 def printCoreResult (options : Options) (coreExpr : NixParserLean.Core.Expr) : IO UInt32 := do
   match NixParserLean.Core.validate coreExpr with
@@ -79,8 +87,11 @@ def main (args : List String) : IO UInt32 := do
       IO.eprintln err
       pure 1
   | .ok options =>
-  match NixParserLean.parse options.input with
-  | .ok expr => printResult options expr
-  | .error err =>
-      IO.eprintln err
-      pure 1
+      if options.coreValidationSmoke then
+        printCoreResult options coreValidationSmokeExpr
+      else
+        match NixParserLean.parse options.input with
+        | .ok expr => printResult options expr
+        | .error err =>
+            IO.eprintln err
+            pure 1

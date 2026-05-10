@@ -2,7 +2,7 @@
 # file<TAB>path<TAB>expectation<TAB>note
 # url<TAB>cache-name<TAB>url<TAB>expectation<TAB>note
 #
-# expectations: pass, parse-fail, validation-fail
+# expectations: pass, parse-fail, validation-fail, core-fail, eval-fail
 #
 # Existing smoke manifests may still use the legacy three-column form:
 # path<TAB>expectation<TAB>note

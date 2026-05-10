@@ -30,6 +30,7 @@
           cd source
           lake build
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/manifest.txt
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/core-validation-manifest.txt --parser "lake exe nixparserlean --core-validation-smoke --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/desugar-manifest.txt --parser "lake exe nixparserlean --desugar --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/eval-manifest.txt --parser "lake exe nixparserlean --eval --file"
           touch "$out"

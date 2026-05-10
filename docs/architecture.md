@@ -101,10 +101,17 @@ The Rust runner uses the first line of stderr to distinguish error kinds:
 |---|---|
 | `parse error at offset N:` | `ParseFail` |
 | `semantic error:` | `ValidationFail` |
+| `core error:` | `CoreFail` |
 | `eval error:` | `EvalFail` |
 | anything else | `OtherFail` |
 
-This convention is established in `Parser.lean` (`failAt`) and `Validate.lean` (`bindingConflictMessage`).
+This convention is established in `Parser.lean` (`failAt`), `Validate.lean`
+(`bindingConflictMessage`), `CoreValidate.lean`, and `CoreEval.lean`
+(`eval error:` messages from the evaluator).
+
+Core validation deliberately keeps the `core error:` prefix separate from
+surface `semantic error:` diagnostics. The e2e runner exposes that distinction
+as the `core-fail` manifest expectation.
 
 ## Nix flake
 

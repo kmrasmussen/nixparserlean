@@ -7,6 +7,7 @@ enum Expectation {
     Pass,
     ParseFail,
     ValidationFail,
+    CoreFail,
     EvalFail,
 }
 
@@ -15,6 +16,7 @@ enum Outcome {
     Pass,
     ParseFail,
     ValidationFail,
+    CoreFail,
     EvalFail,
     OtherFail,
 }
@@ -46,6 +48,7 @@ struct Summary {
     passed: usize,
     expected_parse_failures: usize,
     expected_validation_failures: usize,
+    expected_core_failures: usize,
     expected_eval_failures: usize,
     unexpected_failures: Vec<String>,
     unexpected_successes: Vec<String>,
@@ -96,6 +99,7 @@ fn parse_expectation(raw: &str, manifest: &Path, line: usize) -> Result<Expectat
         "pass" => Ok(Expectation::Pass),
         "parse-fail" => Ok(Expectation::ParseFail),
         "validation-fail" => Ok(Expectation::ValidationFail),
+        "core-fail" => Ok(Expectation::CoreFail),
         "eval-fail" => Ok(Expectation::EvalFail),
         other => Err(format!(
             "{}:{}: unknown expectation {other:?}",
@@ -235,6 +239,8 @@ fn run_parser(command: &str, path: &Path) -> Result<Outcome, String> {
             Ok(Outcome::ParseFail)
         } else if first_line.starts_with("semantic error") {
             Ok(Outcome::ValidationFail)
+        } else if first_line.starts_with("core error") {
+            Ok(Outcome::CoreFail)
         } else if first_line.starts_with("eval error") {
             Ok(Outcome::EvalFail)
         } else {
@@ -284,6 +290,7 @@ fn main() {
             (Expectation::ValidationFail, Outcome::ValidationFail) => {
                 summary.expected_validation_failures += 1
             }
+            (Expectation::CoreFail, Outcome::CoreFail) => summary.expected_core_failures += 1,
             (Expectation::EvalFail, Outcome::EvalFail) => summary.expected_eval_failures += 1,
             (Expectation::Pass, _) => {
                 summary
@@ -306,10 +313,11 @@ fn main() {
     }
 
     println!(
-        "e2e: {} passed, {} expected parse failures, {} expected validation failures, {} expected eval failures, {} unexpected failures, {} unexpected successes",
+        "e2e: {} passed, {} expected parse failures, {} expected validation failures, {} expected core failures, {} expected eval failures, {} unexpected failures, {} unexpected successes",
         summary.passed,
         summary.expected_parse_failures,
         summary.expected_validation_failures,
+        summary.expected_core_failures,
         summary.expected_eval_failures,
         summary.unexpected_failures.len(),
         summary.unexpected_successes.len()

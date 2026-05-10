@@ -59,7 +59,7 @@ Current smoke fixtures:
 ```
 
 - `path` — relative to the repository root.
-- `expectation` — one of `pass`, `parse-fail`, `validation-fail`, `eval-fail`.
+- `expectation` — one of `pass`, `parse-fail`, `validation-fail`, `core-fail`, `eval-fail`.
 - `note` — free-text description shown in failure output.
 
 Lines starting with `#` and blank lines are ignored.
@@ -84,6 +84,15 @@ It checks the supported evaluation fragment and records explicit `eval-fail`
 cases for accepted syntax that the evaluator intentionally does not implement
 yet.
 
+`e2e/core-validation-manifest.txt` is run with:
+
+```sh
+lake exe nixparserlean --core-validation-smoke --file
+```
+
+It exercises the runner contract for `core error:` diagnostics by sending an
+intentionally invalid core expression through `CoreValidate.lean`.
+
 ### e2e runner
 
 The Rust program at `e2e/runner/src/main.rs` reads the manifest and runs the parser once per case.
@@ -101,6 +110,7 @@ cargo run --manifest-path e2e/runner/Cargo.toml -- \
 |---|---|
 | starts with `parse error` | `ParseFail` |
 | starts with `semantic error` | `ValidationFail` |
+| starts with `core error` | `CoreFail` |
 | starts with `eval error` | `EvalFail` |
 | exit 0 | `Pass` |
 | anything else | `OtherFail` |
@@ -112,7 +122,8 @@ cargo run --manifest-path e2e/runner/Cargo.toml -- \
 **Summary line (stdout):**
 ```
 e2e: N passed, N expected parse failures, N expected validation failures,
-     N expected eval failures, N unexpected failures, N unexpected successes
+     N expected core failures, N expected eval failures,
+     N unexpected failures, N unexpected successes
 ```
 
 ## Adding a new fixture
@@ -134,9 +145,17 @@ Validation errors are formatted as:
 semantic error: <description>
 ```
 
+## Core validation pass
+
+`NixParserLean/CoreValidate.lean` runs after desugaring and is invoked by
+`Main.lean` whenever `--desugar` or `--eval` is requested. Core-validation
+errors are prefixed with `core error:` and match the runner's `core-fail`
+expectation.
+
 ## CI
 
 `flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
-the full parser/validator e2e runner, the focused desugar e2e manifest, and the
-focused eval e2e manifest. This check runs on all four supported systems via
+the full parser/validator e2e runner, the core-validation contract manifest,
+the focused desugar e2e manifest, and the focused eval e2e manifest. This check
+runs on all four supported systems via
 `nix flake check`.
