@@ -41,6 +41,16 @@ theorem bindingFromPath_static_top_name
   | nil => simp [nestedStaticAssign, bindingStaticName?]
   | cons next rest => simp [nestedStaticAssign, bindingStaticName?]
 
+theorem bindingFromPath_static_nested_tail
+    {path : List Core.AttrPathPart} {value : Core.Expr}
+    {name next : String} {names : List String}
+    (h : staticNames? path = some (name :: next :: names)) :
+    bindingFromPath path value =
+      .staticAssign name (.attrset false [nestedStaticAssign (next :: names) value]) := by
+  unfold bindingFromPath
+  rw [h]
+  rfl
+
 partial def inheritBindings : List String -> List Core.Binding
   | [] => []
   | name :: names => .inheritAssign name :: inheritBindings names
