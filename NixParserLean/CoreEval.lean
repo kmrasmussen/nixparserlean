@@ -126,14 +126,45 @@ partial def evalUnary : UnaryOp -> Value -> M Value
   | .negate, .int value => pure (.int (-value))
   | .negate, _ => throw "eval error: numeric negation expects an int"
 
+mutual
+partial def equalValue : Value -> Value -> M Bool
+  | .int left, .int right => pure (left == right)
+  | .str left, .str right => pure (left == right)
+  | .bool left, .bool right => pure (left == right)
+  | .null, .null => pure true
+  | .list left, .list right => equalValues left right
+  | .attrset left, .attrset right => equalAttrs left right
+  | .closure _ _ _, .closure _ _ _ => throw "eval error: function values cannot be compared"
+  | _, _ => throw "eval error: equality operands must have the same type"
+
+partial def equalValues : List Value -> List Value -> M Bool
+  | [], [] => pure true
+  | [], _ :: _ => pure false
+  | _ :: _, [] => pure false
+  | left :: lefts, right :: rights => do
+      if ← equalValue left right then equalValues lefts rights else pure false
+
+partial def equalAttrs : List (String × Value) -> List (String × Value) -> M Bool
+  | [], [] => pure true
+  | [], _ :: _ => pure false
+  | _ :: _, [] => pure false
+  | (leftName, leftValue) :: lefts, (rightName, rightValue) :: rights => do
+      if leftName == rightName then
+        if ← equalValue leftValue rightValue then equalAttrs lefts rights else pure false
+      else
+        pure false
+end
+
 partial def evalBinary : BinaryOp -> Value -> Value -> M Value
   | .add, .int left, .int right => pure (.int (left + right))
   | .subtract, .int left, .int right => pure (.int (left - right))
   | .multiply, .int left, .int right => pure (.int (left * right))
   | .divide, .int _, .int 0 => throw "eval error: division by zero"
   | .divide, .int left, .int right => pure (.int (left / right))
-  | .equal, left, right => pure (.bool (left == right))
-  | .notEqual, left, right => pure (.bool (!(left == right)))
+  | .equal, left, right => do
+      pure (.bool (← equalValue left right))
+  | .notEqual, left, right => do
+      pure (.bool (!(← equalValue left right)))
   | .and, .bool left, .bool right => pure (.bool (left && right))
   | .or, .bool left, .bool right => pure (.bool (left || right))
   | .implies, .bool left, .bool right => pure (.bool ((!left) || right))
@@ -343,12 +374,22 @@ partial def evalStringParts (fuel : Nat) (stack : List String) (env : Env) (cont
       let rest ← evalStringParts fuel stack env context parts
       pure (text ++ rest)
   | .interpolation expr :: parts => do
-      let text ←
-        match ← eval fuel stack env expr with
-        | .str text => pure text
-        | _ => throw s!"eval error: {context} interpolation expects a string"
+      let text ← coerceStringPart context (← eval fuel stack env expr)
       let rest ← evalStringParts fuel stack env context parts
       pure (text ++ rest)
+
+partial def coerceStringPart (context : String) : Value -> M String
+  | .str text => pure text
+  | value =>
+      if context == "dynamic attribute" then
+        throw "eval error: dynamic attribute interpolation expects a string"
+      else
+        match value with
+        | .int value => pure (toString value)
+        | .bool true => pure "true"
+        | .bool false => pure "false"
+        | .null => pure "null"
+        | _ => throw s!"eval error: {context} interpolation expects a string-compatible value"
 
 partial def selectPath? : Value -> List String -> Option Value
   | value, [] => some value
