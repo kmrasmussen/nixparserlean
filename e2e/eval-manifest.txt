@@ -7,6 +7,8 @@ e2e/corpus/smoke/eval-select-default.nix	pass	static selection with default
 e2e/corpus/smoke/eval-if-assert.nix	pass	assertion and conditional
 e2e/corpus/smoke/eval-let-lambda.nix	pass	let-bound identifier lambda application
 e2e/corpus/smoke/eval-lexical-closure.nix	pass	identifier lambda captures lexical environment
+e2e/corpus/smoke/eval-let-recursive-later.nix	pass	recursive let can reference a later binding
+e2e/corpus/smoke/eval-let-recursive-chain.nix	pass	recursive let can follow a terminating reference chain
 e2e/corpus/smoke/eval-paramset-lambda.nix	pass	attrset lambda parameter binds required fields
 e2e/corpus/smoke/eval-paramset-ellipsis.nix	pass	attrset lambda ellipsis accepts extra fields
 e2e/corpus/smoke/eval-paramset-default.nix	pass	attrset lambda default fills missing field
@@ -15,3 +17,5 @@ e2e/corpus/smoke/eval-paramset-default-earlier.nix	pass	attrset lambda default c
 e2e/corpus/smoke/eval-paramset-missing.nix	eval-fail	missing required attrset lambda field should fail
 e2e/corpus/smoke/eval-paramset-extra.nix	eval-fail	extra attrset lambda field without ellipsis should fail
 e2e/corpus/smoke/eval-paramset-default-later.nix	eval-fail	attrset lambda default cannot reference later field yet
+e2e/corpus/smoke/eval-let-recursive-self.nix	eval-fail	recursive let self-reference should fail
+e2e/corpus/smoke/eval-let-dynamic-binding.nix	eval-fail	dynamic let binding remains unsupported

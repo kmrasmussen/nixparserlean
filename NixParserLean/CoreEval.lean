@@ -4,6 +4,7 @@ namespace NixParserLean
 namespace Core
 namespace Eval
 
+mutual
 inductive Value where
   | int : Int -> Value
   | str : String -> Value
@@ -11,8 +12,14 @@ inductive Value where
   | null : Value
   | list : List Value -> Value
   | attrset : List (String × Value) -> Value
-  | closure : List (String × Value) -> LambdaParam -> Expr -> Value
+  | closure : List (String × EnvValue) -> LambdaParam -> Expr -> Value
   deriving Repr, Inhabited
+
+inductive EnvValue where
+  | value : Value -> EnvValue
+  | thunk : List (String × EnvValue) -> List Binding -> Expr -> EnvValue
+  deriving Repr, Inhabited
+end
 
 mutual
 partial def beqValue : Value -> Value -> Bool
@@ -39,16 +46,12 @@ end
 instance : BEq Value where
   beq := beqValue
 
-abbrev Env := List (String × Value)
+abbrev Env := List (String × EnvValue)
 abbrev M := Except String
+def defaultFuel : Nat := 200
 
 private def unsupported (feature : String) : M α :=
   throw s!"eval error: unsupported {feature}"
-
-private def lookupName (name : String) : Env -> M Value
-  | [] => throw s!"eval error: unbound identifier '{name}'"
-  | (candidate, value) :: rest =>
-      if candidate == name then pure value else lookupName name rest
 
 private def lookupAttr (name : String) : List (String × Value) -> Option Value
   | [] => none
@@ -78,6 +81,11 @@ private def textOnlyString : List StringPart -> Option String
       some (text ++ rest)
   | .interpolation _ :: _ => none
 
+private def hasDynamicBinding : List Binding -> Bool
+  | [] => false
+  | .dynamicAssign _ _ :: _ => true
+  | .staticAssign _ _ :: bindings => hasDynamicBinding bindings
+
 partial def evalUnary : UnaryOp -> Value -> M Value
   | .not, .bool value => pure (.bool (!value))
   | .not, _ => throw "eval error: boolean negation expects a bool"
@@ -98,7 +106,7 @@ partial def evalBinary : BinaryOp -> Value -> Value -> M Value
   | op, _, _ => throw s!"eval error: unsupported operands for binary operator {repr op}"
 
 mutual
-partial def eval (env : Env) : Expr -> M Value
+partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Value
   | .int value => pure (.int value)
   | .str parts =>
       match textOnlyString parts with
@@ -106,57 +114,76 @@ partial def eval (env : Env) : Expr -> M Value
       | none => unsupported "string interpolation evaluation"
   | .bool value => pure (.bool value)
   | .null => pure .null
-  | .ident name => lookupName name env
+  | .ident name => lookupName fuel stack name env
   | .path _ => unsupported "path values"
   | .list items => do
-      pure (.list (← evalList env items))
+      pure (.list (← evalList fuel stack env items))
   | .attrset recursive bindings => do
       if recursive then
         unsupported "recursive attribute sets"
       else
-        pure (.attrset (← evalBindings env bindings))
+        pure (.attrset (← evalBindings fuel stack env bindings))
   | .letIn bindings body => do
-      let env ← evalLetBindings env bindings
-      eval env body
+      if hasDynamicBinding bindings then
+        unsupported "dynamic let binding evaluation"
+      else
+        eval fuel stack (letEnv env bindings) body
   | .lambda param body => pure (.closure env param body)
   | .ifThenElse condition thenBranch elseBranch => do
-      match ← eval env condition with
-      | .bool true => eval env thenBranch
-      | .bool false => eval env elseBranch
+      match ← eval fuel stack env condition with
+      | .bool true => eval fuel stack env thenBranch
+      | .bool false => eval fuel stack env elseBranch
       | _ => throw "eval error: if condition must be a bool"
   | .assertExpr condition body => do
-      match ← eval env condition with
-      | .bool true => eval env body
+      match ← eval fuel stack env condition with
+      | .bool true => eval fuel stack env body
       | .bool false => throw "eval error: assertion failed"
       | _ => throw "eval error: assertion condition must be a bool"
   | .withExpr _ _ => unsupported "with evaluation"
   | .select base path none => do
       let names ← evalStaticPath path
-      selectPath (← eval env base) names
+      selectPath (← eval fuel stack env base) names
   | .select base path (some defaultExpr) => do
       let names ← evalStaticPath path
-      match selectPath? (← eval env base) names with
+      match selectPath? (← eval fuel stack env base) names with
       | some value => pure value
-      | none => eval env defaultExpr
+      | none => eval fuel stack env defaultExpr
   | .hasAttr base path => do
       let names ← evalStaticPath path
-      pure (.bool ((selectPath? (← eval env base) names).isSome))
+      pure (.bool ((selectPath? (← eval fuel stack env base) names).isSome))
   | .app function argument => do
-      match ← eval env function with
+      match ← eval fuel stack env function with
       | .closure closureEnv param body => do
-          let argument ← eval env argument
-          let env ← bindParam param argument closureEnv
-          eval env body
+          let argument ← eval fuel stack env argument
+          let env ← bindParam fuel stack param argument closureEnv
+          eval fuel stack env body
       | _ => throw "eval error: function application expects a function"
   | .unary op inner => do
-      evalUnary op (← eval env inner)
+      evalUnary op (← eval fuel stack env inner)
   | .binary op left right => do
-      evalBinary op (← eval env left) (← eval env right)
+      evalBinary op (← eval fuel stack env left) (← eval fuel stack env right)
 
-partial def bindParam (param : LambdaParam) (argument : Value) (env : Env) : M Env :=
+partial def lookupName (fuel : Nat) (stack : List String) (name : String) : Env -> M Value
+  | [] => throw s!"eval error: unbound identifier '{name}'"
+  | (candidate, entry) :: rest =>
+      if candidate == name then
+        match entry with
+        | .value value => pure value
+        | .thunk baseEnv bindings expr =>
+            if containsName name stack then
+              throw s!"eval error: recursive let binding '{name}'"
+            else
+              match fuel with
+              | 0 => throw "eval error: evaluation fuel exhausted"
+              | fuel + 1 => eval fuel (name :: stack) (letEnv baseEnv bindings) expr
+      else
+        lookupName fuel stack name rest
+
+partial def bindParam (fuel : Nat) (stack : List String) (param : LambdaParam) (argument : Value)
+    (env : Env) : M Env :=
   match param with
-  | .ident name => pure ((name, argument) :: env)
-  | .attrset paramSet => bindParamSet paramSet argument env
+  | .ident name => pure ((name, .value argument) :: env)
+  | .attrset paramSet => bindParamSet fuel stack paramSet argument env
   | .alias _ _ => unsupported "aliased lambda parameter evaluation"
 
 partial def paramEntryNames : List ParamEntry -> List String
@@ -172,17 +199,19 @@ partial def findExtraAttr? (allowed : List String) : List (String × Value) -> O
   | (name, _) :: attrs =>
       if containsName name allowed then findExtraAttr? allowed attrs else some name
 
-partial def bindParamSet (paramSet : ParamSet) (argument : Value) (env : Env) : M Env :=
+partial def bindParamSet (fuel : Nat) (stack : List String) (paramSet : ParamSet)
+    (argument : Value) (env : Env) : M Env :=
   match argument with
   | .attrset attrs => do
       if !paramSet.ellipsis then
         match findExtraAttr? (paramEntryNames paramSet.entries) attrs with
         | some name => throw s!"eval error: unexpected function argument attribute '{name}'"
         | none => pure ()
-      bindParamEntries attrs paramSet.entries env
+      bindParamEntries fuel stack attrs paramSet.entries env
   | _ => throw "eval error: attribute-set lambda parameter expects an attrset"
 
-partial def bindParamEntries (attrs : List (String × Value)) : List ParamEntry -> Env -> M Env
+partial def bindParamEntries (fuel : Nat) (stack : List String) (attrs : List (String × Value)) :
+    List ParamEntry -> Env -> M Env
   | [], env => pure env
   | entry :: entries, env => do
       let value ←
@@ -190,45 +219,44 @@ partial def bindParamEntries (attrs : List (String × Value)) : List ParamEntry 
         | some value => pure value
         | none =>
             match entry.default? with
-            | some defaultExpr => eval env defaultExpr
+            | some defaultExpr => eval fuel stack env defaultExpr
             | none => throw s!"eval error: missing function argument attribute '{entry.name}'"
-      bindParamEntries attrs entries ((entry.name, value) :: env)
+      bindParamEntries fuel stack attrs entries ((entry.name, .value value) :: env)
 
-partial def evalList (env : Env) : List Expr -> M (List Value)
+partial def evalList (fuel : Nat) (stack : List String) (env : Env) : List Expr -> M (List Value)
   | [] => pure []
   | item :: items => do
-      let item ← eval env item
-      let items ← evalList env items
+      let item ← eval fuel stack env item
+      let items ← evalList fuel stack env items
       pure (item :: items)
 
-partial def evalBindings (env : Env) : List Binding -> M (List (String × Value))
+partial def evalBindings (fuel : Nat) (stack : List String) (env : Env) :
+    List Binding -> M (List (String × Value))
   | [] => pure []
   | binding :: bindings => do
-      let attrs ← evalBindings env bindings
-      evalBindingInto env binding attrs
+      let attrs ← evalBindings fuel stack env bindings
+      evalBindingInto fuel stack env binding attrs
 
-partial def evalBindingInto (env : Env) (binding : Binding) (attrs : List (String × Value)) :
-    M (List (String × Value)) := do
+partial def evalBindingInto (fuel : Nat) (stack : List String) (env : Env) (binding : Binding)
+    (attrs : List (String × Value)) : M (List (String × Value)) := do
   match binding with
   | .staticAssign name expr => do
-      let value ← eval env expr
+      let value ← eval fuel stack env expr
       pure (insertAttr name value attrs)
   | .dynamicAssign _ _ => unsupported "dynamic attribute binding evaluation"
 
-partial def evalLetBindings (env : Env) : List Binding -> M Env
-  | bindings => evalLetBindingsForward env bindings.reverse
+partial def letEnv (baseEnv : Env) (bindings : List Binding) : Env :=
+  letThunkEntries baseEnv bindings ++ baseEnv
 
-partial def evalLetBindingsForward (env : Env) : List Binding -> M Env
-  | [] => pure env
-  | binding :: bindings => do
-      let env ← evalLetBindingInto env binding
-      evalLetBindingsForward env bindings
+partial def letThunkEntries (baseEnv : Env) (bindings : List Binding) : Env :=
+  letThunkEntriesGo baseEnv bindings bindings
 
-partial def evalLetBindingInto (env : Env) : Binding -> M Env
-  | .staticAssign name expr => do
-      let value ← eval env expr
-      pure ((name, value) :: env)
-  | .dynamicAssign _ _ => unsupported "dynamic let binding evaluation"
+partial def letThunkEntriesGo (baseEnv : Env) (allBindings : List Binding) :
+    List Binding -> Env
+  | [] => []
+  | .staticAssign name expr :: bindings =>
+      (name, .thunk baseEnv allBindings expr) :: letThunkEntriesGo baseEnv allBindings bindings
+  | .dynamicAssign _ _ :: bindings => letThunkEntriesGo baseEnv allBindings bindings
 
 partial def evalStaticPath (path : List AttrPathPart) : M (List String) :=
   match staticPath? path with
@@ -250,7 +278,7 @@ partial def selectPath (value : Value) (names : List String) : M Value :=
 end
 
 def evaluate (expr : Expr) : M Value :=
-  eval [] expr
+  eval defaultFuel [] [] expr
 
 end Eval
 

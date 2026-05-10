@@ -82,7 +82,7 @@ is validated before it is printed.
 fragment. It currently supports:
 
 - integers, booleans, null, text-only strings, lists, and non-recursive attrsets
-- `let` bindings through an environment
+- recursive `let` bindings through lazy thunks with cycle detection
 - static attribute selection and selection defaults
 - conditionals and assertions
 - identifier-parameter lambdas and function application
@@ -94,6 +94,10 @@ fragment. It currently supports:
 Default parameter expressions are evaluated when the corresponding argument
 field is absent. A default can refer to earlier bound parameters, but not later
 ones.
+
+Static `let` bindings are recursive: a binding can refer to a later binding in
+the same `let`. Self-recursive cycles fail with an `eval error:` instead of
+looping indefinitely. Dynamic `let` bindings remain unsupported.
 
 Unsupported forms fail explicitly with an `eval error:` prefix. The evaluator
 does not yet implement aliased lambda parameters, recursive attrsets, dynamic
