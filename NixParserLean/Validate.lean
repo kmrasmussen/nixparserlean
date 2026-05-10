@@ -2,37 +2,59 @@ import NixParserLean.Syntax
 
 namespace NixParserLean
 
-private def containsString : List String -> String -> Bool
-  | [], _ => false
-  | x :: xs, needle => x == needle || containsString xs needle
+private def namesToPaths : List String -> List AttrPath
+  | [] => []
+  | name :: names => { parts := [name] } :: namesToPaths names
 
-private def firstDuplicate? (seen : List String) : List String -> Option String
-  | [] => none
-  | x :: xs =>
-      if containsString seen x then
-        some x
-      else
-        firstDuplicate? (x :: seen) xs
-
-private def bindingNames : Binding -> List String
-  | .assign path _ => [path.toString]
-  | .inherit names => names
-  | .inheritFrom _ names => names
+private def bindingPaths : Binding -> List AttrPath
+  | .assign path _ => [path]
+  | .inherit names => namesToPaths names
+  | .inheritFrom _ names => namesToPaths names
 
 private def bindingValues : Binding -> List Expr
   | .assign _ value => [value]
   | .inherit _ => []
   | .inheritFrom scope _ => [scope]
 
-private def allBindingNames : List Binding -> List String
+private def allBindingPaths : List Binding -> List AttrPath
   | [] => []
-  | binding :: bindings => bindingNames binding ++ allBindingNames bindings
+  | binding :: bindings => bindingPaths binding ++ allBindingPaths bindings
 
-private def validateDuplicateBindings (context : String) (bindings : List Binding) :
+private def isPrefix : List String -> List String -> Bool
+  | [], _ => true
+  | _ :: _, [] => false
+  | x :: xs, y :: ys => x == y && isPrefix xs ys
+
+private def pathsConflict (left right : AttrPath) : Bool :=
+  isPrefix left.parts right.parts || isPrefix right.parts left.parts
+
+private def findConflictWith (path : AttrPath) : List AttrPath -> Option (AttrPath × AttrPath)
+  | [] => none
+  | other :: paths =>
+      if pathsConflict other path then
+        some (other, path)
+      else
+        findConflictWith path paths
+
+private def firstPathConflict? (seen : List AttrPath) : List AttrPath ->
+    Option (AttrPath × AttrPath)
+  | [] => none
+  | path :: paths =>
+      match findConflictWith path seen with
+      | some conflict => some conflict
+      | none => firstPathConflict? (path :: seen) paths
+
+private def bindingConflictMessage (context : String) (left right : AttrPath) : String :=
+  if left.toString == right.toString then
+    s!"semantic error: duplicate binding '{left.toString}' in {context}"
+  else
+    s!"semantic error: conflicting binding paths '{left.toString}' and '{right.toString}' in {context}"
+
+private def validateBindingPaths (context : String) (bindings : List Binding) :
     Except String Unit := do
-  let names := allBindingNames bindings
-  match firstDuplicate? [] names with
-  | some name => throw s!"semantic error: duplicate binding '{name}' in {context}"
+  let paths := allBindingPaths bindings
+  match firstPathConflict? [] paths with
+  | some (left, right) => throw (bindingConflictMessage context left right)
   | none => pure ()
 
 mutual
@@ -40,10 +62,10 @@ partial def validateExpr : Expr -> Except String Unit
   | .int _ | .str _ | .bool _ | .null | .ident _ | .path _ => pure ()
   | .list items => validateExprs items
   | .attrset _ bindings => do
-      validateDuplicateBindings "attribute set" bindings
+      validateBindingPaths "attribute set" bindings
       validateBindings bindings
   | .letIn bindings body => do
-      validateDuplicateBindings "let expression" bindings
+      validateBindingPaths "let expression" bindings
       validateBindings bindings
       validateExpr body
   | .lambda _ body => validateExpr body

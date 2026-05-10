@@ -2,6 +2,7 @@
 # expectations: pass, parse-fail, validation-fail
 e2e/corpus/smoke/addition.nix	pass	addition operator
 e2e/corpus/smoke/angle-path.nix	pass	angle-bracket path
+e2e/corpus/smoke/attrpath-siblings.nix	pass	sibling attrpath bindings
 e2e/corpus/smoke/attrset.nix	pass	basic attrset with comments
 e2e/corpus/smoke/application.nix	pass	function application
 e2e/corpus/smoke/boolean-operators.nix	pass	boolean and equality operators
@@ -18,7 +19,9 @@ e2e/corpus/smoke/lambda.nix	pass	attrset lambda parameter
 e2e/corpus/smoke/missing-equals.nix	parse-fail	missing equals should fail parsing
 e2e/corpus/smoke/open-param-lambda.nix	pass	open attrset lambda parameter
 e2e/corpus/smoke/parenthesized.nix	pass	parenthesized expression
+e2e/corpus/smoke/prefix-attr-conflict.nix	validation-fail	attrpath prefix conflict should fail validation
 e2e/corpus/smoke/relative-path.nix	pass	relative path literal
+e2e/corpus/smoke/reverse-prefix-attr-conflict.nix	validation-fail	reverse attrpath prefix conflict should fail validation
 e2e/corpus/smoke/select.nix	pass	attribute selection
 e2e/corpus/smoke/update-operator.nix	pass	attrset update operator
 e2e/corpus/smoke/with-expr.nix	pass	with expression
