@@ -38,6 +38,9 @@ lake exe nixparserlean --file path/to/file.nix
 # Print the desugared core AST
 lake exe nixparserlean --desugar --file path/to/file.nix
 
+# Evaluate the supported core fragment
+lake exe nixparserlean --eval --file path/to/file.nix
+
 # Parse an inline expression
 lake exe nixparserlean '{ x = 1; }'
 

@@ -66,9 +66,32 @@ Core output is opt-in:
 lake exe nixparserlean --desugar --file path/to/file.nix
 ```
 
+The first evaluator is also opt-in:
+
+```sh
+lake exe nixparserlean --eval --file path/to/file.nix
+```
+
 Parsing and validation still run first. Desugaring only happens after the
 surface tree is structurally and semantically accepted. The resulting core tree
 is validated before it is printed.
+
+## Evaluation
+
+`NixParserLean/CoreEval.lean` defines a small evaluator for the checked core
+fragment. It currently supports:
+
+- integers, booleans, null, text-only strings, lists, and non-recursive attrsets
+- `let` bindings through an environment
+- static attribute selection and selection defaults
+- conditionals and assertions
+- boolean negation and integer negation
+- integer `+`, `-`, `*`, `/`
+- equality, inequality, `&&`, `||`, and implication over supported values
+
+Unsupported forms fail explicitly with an `eval error:` prefix. The evaluator
+does not yet implement lambdas, function application, recursive attrsets,
+dynamic attribute names, imports, paths, `with`, or string interpolation.
 
 ## Core validation
 

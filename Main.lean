@@ -3,6 +3,7 @@ import NixParserLean
 structure Options where
   input : String
   desugar : Bool := false
+  eval : Bool := false
 
 def readFile (path : String) : IO (Except String String) := do
   try
@@ -14,6 +15,8 @@ def readInput : List String -> IO (Except String Options)
   | [] => pure (.ok { input := "{ answer = 42; values = [ true null \"nix\" ]; }" })
   | ["--desugar"] =>
       pure (.ok { input := "{ answer = 42; values = [ true null \"nix\" ]; }", desugar := true })
+  | ["--eval"] =>
+      pure (.ok { input := "{ answer = 42; values = [ true null \"nix\" ]; }", eval := true })
   | ["--file", path] => do
       match ← readFile path with
       | .ok input => pure (.ok { input })
@@ -26,21 +29,40 @@ def readInput : List String -> IO (Except String Options)
       match ← readFile path with
       | .ok input => pure (.ok { input, desugar := true })
       | .error err => pure (.error err)
+  | ["--eval", "--file", path] => do
+      match ← readFile path with
+      | .ok input => pure (.ok { input, eval := true })
+      | .error err => pure (.error err)
+  | ["--file", path, "--eval"] => do
+      match ← readFile path with
+      | .ok input => pure (.ok { input, eval := true })
+      | .error err => pure (.error err)
   | args => pure (.ok { input := " ".intercalate args })
+
+def printCoreResult (options : Options) (coreExpr : NixParserLean.Core.Expr) : IO UInt32 := do
+  match NixParserLean.Core.validate coreExpr with
+  | .ok () =>
+      if options.eval then
+        match NixParserLean.Core.eval coreExpr with
+        | .ok value =>
+            IO.println (repr value)
+            pure 0
+        | .error err =>
+            IO.eprintln err
+            pure 1
+      else
+        IO.println (repr coreExpr)
+        pure 0
+  | .error err =>
+      IO.eprintln err
+      pure 1
 
 def printResult (options : Options) (expr : NixParserLean.Expr) : IO UInt32 := do
   match NixParserLean.validate expr with
   | .ok () =>
-      if options.desugar then
+      if options.desugar || options.eval then
         match NixParserLean.desugar expr with
-        | .ok coreExpr =>
-            match NixParserLean.Core.validate coreExpr with
-            | .ok () =>
-                IO.println (repr coreExpr)
-                pure 0
-            | .error err =>
-                IO.eprintln err
-                pure 1
+        | .ok coreExpr => printCoreResult options coreExpr
         | .error err =>
             IO.eprintln err
             pure 1

@@ -13,6 +13,7 @@ The project is split into two layers with a clean boundary between them.
 │  Validate.lean — validator  │
 │  Core.lean     — core AST   │
 │  CoreValidate  — core checks│
+│  CoreEval.lean — evaluator  │
 │  Desugar.lean  — lowering   │
 │  Main.lean     — CLI        │
 └────────────┬────────────────┘
@@ -46,7 +47,7 @@ Vec<Case>  (path, expectation, note)
     │
     │ for each case: run_parser()
     ▼
-Outcome  (Pass | ParseFail | ValidationFail | OtherFail)
+Outcome  (Pass | ParseFail | ValidationFail | EvalFail | OtherFail)
     │
     │ compare with Expectation
     ▼
@@ -79,14 +80,18 @@ Except String Core.Expr
     ▼
 Except String Unit
     │
-    │ IO.println (repr expr/coreExpr)  on success
+    │ optionally NixParserLean.Core.eval
+    ▼
+Except String Core.Eval.Value
+    │
+    │ IO.println (repr expr/coreExpr/value)  on success
     │ IO.eprintln err         on failure
     ▼
 exit 0 / exit 1
 ```
 
-`parse`, `validate`, and `desugar` are pure functions. All IO lives in
-`Main.lean`.
+`parse`, `validate`, `desugar`, core validation, and core evaluation are pure
+functions. All IO lives in `Main.lean`.
 
 ## Error classification
 
@@ -96,6 +101,7 @@ The Rust runner uses the first line of stderr to distinguish error kinds:
 |---|---|
 | `parse error at offset N:` | `ParseFail` |
 | `semantic error:` | `ValidationFail` |
+| `eval error:` | `EvalFail` |
 | anything else | `OtherFail` |
 
 This convention is established in `Parser.lean` (`failAt`) and `Validate.lean` (`bindingConflictMessage`).

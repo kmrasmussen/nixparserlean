@@ -59,7 +59,7 @@ Current smoke fixtures:
 ```
 
 - `path` — relative to the repository root.
-- `expectation` — one of `pass`, `parse-fail`, `validation-fail`.
+- `expectation` — one of `pass`, `parse-fail`, `validation-fail`, `eval-fail`.
 - `note` — free-text description shown in failure output.
 
 Lines starting with `#` and blank lines are ignored.
@@ -73,6 +73,16 @@ lake exe nixparserlean --desugar --file
 It keeps a focused set of fixtures for the surface-to-core pipeline, including
 static dotted bindings, dynamic attribute names, scoped inherit lowering, and a
 surface validation failure that must still fail before core output is printed.
+
+`e2e/eval-manifest.txt` is run with:
+
+```sh
+lake exe nixparserlean --eval --file
+```
+
+It checks the supported evaluation fragment and records explicit `eval-fail`
+cases for accepted syntax that the evaluator intentionally does not implement
+yet.
 
 ### e2e runner
 
@@ -91,6 +101,7 @@ cargo run --manifest-path e2e/runner/Cargo.toml -- \
 |---|---|
 | starts with `parse error` | `ParseFail` |
 | starts with `semantic error` | `ValidationFail` |
+| starts with `eval error` | `EvalFail` |
 | exit 0 | `Pass` |
 | anything else | `OtherFail` |
 
@@ -101,7 +112,7 @@ cargo run --manifest-path e2e/runner/Cargo.toml -- \
 **Summary line (stdout):**
 ```
 e2e: N passed, N expected parse failures, N expected validation failures,
-     N unexpected failures, N unexpected successes
+     N expected eval failures, N unexpected failures, N unexpected successes
 ```
 
 ## Adding a new fixture
@@ -126,5 +137,6 @@ semantic error: <description>
 ## CI
 
 `flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
-the full parser/validator e2e runner, and the focused desugar e2e manifest.
-This check runs on all four supported systems via `nix flake check`.
+the full parser/validator e2e runner, the focused desugar e2e manifest, and the
+focused eval e2e manifest. This check runs on all four supported systems via
+`nix flake check`.

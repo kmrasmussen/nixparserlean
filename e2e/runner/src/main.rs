@@ -7,6 +7,7 @@ enum Expectation {
     Pass,
     ParseFail,
     ValidationFail,
+    EvalFail,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -14,6 +15,7 @@ enum Outcome {
     Pass,
     ParseFail,
     ValidationFail,
+    EvalFail,
     OtherFail,
 }
 
@@ -44,6 +46,7 @@ struct Summary {
     passed: usize,
     expected_parse_failures: usize,
     expected_validation_failures: usize,
+    expected_eval_failures: usize,
     unexpected_failures: Vec<String>,
     unexpected_successes: Vec<String>,
 }
@@ -93,6 +96,7 @@ fn parse_expectation(raw: &str, manifest: &Path, line: usize) -> Result<Expectat
         "pass" => Ok(Expectation::Pass),
         "parse-fail" => Ok(Expectation::ParseFail),
         "validation-fail" => Ok(Expectation::ValidationFail),
+        "eval-fail" => Ok(Expectation::EvalFail),
         other => Err(format!(
             "{}:{}: unknown expectation {other:?}",
             manifest.display(),
@@ -231,6 +235,8 @@ fn run_parser(command: &str, path: &Path) -> Result<Outcome, String> {
             Ok(Outcome::ParseFail)
         } else if first_line.starts_with("semantic error") {
             Ok(Outcome::ValidationFail)
+        } else if first_line.starts_with("eval error") {
+            Ok(Outcome::EvalFail)
         } else {
             Ok(Outcome::OtherFail)
         }
@@ -278,6 +284,7 @@ fn main() {
             (Expectation::ValidationFail, Outcome::ValidationFail) => {
                 summary.expected_validation_failures += 1
             }
+            (Expectation::EvalFail, Outcome::EvalFail) => summary.expected_eval_failures += 1,
             (Expectation::Pass, _) => {
                 summary
                     .unexpected_failures
@@ -299,10 +306,11 @@ fn main() {
     }
 
     println!(
-        "e2e: {} passed, {} expected parse failures, {} expected validation failures, {} unexpected failures, {} unexpected successes",
+        "e2e: {} passed, {} expected parse failures, {} expected validation failures, {} expected eval failures, {} unexpected failures, {} unexpected successes",
         summary.passed,
         summary.expected_parse_failures,
         summary.expected_validation_failures,
+        summary.expected_eval_failures,
         summary.unexpected_failures.len(),
         summary.unexpected_successes.len()
     );

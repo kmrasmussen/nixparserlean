@@ -1,0 +1,7 @@
+# format: path<TAB>expectation<TAB>note
+# expectations include eval-fail
+# parser command: lake exe nixparserlean --eval --file
+e2e/corpus/smoke/eval-arithmetic.nix	pass	let-bound integer arithmetic
+e2e/corpus/smoke/eval-select-default.nix	pass	static selection with default
+e2e/corpus/smoke/eval-if-assert.nix	pass	assertion and conditional
+e2e/corpus/smoke/eval-unsupported-lambda.nix	eval-fail	unsupported lambda evaluation should fail explicitly
