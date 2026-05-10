@@ -4,6 +4,24 @@ structure AttrPath where
   parts : List String
   deriving Repr, BEq, Inhabited
 
+structure ParamSet where
+  names : List String
+  ellipsis : Bool := false
+  deriving Repr, BEq, Inhabited
+
+inductive LambdaParam where
+  | ident : String -> LambdaParam
+  | attrset : ParamSet -> LambdaParam
+  deriving Repr, BEq, Inhabited
+
+inductive BinaryOp where
+  | equal
+  | and
+  | or
+  | add
+  | update
+  deriving Repr, BEq, Inhabited
+
 mutual
 inductive Expr where
   | int : Int -> Expr
@@ -11,14 +29,22 @@ inductive Expr where
   | bool : Bool -> Expr
   | null : Expr
   | ident : String -> Expr
+  | path : String -> Expr
   | list : List Expr -> Expr
   | attrset : (recursive : Bool) -> (bindings : List Binding) -> Expr
   | letIn : (bindings : List Binding) -> (body : Expr) -> Expr
+  | lambda : (param : LambdaParam) -> (body : Expr) -> Expr
+  | ifThenElse : (condition : Expr) -> (thenBranch : Expr) -> (elseBranch : Expr) -> Expr
+  | withExpr : (scope : Expr) -> (body : Expr) -> Expr
+  | select : (base : Expr) -> (path : AttrPath) -> Expr
+  | app : (function : Expr) -> (argument : Expr) -> Expr
+  | binary : (op : BinaryOp) -> (left : Expr) -> (right : Expr) -> Expr
   deriving Repr, BEq, Inhabited
 
 inductive Binding where
   | assign : (path : AttrPath) -> (value : Expr) -> Binding
   | inherit : (names : List String) -> Binding
+  | inheritFrom : (scope : Expr) -> (names : List String) -> Binding
   deriving Repr, BEq, Inhabited
 end
 
@@ -28,9 +54,10 @@ def AttrPath.toString (path : AttrPath) : String :=
 def Binding.path? : Binding -> Option AttrPath
   | .assign path _ => some path
   | .inherit _ => none
+  | .inheritFrom _ _ => none
 
 def Expr.isAtomic : Expr -> Bool
-  | .int _ | .str _ | .bool _ | .null | .ident _ => true
+  | .int _ | .str _ | .bool _ | .null | .ident _ | .path _ => true
   | _ => false
 
 end NixParserLean

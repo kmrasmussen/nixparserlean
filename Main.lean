@@ -17,8 +17,13 @@ def main (args : List String) : IO UInt32 := do
   | .ok input =>
   match NixParserLean.parse input with
   | .ok expr =>
-      IO.println (repr expr)
-      pure 0
+      match NixParserLean.validate expr with
+      | .ok () =>
+          IO.println (repr expr)
+          pure 0
+      | .error err =>
+          IO.eprintln err
+          pure 1
   | .error err =>
       IO.eprintln err
       pure 1

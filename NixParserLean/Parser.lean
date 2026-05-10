@@ -23,6 +23,14 @@ private def bump (s : ParserState) : ParserState :=
 private def next? (s : ParserState) : Option Char :=
   curr? (bump s)
 
+private def listGet? : List α -> Nat -> Option α
+  | [], _ => none
+  | x :: _, 0 => some x
+  | _ :: xs, n + 1 => listGet? xs n
+
+private def charAt? (n : Nat) (s : ParserState) : Option Char :=
+  listGet? s.remaining n
+
 private def failAt (s : ParserState) (msg : String) : ParserM α :=
   throw s!"parse error at offset {s.offset}: {msg}"
 
@@ -30,8 +38,8 @@ private partial def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : Parser
     String × ParserState :=
   match curr? s with
   | some c =>
-      if p c then takeWhileGo p (c :: acc) (bump s) else (String.mk acc.reverse, s)
-  | none => (String.mk acc.reverse, s)
+      if p c then takeWhileGo p (c :: acc) (bump s) else (String.ofList acc.reverse, s)
+  | none => (String.ofList acc.reverse, s)
 
 private def takeWhile (p : Char -> Bool) (s : ParserState) : String × ParserState :=
   takeWhileGo p [] s
@@ -71,6 +79,19 @@ private def char (expected : Char) (s : ParserState) : ParserM ParserState := do
       else failAt s s!"expected '{expected}', found '{c}'"
   | none => failAt s s!"expected '{expected}', found end of input"
 
+private def token (expected : String) (s : ParserState) : ParserM ParserState := do
+  let s := skipSpace s
+  let rec loop (chars : List Char) (st : ParserState) := do
+    match chars with
+    | [] => pure st
+    | expectedChar :: rest =>
+        match curr? st with
+        | some c =>
+            if c == expectedChar then loop rest (bump st)
+            else failAt st s!"expected '{String.ofList chars}'"
+        | none => failAt st s!"expected '{String.ofList chars}', found end of input"
+  loop expected.toList s
+
 private def isIdentStart (c : Char) : Bool :=
   c.isAlpha || c == '_'
 
@@ -92,6 +113,42 @@ private def keyword (word : String) (s : ParserState) : ParserM ParserState := d
   let (name, s') ← ident s
   if name == word then pure s' else failAt s s!"expected keyword '{word}'"
 
+private def isExprStopKeyword (name : String) : Bool :=
+  name == "in" || name == "then" || name == "else"
+
+private def isPathStart (s : ParserState) : Bool :=
+  let s := skipSpace s
+  match curr? s, next? s, charAt? 2 s with
+  | some '.', some '/', _ => true
+  | some '.', some '.', some '/' => true
+  | some '/', some '/', _ => false
+  | some '/', _, _ => true
+  | some '~', some '/', _ => true
+  | some '<', _, _ => true
+  | _, _, _ => false
+
+private def isAppArgumentStart (s : ParserState) : Bool :=
+  let s := skipSpace s
+  isPathStart s ||
+    match curr? s with
+    | some '"' | some '[' | some '{' | some '-' => true
+    | some c => c.isDigit || isIdentStart c
+    | none => false
+
+private def isAppStop (s : ParserState) : Bool :=
+  let s := skipSpace s
+  match curr? s with
+  | none => true
+  | some ']' | some '}' | some ';' | some ',' | some ':' => true
+  | some '/' => next? s == some '/'
+  | some c =>
+      if isIdentStart c then
+        match ident s with
+        | .ok (name, _) => isExprStopKeyword name
+        | .error _ => false
+      else
+        false
+
 private def integer (s : ParserState) : ParserM (Int × ParserState) := do
   let s := skipSpace s
   let sign :=
@@ -109,7 +166,7 @@ private partial def quotedStringGo (acc : List Char) (s : ParserState) :
     ParserM (String × ParserState) := do
   match curr? s with
   | none => failAt s "unterminated string"
-  | some '"' => pure (String.mk acc.reverse, bump s)
+  | some '"' => pure (String.ofList acc.reverse, bump s)
   | some '\\' =>
       let s := bump s
       match curr? s with
@@ -125,20 +182,131 @@ private def quotedString (s : ParserState) : ParserM (String × ParserState) := 
   let s ← char '"' s
   quotedStringGo [] s
 
+private def isPathTerminator (c : Char) : Bool :=
+  c.isWhitespace || c == ')' || c == ']' || c == '}' || c == ';' || c == ','
+
+private partial def anglePathGo (acc : List Char) (s : ParserState) :
+    ParserM (String × ParserState) := do
+  match curr? s with
+  | none => failAt s "unterminated angle path"
+  | some '>' => pure ("<" ++ String.ofList acc.reverse ++ ">", bump s)
+  | some c => anglePathGo (c :: acc) (bump s)
+
+private def anglePath (s : ParserState) : ParserM (String × ParserState) := do
+  let s ← char '<' s
+  anglePathGo [] s
+
+private def pathLiteral (s : ParserState) : ParserM (String × ParserState) := do
+  let s := skipSpace s
+  if !isPathStart s then
+    failAt s "expected path"
+  else if curr? s == some '<' then
+    anglePath s
+  else
+    let (path, s') := takeWhile (fun c => !isPathTerminator c) s
+    pure (path, s')
+
 mutual
 partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
   match ident s with
   | .ok ("let", _) =>
     parseLet s
-  | _ => parseAtom s
+  | .ok ("if", _) =>
+    parseIf s
+  | .ok ("with", _) =>
+    parseWith s
+  | _ =>
+    match parseLambda s with
+    | .ok result => pure result
+    | .error _ => parseOr s
+
+partial def parseOr (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseAnd s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "||" st with
+    | .ok st =>
+        let (right, st) ← parseAnd st
+        loop (.binary .or expr right) st
+    | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseAnd (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseEquality s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "&&" st with
+    | .ok st =>
+        let (right, st) ← parseEquality st
+        loop (.binary .and expr right) st
+    | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseEquality (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseUpdate s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "==" st with
+    | .ok st =>
+        let (right, st) ← parseUpdate st
+        loop (.binary .equal expr right) st
+    | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseUpdate (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseAdd s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "//" st with
+    | .ok st =>
+        let (right, st) ← parseAdd st
+        loop (.binary .update expr right) st
+    | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseApp s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "+" st with
+    | .ok st =>
+        let (right, st) ← parseApp st
+        loop (.binary .add expr right) st
+    | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseApp (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (function, s) ← parseSelect s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    if isAppStop st || !isAppArgumentStart st then
+      pure (expr, st)
+    else
+      match parseSelect st with
+      | .ok (argument, st') => loop (.app expr argument) st'
+      | .error _ => pure (expr, st)
+  loop function s
+
+partial def parseSelect (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (base, s) ← parseAtom s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match curr? st with
+    | some '.' =>
+        let (path, st) ← parseAttrPath (bump st)
+        loop (.select expr path) st
+    | _ => pure (expr, st)
+  loop base s
 
 partial def parseAtom (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
+  if isPathStart s then
+    let (path, s) ← pathLiteral s
+    pure (.path path, s)
+  else
   match curr? s with
   | some '"' =>
       let (v, s') ← quotedString s
       pure (.str v, s')
+  | some '(' =>
+      let s ← char '(' s
+      let (expr, s) ← parseExpr s
+      let s ← char ')' s
+      pure (expr, s)
   | some '[' => parseList s
   | some '{' => parseAttrset false s
   | some '-' =>
@@ -173,6 +341,43 @@ partial def parseList (s : ParserState) : ParserM (Expr × ParserState) := do
         loop (item :: items) st'
   loop [] s
 
+partial def parseLambda (s : ParserState) : ParserM (Expr × ParserState) := do
+  let s := skipSpace s
+  let (param, s) ←
+    match curr? s with
+    | some '{' =>
+        let (paramSet, s) ← parseParamSet s
+        pure (LambdaParam.attrset paramSet, s)
+    | _ =>
+        let (name, s) ← ident s
+        pure (LambdaParam.ident name, s)
+  let s ← char ':' s
+  let (body, s) ← parseExpr s
+  pure (.lambda param body, s)
+
+partial def parseParamSet (s : ParserState) : ParserM (ParamSet × ParserState) := do
+  let s ← char '{' s
+  let rec loop (names : List String) (ellipsis : Bool) (st : ParserState) := do
+    let st := skipSpace st
+    match curr? st with
+    | some '}' => pure ({ names := names.reverse, ellipsis }, bump st)
+    | some '.' =>
+        let st ← token "..." st
+        let st ← char '}' st
+        pure ({ names := names.reverse, ellipsis := true }, st)
+    | none => failAt st "unterminated function parameter set"
+    | _ =>
+        let (name, st) ← ident st
+        let st := skipSpace st
+        match curr? st with
+        | some ',' => loop (name :: names) ellipsis (bump st)
+        | some '}' => pure ({ names := (name :: names).reverse, ellipsis }, bump st)
+        | some c =>
+            failAt st
+              ("expected ',' or '}' in function parameter set, found '" ++ String.singleton c ++ "'")
+        | none => failAt st "unterminated function parameter set"
+  loop [] false s
+
 partial def parseAttrPath (s : ParserState) : ParserM (AttrPath × ParserState) := do
   let (first, s) ← ident s
   let rec loop (parts : List String) (st : ParserState) := do
@@ -189,7 +394,7 @@ partial def parseBinding (s : ParserState) : ParserM (Binding × ParserState) :=
   match ident s with
   | .ok ("inherit", _) =>
     let s ← keyword "inherit" s
-    parseInheritNames [] s
+    parseInherit s
   | _ =>
     let (path, s) ← parseAttrPath s
     let s ← char '=' s
@@ -197,15 +402,33 @@ partial def parseBinding (s : ParserState) : ParserM (Binding × ParserState) :=
     let s ← char ';' s
     pure (.assign path value, s)
 
-partial def parseInheritNames (acc : List String) (s : ParserState) :
-    ParserM (Binding × ParserState) := do
+partial def parseInherit (s : ParserState) : ParserM (Binding × ParserState) := do
   let s := skipSpace s
   match curr? s with
-  | some ';' => pure (.inherit acc.reverse, bump s)
+  | some '(' =>
+      let s ← char '(' s
+      let (scope, s) ← parseExpr s
+      let s ← char ')' s
+      let (names, s) ← parseInheritNameList [] s
+      pure (.inheritFrom scope names, s)
+  | _ =>
+      let (names, s) ← parseInheritNameList [] s
+      pure (.inherit names, s)
+
+partial def parseInheritNames (acc : List String) (s : ParserState) :
+    ParserM (Binding × ParserState) := do
+  let (names, s) ← parseInheritNameList acc s
+  pure (.inherit names, s)
+
+partial def parseInheritNameList (acc : List String) (s : ParserState) :
+    ParserM (List String × ParserState) := do
+  let s := skipSpace s
+  match curr? s with
+  | some ';' => pure (acc.reverse, bump s)
   | none => failAt s "unterminated inherit binding"
   | _ =>
       let (name, s') ← ident s
-      parseInheritNames (name :: acc) s'
+      parseInheritNameList (name :: acc) s'
 
 partial def parseBindingsUntil (endChar : Char) (s : ParserState) : ParserM (List Binding × ParserState) := do
   let rec loop (bindings : List Binding) (st : ParserState) := do
@@ -232,6 +455,22 @@ partial def parseLet (s : ParserState) : ParserM (Expr × ParserState) := do
   let s ← keyword "in" s
   let (body, s) ← parseExpr s
   pure (.letIn bindings body, s)
+
+partial def parseIf (s : ParserState) : ParserM (Expr × ParserState) := do
+  let s ← keyword "if" s
+  let (condition, s) ← parseExpr s
+  let s ← keyword "then" s
+  let (thenBranch, s) ← parseExpr s
+  let s ← keyword "else" s
+  let (elseBranch, s) ← parseExpr s
+  pure (.ifThenElse condition thenBranch elseBranch, s)
+
+partial def parseWith (s : ParserState) : ParserM (Expr × ParserState) := do
+  let s ← keyword "with" s
+  let (scope, s) ← parseExpr s
+  let s ← char ';' s
+  let (body, s) ← parseExpr s
+  pure (.withExpr scope body, s)
 
 partial def parseLetBindings (bindings : List Binding) (s : ParserState) :
     ParserM (List Binding × ParserState) := do
