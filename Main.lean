@@ -1,8 +1,20 @@
 import NixParserLean
 
+def readInput : List String -> IO (Except String String)
+  | [] => pure (.ok "{ answer = 42; values = [ true null \"nix\" ]; }")
+  | ["--file", path] => do
+      try
+        pure (.ok (← IO.FS.readFile path))
+      catch err =>
+        pure (.error s!"could not read {path}: {err}")
+  | args => pure (.ok (" ".intercalate args))
+
 def main (args : List String) : IO UInt32 := do
-  let input := " ".intercalate args
-  let input := if input.isEmpty then "{ answer = 42; values = [ true null \"nix\" ]; }" else input
+  match ← readInput args with
+  | .error err =>
+      IO.eprintln err
+      pure 1
+  | .ok input =>
   match NixParserLean.parse input with
   | .ok expr =>
       IO.println (repr expr)
