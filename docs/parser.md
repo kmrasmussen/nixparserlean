@@ -55,7 +55,10 @@ Dispatches on the current character after skipping whitespace:
 - `(` — parenthesized expression
 - `[` — list
 - `{` — attribute set
-- `-` or digit — integer (optionally negative)
+- `-` or digit — numeric literal. Integers parse to `Expr.int`; floats parse
+  to `Expr.float` and preserve their source spelling. Floats currently accept
+  `digits.digits`, `digits e exponent`, and decimal forms with exponents such
+  as `2.5e-3`. `1.foo` remains integer attribute selection, not a float.
 - path-start characters — path literal (see below)
 - otherwise — identifier, then matched against `true`, `false`, `null`, `rec`
 

@@ -142,6 +142,7 @@ partial def evalBinary : BinaryOp -> Value -> Value -> M Value
 mutual
 partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Value
   | .int value => pure (.int value)
+  | .float _ => unsupported "float values"
   | .str parts => do
       pure (.str (← evalStringParts fuel stack env "string" parts))
   | .bool value => pure (.bool value)

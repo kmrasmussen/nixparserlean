@@ -17,10 +17,12 @@ e2e/corpus/smoke/duplicate-inherit.nix	validation-fail	duplicate inherit binding
 e2e/corpus/smoke/duplicate-let.nix	validation-fail	duplicate let binding should fail validation
 e2e/corpus/smoke/duplicate-param-lambda.nix	validation-fail	duplicate lambda parameter should fail validation
 e2e/corpus/smoke/dynamic-attr-names.nix	pass	dynamic attribute names in binding and selection
+e2e/corpus/smoke/float-literals.nix	pass	representative float literal forms
 e2e/corpus/smoke/identity-lambda.nix	pass	identifier lambda parameter
 e2e/corpus/smoke/if-then-else.nix	pass	conditional expression
 e2e/corpus/smoke/has-attr.nix	pass	attribute existence test
 e2e/corpus/smoke/indented-string.nix	pass	indented string with interpolation
+e2e/corpus/smoke/integer-selection.nix	pass	integer attribute selection remains distinct from float parsing
 e2e/corpus/smoke/inherit-from.nix	pass	scoped inherit binding
 e2e/corpus/smoke/import-path.nix	pass	import path application
 e2e/corpus/smoke/let-application.nix	pass	let-bound lambda application

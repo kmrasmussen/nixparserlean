@@ -41,6 +41,7 @@ e2e/corpus/smoke/eval-dynamic-attr-interpolation-type.nix	eval-fail	dynamic attr
 e2e/corpus/smoke/eval-duplicate-static-dynamic-attr.nix	eval-fail	static and dynamic attr bindings cannot produce the same key
 e2e/corpus/smoke/eval-duplicate-dynamic-attr.nix	eval-fail	dynamic attr bindings cannot produce the same key
 e2e/corpus/smoke/eval-duplicate-dynamic-prefix-attr.nix	eval-fail	dynamic attr binding cannot overwrite an existing attrset prefix
+e2e/corpus/smoke/eval-float-literal.nix	eval-fail	float evaluation is parsed but intentionally deferred
 e2e/corpus/smoke/eval-string-interpolation-int.nix	eval-fail	string interpolation rejects integers without coercion
 e2e/corpus/smoke/eval-string-interpolation-attrset.nix	eval-fail	string interpolation rejects attrsets
 e2e/corpus/smoke/eval-let-dynamic-binding.nix	eval-fail	dynamic let binding remains unsupported

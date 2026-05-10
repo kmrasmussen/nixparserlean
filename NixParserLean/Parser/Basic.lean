@@ -24,6 +24,11 @@ instance : ToString ParseError where
 
 abbrev ParserM := Except ParseError
 
+inductive NumberLiteral where
+  | int : Int -> NumberLiteral
+  | float : String -> NumberLiteral
+  deriving Repr, BEq, Inhabited
+
 def eof (s : ParserState) : Bool :=
   s.remaining.isEmpty
 
@@ -170,6 +175,58 @@ def integer (s : ParserState) : ParserM (Int × ParserState) := do
     failAt s "expected integer"
   else
     pure (sign * digits.toInt!, s')
+
+private def exponentPart? (s : ParserState) : ParserM (Option (String × ParserState)) := do
+  match curr? s with
+  | some c =>
+      if c == 'e' || c == 'E' then
+        let afterE := bump s
+        let (signText, digitsStart) :=
+          match curr? afterE with
+          | some '+' => ("+", bump afterE)
+          | some '-' => ("-", bump afterE)
+          | _ => ("", afterE)
+        let (digits, afterDigits) := takeWhile Char.isDigit digitsStart
+        if digits.isEmpty then
+          failAt s "expected float exponent"
+        else
+          pure (some (String.singleton c ++ signText ++ digits, afterDigits))
+      else
+        pure none
+  | none => pure none
+
+def numberLiteral (s : ParserState) : ParserM (NumberLiteral × ParserState) := do
+  let s := skipSpace s
+  let (signText, digitsStart) :=
+    match curr? s with
+    | some '-' => ("-", bump s)
+    | _ => ("", s)
+  let sign := if signText == "-" then -1 else 1
+  let (digits, afterDigits) := takeWhile Char.isDigit digitsStart
+  if digits.isEmpty then
+    failAt digitsStart "expected number"
+  else
+    match curr? afterDigits, next? afterDigits with
+    | some '.', some c =>
+        if c.isDigit then
+          let afterDot := bump afterDigits
+          let (fraction, afterFraction) := takeWhile Char.isDigit afterDot
+          let exp? ← exponentPart? afterFraction
+          match exp? with
+          | some (exponent, afterExponent) =>
+              pure (.float (signText ++ digits ++ "." ++ fraction ++ exponent), afterExponent)
+          | none =>
+              pure (.float (signText ++ digits ++ "." ++ fraction), afterFraction)
+        else
+          match ← exponentPart? afterDigits with
+          | some (exponent, afterExponent) =>
+              pure (.float (signText ++ digits ++ exponent), afterExponent)
+          | none => pure (.int (sign * digits.toInt!), afterDigits)
+    | _, _ =>
+        match ← exponentPart? afterDigits with
+        | some (exponent, afterExponent) =>
+            pure (.float (signText ++ digits ++ exponent), afterExponent)
+        | none => pure (.int (sign * digits.toInt!), afterDigits)
 
 def flushStringText (text : List Char) (parts : List StringPart) : List StringPart :=
   if text.isEmpty then

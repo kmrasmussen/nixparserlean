@@ -56,6 +56,7 @@ inductive StringPart where
 
 inductive Expr where
   | int : Int -> Expr
+  | float : String -> Expr
   | str : List StringPart -> Expr
   | bool : Bool -> Expr
   | null : Expr
@@ -95,7 +96,7 @@ def Binding.path? : Binding -> Option AttrPath
   | .inheritFrom _ _ => none
 
 def Expr.isAtomic : Expr -> Bool
-  | .int _ | .str _ | .bool _ | .null | .ident _ | .path _ => true
+  | .int _ | .float _ | .str _ | .bool _ | .null | .ident _ | .path _ => true
   | _ => false
 
 end NixParserLean

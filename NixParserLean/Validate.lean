@@ -112,7 +112,7 @@ private def AttrPath.exprs (path : AttrPath) : List Expr :=
 
 mutual
 partial def validateExpr : Expr -> Except String Unit
-  | .int _ | .bool _ | .null | .ident _ | .path _ => pure ()
+  | .int _ | .float _ | .bool _ | .null | .ident _ | .path _ => pure ()
   | .str parts => validateStringParts parts
   | .list items => validateExprs items
   | .attrset _ bindings => do

@@ -22,6 +22,7 @@ structure ParamSet where
 
 inductive Expr where
   | int : Int -> Expr
+  | float : String -> Expr
   | str : List StringPart -> Expr
   | bool : Bool -> Expr
   | null : Expr

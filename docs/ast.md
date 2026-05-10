@@ -9,6 +9,7 @@ The main expression type. A Nix program is a single `Expr`.
 | Constructor | Fields | Nix example |
 |---|---|---|
 | `int` | `Int` | `42`, `-1` |
+| `float` | `String` | `1.0`, `3.14`, `1e6`, `2.5e-3` |
 | `str` | `List StringPart` | `"hello ${name}"` |
 | `bool` | `Bool` | `true`, `false` |
 | `null` | — | `null` |
@@ -31,7 +32,7 @@ The main expression type. A Nix program is a single `Expr`.
 
 ### `Expr.isAtomic`
 
-Returns `true` for `int`, `str`, `bool`, `null`, `ident`, and `path`. Used to determine whether a pretty-printer would need parentheses (not yet implemented).
+Returns `true` for `int`, `float`, `str`, `bool`, `null`, `ident`, and `path`. Used to determine whether a pretty-printer would need parentheses (not yet implemented).
 
 ## `Binding`
 

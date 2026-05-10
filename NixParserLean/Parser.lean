@@ -255,8 +255,10 @@ partial def parseUnary (s : ParserState) : ParserM (Expr × ParserState) := do
       pure (.unary .not expr, s)
   | some '-', some c =>
       if c.isDigit then
-        let (v, s) ← integer s
-        pure (.int v, s)
+        let (number, s) ← numberLiteral s
+        match number with
+        | .int value => pure (.int value, s)
+        | .float value => pure (.float value, s)
       else
         let (expr, s) ← parseUnary (bump s)
         pure (.unary .negate expr, s)
@@ -312,8 +314,10 @@ partial def parseAtom (s : ParserState) : ParserM (Expr × ParserState) := do
   | some '{' => parseAttrset false s
   | some c =>
       if c.isDigit then
-        let (v, s') ← integer s
-        pure (.int v, s')
+        let (number, s') ← numberLiteral s
+        match number with
+        | .int value => pure (.int value, s')
+        | .float value => pure (.float value, s')
       else
         let (name, s') ← ident s
         match name with

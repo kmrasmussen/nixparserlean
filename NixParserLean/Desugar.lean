@@ -125,6 +125,7 @@ partial def paramEntries : List ParamEntry -> M (List Core.ParamEntry)
 
 partial def expr : Expr -> M Core.Expr
   | .int value => pure (.int value)
+  | .float value => pure (.float value)
   | .str parts => do
       pure (.str (← stringParts parts))
   | .bool value => pure (.bool value)
