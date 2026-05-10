@@ -1,0 +1,26 @@
+{
+  "$schema": "./statuses.schema.json",
+  "default_status": "ready_for_analysis",
+  "statuses": [
+    {
+      "key": "ready_for_analysis",
+      "label": "Ready for Analysis"
+    },
+    {
+      "key": "ready_for_development",
+      "label": "Ready for Development"
+    },
+    {
+      "key": "in_progress",
+      "label": "In Progress"
+    },
+    {
+      "key": "completed",
+      "label": "Completed"
+    },
+    {
+      "key": "cancelled",
+      "label": "Cancelled"
+    }
+  ]
+}
