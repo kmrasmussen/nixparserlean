@@ -2,6 +2,9 @@
 # expectations include eval-fail
 # parser command: lake exe nixparserlean --eval --file
 e2e/corpus/smoke/eval-arithmetic.nix	pass	let-bound integer arithmetic
+e2e/corpus/smoke/eval-direct-lambda.nix	pass	direct identifier lambda application
 e2e/corpus/smoke/eval-select-default.nix	pass	static selection with default
 e2e/corpus/smoke/eval-if-assert.nix	pass	assertion and conditional
-e2e/corpus/smoke/eval-unsupported-lambda.nix	eval-fail	unsupported lambda evaluation should fail explicitly
+e2e/corpus/smoke/eval-let-lambda.nix	pass	let-bound identifier lambda application
+e2e/corpus/smoke/eval-lexical-closure.nix	pass	identifier lambda captures lexical environment
+e2e/corpus/smoke/eval-unsupported-paramset.nix	eval-fail	unsupported attrset lambda parameter should fail explicitly

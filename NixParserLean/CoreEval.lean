@@ -11,7 +11,33 @@ inductive Value where
   | null : Value
   | list : List Value -> Value
   | attrset : List (String × Value) -> Value
-  deriving Repr, BEq, Inhabited
+  | closure : List (String × Value) -> LambdaParam -> Expr -> Value
+  deriving Repr, Inhabited
+
+mutual
+partial def beqValue : Value -> Value -> Bool
+  | .int left, .int right => left == right
+  | .str left, .str right => left == right
+  | .bool left, .bool right => left == right
+  | .null, .null => true
+  | .list left, .list right => beqValues left right
+  | .attrset left, .attrset right => beqAttrs left right
+  | _, _ => false
+
+partial def beqValues : List Value -> List Value -> Bool
+  | [], [] => true
+  | left :: lefts, right :: rights => beqValue left right && beqValues lefts rights
+  | _, _ => false
+
+partial def beqAttrs : List (String × Value) -> List (String × Value) -> Bool
+  | [], [] => true
+  | (leftName, leftValue) :: lefts, (rightName, rightValue) :: rights =>
+      leftName == rightName && beqValue leftValue rightValue && beqAttrs lefts rights
+  | _, _ => false
+end
+
+instance : BEq Value where
+  beq := beqValue
 
 abbrev Env := List (String × Value)
 abbrev M := Except String
@@ -52,6 +78,12 @@ private def textOnlyString : List StringPart -> Option String
       some (text ++ rest)
   | .interpolation _ :: _ => none
 
+partial def bindParam (param : LambdaParam) (argument : Value) (env : Env) : M Env :=
+  match param with
+  | .ident name => pure ((name, argument) :: env)
+  | .attrset _ => unsupported "attribute-set lambda parameter evaluation"
+  | .alias _ _ => unsupported "aliased lambda parameter evaluation"
+
 partial def evalUnary : UnaryOp -> Value -> M Value
   | .not, .bool value => pure (.bool (!value))
   | .not, _ => throw "eval error: boolean negation expects a bool"
@@ -90,9 +122,9 @@ partial def eval (env : Env) : Expr -> M Value
       else
         pure (.attrset (← evalBindings env bindings))
   | .letIn bindings body => do
-      let values ← evalBindings env bindings
-      eval (values ++ env) body
-  | .lambda _ _ => unsupported "lambda evaluation"
+      let env ← evalLetBindings env bindings
+      eval env body
+  | .lambda param body => pure (.closure env param body)
   | .ifThenElse condition thenBranch elseBranch => do
       match ← eval env condition with
       | .bool true => eval env thenBranch
@@ -115,7 +147,13 @@ partial def eval (env : Env) : Expr -> M Value
   | .hasAttr base path => do
       let names ← evalStaticPath path
       pure (.bool ((selectPath? (← eval env base) names).isSome))
-  | .app _ _ => unsupported "function application"
+  | .app function argument => do
+      match ← eval env function with
+      | .closure closureEnv param body => do
+          let argument ← eval env argument
+          let env ← bindParam param argument closureEnv
+          eval env body
+      | _ => throw "eval error: function application expects a function"
   | .unary op inner => do
       evalUnary op (← eval env inner)
   | .binary op left right => do
@@ -141,6 +179,21 @@ partial def evalBindingInto (env : Env) (binding : Binding) (attrs : List (Strin
       let value ← eval env expr
       pure (insertAttr name value attrs)
   | .dynamicAssign _ _ => unsupported "dynamic attribute binding evaluation"
+
+partial def evalLetBindings (env : Env) : List Binding -> M Env
+  | bindings => evalLetBindingsForward env bindings.reverse
+
+partial def evalLetBindingsForward (env : Env) : List Binding -> M Env
+  | [] => pure env
+  | binding :: bindings => do
+      let env ← evalLetBindingInto env binding
+      evalLetBindingsForward env bindings
+
+partial def evalLetBindingInto (env : Env) : Binding -> M Env
+  | .staticAssign name expr => do
+      let value ← eval env expr
+      pure ((name, value) :: env)
+  | .dynamicAssign _ _ => unsupported "dynamic let binding evaluation"
 
 partial def evalStaticPath (path : List AttrPathPart) : M (List String) :=
   match staticPath? path with

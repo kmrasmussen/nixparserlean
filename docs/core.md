@@ -85,13 +85,15 @@ fragment. It currently supports:
 - `let` bindings through an environment
 - static attribute selection and selection defaults
 - conditionals and assertions
+- identifier-parameter lambdas and function application
 - boolean negation and integer negation
 - integer `+`, `-`, `*`, `/`
 - equality, inequality, `&&`, `||`, and implication over supported values
 
 Unsupported forms fail explicitly with an `eval error:` prefix. The evaluator
-does not yet implement lambdas, function application, recursive attrsets,
-dynamic attribute names, imports, paths, `with`, or string interpolation.
+does not yet implement attribute-set lambda parameters, aliased lambda
+parameters, recursive attrsets, dynamic attribute names, imports, paths, `with`,
+or string interpolation.
 
 ## Core validation
 
