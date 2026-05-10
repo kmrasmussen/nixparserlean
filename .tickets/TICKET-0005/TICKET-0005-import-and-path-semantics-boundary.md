@@ -4,6 +4,12 @@
 Path literals parse, and `import ./file.nix` parses as application, but the
 evaluator rejects path values and function application cannot model imports.
 
+The pure path-handling pipeline (parser, surface validator, desugarer,
+core validator, `--eval`) still treats path values as unsupported evaluator
+values. The host import layer in `HostEval.lean` is the explicit exception:
+`--eval-imports` can resolve relative imports through filesystem IO while
+leaving bare path values rejected.
+
 ## Goal
 Design and implement a safe first boundary for path values and imports.
 

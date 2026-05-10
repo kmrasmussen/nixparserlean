@@ -5,32 +5,46 @@
 The project is split into two layers with a clean boundary between them.
 
 ```
-┌─────────────────────────────┐
-│  Lean 4  (NixParserLean)    │
-│                             │
-│  Syntax.lean   — AST types  │
-│  Parser.lean   — parser     │
-│  Validate.lean — validator  │
-│  Core.lean     — core AST   │
-│  CoreValidate  — core checks│
-│  CoreEval.lean — evaluator  │
-│  Desugar.lean  — lowering   │
-│  Main.lean     — CLI        │
-└────────────┬────────────────┘
+┌──────────────────────────────────────┐
+│  Lean 4  (NixParserLean)             │
+│                                      │
+│  Syntax.lean        — surface AST    │
+│  Parser/Basic.lean  — parser state,  │
+│                       token/ident/   │
+│                       int/path/ws    │
+│  Parser.lean        — expression     │
+│                       grammar        │
+│  Validate.lean      — surface        │
+│                       validator      │
+│  Core.lean          — core AST       │
+│  Desugar.lean       — surface→core   │
+│  CoreValidate.lean  — core invariants│
+│  CoreEval.lean      — evaluator      │
+│  HostEval.lean      — host imports   │
+│  Main.lean          — CLI            │
+└────────────┬─────────────────────────┘
              │ subprocess (stdin/stdout/exit code)
-┌────────────▼────────────────┐
-│  Rust  (e2e/runner)         │
-│                             │
-│  reads manifest.txt         │
-│  runs parser per fixture    │
-│  classifies outcomes        │
-│  prints summary             │
-└─────────────────────────────┘
+┌────────────▼─────────────────────────┐
+│  Rust  (e2e/runner)                  │
+│                                      │
+│  reads manifest.txt                  │
+│  runs parser per fixture             │
+│  classifies outcomes                 │
+│  prints summary                      │
+└──────────────────────────────────────┘
 ```
 
-**Lean** owns the language model: the surface AST definition, all parsing logic,
-semantic validation, and the first surface-to-core desugaring pass. It is the
-authoritative source of what is and is not accepted Nix syntax.
+**Lean** owns the language model: the surface AST, all parsing logic,
+semantic validation, surface-to-core desugaring, core invariant checking, the
+first pure evaluator, and the explicit host IO wrapper for relative imports.
+It is the authoritative source of what is and is not accepted Nix syntax, and
+of how the supported subset evaluates.
+
+`Parser.lean` is split into two files: `Parser/Basic.lean` carries the
+reusable lexer-level infrastructure (parser state, whitespace, identifiers,
+integers, path literals, keyword/token primitives), while `Parser.lean`
+itself carries the recursive-descent expression/binding grammar that builds
+on those primitives.
 
 **Rust** owns corpus orchestration: reading the manifest, invoking the parser as a subprocess per fixture file, classifying outcomes (pass / parse-fail / validation-fail), and summarizing results. It does not parse Nix itself.
 
@@ -47,7 +61,7 @@ Vec<Case>  (path, expectation, note)
     │
     │ for each case: run_parser()
     ▼
-Outcome  (Pass | ParseFail | ValidationFail | EvalFail | OtherFail)
+Outcome  (Pass | ParseFail | ValidationFail | CoreFail | EvalFail | OtherFail)
     │
     │ compare with Expectation
     ▼
@@ -66,7 +80,7 @@ String input
     │
     │ NixParserLean.parse
     ▼
-Except String Expr
+Except ParseError Expr
     │
     │ NixParserLean.validate
     ▼
@@ -80,6 +94,10 @@ Except String Core.Expr
     ▼
 Except String Unit
     │
+    │ optionally NixParserLean.HostEval.resolveImports for --eval-imports
+    ▼
+Except String Core.Expr
+    │
     │ optionally NixParserLean.Core.eval
     ▼
 Except String Core.Eval.Value
@@ -91,7 +109,9 @@ exit 0 / exit 1
 ```
 
 `parse`, `validate`, `desugar`, core validation, and core evaluation are pure
-functions. All IO lives in `Main.lean`.
+functions. `HostEval.lean` is the explicit exception: it performs filesystem IO
+for `--eval-imports`, then hands a core expression back to the pure evaluator.
+CLI orchestration lives in `Main.lean`.
 
 ## Error classification
 
@@ -105,9 +125,10 @@ The Rust runner uses the first line of stderr to distinguish error kinds:
 | `eval error:` | `EvalFail` |
 | anything else | `OtherFail` |
 
-This convention is established in `Parser.lean` (`failAt`), `Validate.lean`
-(`bindingConflictMessage`), `CoreValidate.lean`, and `CoreEval.lean`
-(`eval error:` messages from the evaluator).
+This convention is established in `Parser/Basic.lean` (`failAt`),
+`Validate.lean` (`bindingConflictMessage`), `CoreValidate.lean`, and
+`CoreEval.lean` and `HostEval.lean` (`eval error:` messages from evaluation
+and import IO).
 
 Core validation deliberately keeps the `core error:` prefix separate from
 surface `semantic error:` diagnostics. The e2e runner exposes that distinction

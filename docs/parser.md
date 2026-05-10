@@ -1,6 +1,15 @@
 # Parser Internals
 
-The parser lives in `NixParserLean/Parser.lean`. It is a handwritten recursive-descent parser with no external dependencies.
+The parser is split across two files:
+
+- `NixParserLean/Parser/Basic.lean` — parser state, `ParseError`, the
+  `ParserM` monad, whitespace and comment handling,
+  character/token/keyword primitives, the identifier and number lexers, and
+  the path literal recogniser.
+- `NixParserLean/Parser.lean` — the recursive-descent expression/binding
+  grammar built on top of those primitives.
+
+The whole parser is handwritten and has no external dependencies.
 
 ## Parser state
 
@@ -8,9 +17,14 @@ The parser lives in `NixParserLean/Parser.lean`. It is a handwritten recursive-d
 structure ParserState where
   remaining : List Char
   offset    : Nat := 0
+  line      : Nat := 1
+  column    : Nat := 1
 ```
 
-The input is stored as a `List Char`. `offset` tracks how many characters have been consumed, used in error messages. The monad is `Except String` — every parser function returns either a value or an error string.
+The input is stored as a `List Char`. `offset` tracks how many characters have
+been consumed, while `line` and `column` track source position for diagnostics.
+The monad is `abbrev ParserM := Except ParseError` — every parser function
+returns either a value or a structured parse error.
 
 ## Whitespace and comments
 
@@ -28,7 +42,7 @@ The expression parser is split into a chain of functions, each handling one prec
 
 | Function | Operator(s) | Associativity |
 |---|---|---|
-| `parseExpr` | `let`, `if`, `with`, lambdas | — |
+| `parseExpr` | `let`, `if`, `assert`, `with`, lambdas | — |
 | `parseImplies` | `->` | right |
 | `parseOr` | `\|\|` | left |
 | `parseAnd` | `&&` | left |
@@ -55,10 +69,7 @@ Dispatches on the current character after skipping whitespace:
 - `(` — parenthesized expression
 - `[` — list
 - `{` — attribute set
-- `-` or digit — numeric literal. Integers parse to `Expr.int`; floats parse
-  to `Expr.float` and preserve their source spelling. Floats currently accept
-  `digits.digits`, `digits e exponent`, and decimal forms with exponents such
-  as `2.5e-3`. `1.foo` remains integer attribute selection, not a float.
+- `-` or digit — integer or float literal (optionally negative)
 - path-start characters — path literal (see below)
 - otherwise — identifier, then matched against `true`, `false`, `null`, `rec`
 
@@ -118,12 +129,29 @@ at validation time.
 
 `parseBindingsUntil endChar` loops until it sees `endChar` without consuming it. `parseLetBindings` loops until it peeks `in`.
 
+## Operator-token disambiguation
+
+`operatorToken` (in `Parser/Basic.lean`) is a wrapper around `token` that
+rejects certain pairs to avoid confusing single-character operators with their
+longer relatives:
+
+| `operatorToken` | rejected if next char is |
+|---|---|
+| `+` | `+` (i.e. would form `++`) |
+| `-` | `>` (`->`) |
+| `/` | `/` (`//`) |
+| `<` | `=` (`<=`) |
+| `>` | `=` (`>=`) |
+
+This is what lets `parseAdd` ask for `+` without accidentally claiming the
+`++` of `parseConcat`, and similarly for the other near-collisions.
+
 ## Error messages
 
-All errors are produced by `failAt`, which formats:
+All parser errors are produced by `failAt`, which formats:
 
 ```
-parse error at offset N: <message>
+parse error at offset N (line L, column C): <message>
 ```
 
 The `parse error at offset` prefix is significant — the Rust e2e runner uses it to classify failures as `ParseFail`.

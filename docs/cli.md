@@ -9,6 +9,8 @@ uses a small built-in example.
 - `--file PATH` reads input from a file.
 - `--desugar` prints the validated core AST instead of the surface AST.
 - `--eval` evaluates the validated core AST.
+- `--eval-imports` evaluates with the explicit host IO layer for relative
+  path imports.
 - `--fuel N` sets evaluator thunk-forcing fuel for `--eval`.
 - `--format repr|json` selects output format. The default is `repr`.
 - `--help` prints usage.

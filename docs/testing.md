@@ -2,109 +2,104 @@
 
 ## Layers
 
-### Smoke corpus (committed fixtures)
+The project has five end-to-end manifests, each driven by the same Rust runner
+with a different `--parser` command line:
 
-Small, self-contained `.nix` files live under `e2e/corpus/smoke/`. Each fixture exercises one specific construct or failure mode. They are committed to the repository and reviewed alongside parser changes.
-
-Current smoke fixtures:
-
-| File | Expected outcome | What it tests |
+| Manifest | Parser command | Purpose |
 |---|---|---|
-| `attrset.nix` | pass | basic attribute set with inline and block comments |
-| `let-list.nix` | pass | `let ... in` with a list body |
-| `lambda.nix` | pass | attribute-set lambda parameter (`{ pkgs }: ...`) |
-| `identity-lambda.nix` | pass | single-identifier lambda parameter |
-| `open-param-lambda.nix` | pass | `{ a, ... }:` ellipsis parameter |
-| `default-param-lambda.nix` | pass | attrset lambda parameter default |
-| `aliased-param-lambda.nix` | pass | `args@{ ... }` parameter alias |
-| `reverse-aliased-param-lambda.nix` | pass | `{ ... }@args` parameter alias |
-| `aliased-default-param-lambda.nix` | pass | parameter alias with defaulted entry |
-| `if-then-else.nix` | pass | conditional expression |
-| `assert.nix` | pass | `assert condition; body` |
-| `select.nix` | pass | attribute selection (`a.b.c`) |
-| `select-default.nix` | pass | attribute selection with `or` default |
-| `has-attr.nix` | pass | attribute existence test |
-| `application.nix` | pass | function application |
-| `let-application.nix` | pass | let-bound lambda applied to an argument |
-| `parenthesized.nix` | pass | parenthesized sub-expression |
-| `quoted-attr-names.nix` | pass | quoted static attribute names in binding/select/hasAttr |
-| `relative-path.nix` | pass | relative path literal |
-| `angle-path.nix` | pass | `<nixpkgs>`-style path |
-| `import-path.nix` | pass | `import ./foo.nix` pattern |
-| `inherit-from.nix` | pass | `inherit (scope) name;` form |
-| `with-expr.nix` | pass | `with pkgs; ...` |
-| `addition.nix` | pass | `+` binary operator |
-| `arithmetic-operators.nix` | pass | `-`, `*`, and `/` binary operators |
-| `update-operator.nix` | pass | `//` attribute-set update |
-| `boolean-operators.nix` | pass | `&&`, `\|\|`, `==` |
-| `operator-table.nix` | pass | comparisons, implication, concat, and unary operators |
-| `string-interpolation.nix` | pass | quoted string interpolation |
-| `indented-string.nix` | pass | indented string interpolation |
-| `attrpath-siblings.nix` | pass | two sibling dotted-path bindings |
-| `duplicate-attr.nix` | validation-fail | duplicate key in attribute set |
-| `duplicate-inherit.nix` | validation-fail | duplicate name in `inherit` |
-| `duplicate-let.nix` | validation-fail | duplicate binding in `let` |
-| `duplicate-param-lambda.nix` | validation-fail | duplicate destructured lambda parameter |
-| `dynamic-attr-names.nix` | pass | dynamic attribute names in binding and selection |
-| `prefix-attr-conflict.nix` | validation-fail | `a.b = 1; a = 2;` prefix conflict |
-| `reverse-prefix-attr-conflict.nix` | validation-fail | same conflict, reversed order |
-| `missing-equals.nix` | parse-fail | binding without `=` |
+| `e2e/manifest.txt` | `lake exe nixparserlean --file` | parser + surface validator |
+| `e2e/core-validation-manifest.txt` | `lake exe nixparserlean --core-validation-smoke --file` | runner classification for core validation failures |
+| `e2e/desugar-manifest.txt` | `lake exe nixparserlean --desugar --file` | parser + surface validator + desugar + core validator |
+| `e2e/eval-manifest.txt` | `lake exe nixparserlean --eval --file` | the full pipeline including the evaluator |
+| `e2e/import-manifest.txt` | `lake exe nixparserlean --eval-imports --file` | explicit host IO path for relative imports |
+
+All manifests use the same row format. The `flake.nix` `checks.e2e-smoke`
+derivation runs all five.
+
+### Smoke corpus
+
+Small, self-contained `.nix` files live under `e2e/corpus/smoke/`. Each
+fixture exercises one specific construct or failure mode. They are committed
+to the repository and reviewed alongside parser/evaluator changes.
+
+Smoke fixtures are grouped roughly into:
+
+- **Surface forms (parser smoke):** `attrset.nix`, `let-list.nix`,
+  `lambda.nix`, `identity-lambda.nix`, `open-param-lambda.nix`,
+  `default-param-lambda.nix`, `aliased-param-lambda.nix`,
+  `reverse-aliased-param-lambda.nix`, `aliased-default-param-lambda.nix`,
+  `if-then-else.nix`, `assert.nix`, `select.nix`, `select-default.nix`,
+  `has-attr.nix`, `application.nix`, `let-application.nix`,
+  `parenthesized.nix`, `quoted-attr-names.nix`, `relative-path.nix`,
+  `angle-path.nix`, `import-path.nix`, `inherit-from.nix`, `with-expr.nix`,
+  `addition.nix`, `arithmetic-operators.nix`, `update-operator.nix`,
+  `boolean-operators.nix`, `operator-table.nix`, `string-interpolation.nix`,
+  `indented-string.nix`, `attrpath-siblings.nix`, `dynamic-attr-names.nix`.
+- **Surface validation failures:** `duplicate-attr.nix`,
+  `duplicate-inherit.nix`, `duplicate-let.nix`,
+  `duplicate-param-lambda.nix`, `prefix-attr-conflict.nix`,
+  `reverse-prefix-attr-conflict.nix`.
+- **Surface parse failures:** `missing-equals.nix`.
+- **Eval pass cases (`eval-*.nix`):** integer arithmetic, lambda application
+  forms, lexical closures, recursive `let` and `rec { ... }`, with-scope
+  fallback and lexical shadowing, dynamic attribute binding/selection,
+  quoted dynamic attribute names, string interpolation/coercion, floats as
+  values, attribute-set lambda parameters with defaults / overrides /
+  ellipsis / aliases.
+- **Host import cases (`eval-host-*.nix`):** relative import success through
+  `--eval-imports`, plus unsupported import/path cases that must remain
+  classified as eval failures.
+- **Eval failure cases (`eval-*-fail` style):**
+  `eval-paramset-missing.nix`, `eval-paramset-extra.nix`,
+  `eval-paramset-default-later.nix`, `eval-let-recursive-self.nix`,
+  `eval-rec-attrset-self.nix`, `eval-rec-attrset-mutual.nix`,
+  `eval-with-non-attr.nix`,
+  `eval-dynamic-attr-interpolation-type.nix`,
+  `eval-string-interpolation-int.nix`,
+  `eval-string-interpolation-attrset.nix`,
+  `eval-let-dynamic-binding.nix`. These exercise paths that the surface
+  parser/validator accept but the evaluator deliberately rejects.
+
+The combined integration example `examples/current-core-showcase/showcase.nix`
+is also referenced from `e2e/eval-manifest.txt` so the example is both
+documentation and a regression test.
 
 ### Manifest format
 
-`e2e/manifest.txt` lists every fixture. Each non-comment line has three tab-separated fields:
+Manifest rows are tab-separated and accept three forms:
 
 ```
-<path>  <expectation>  <note>
+<path>                 <expectation>  <note>
+file <path>            <expectation>  <note>
+url  <cache-name> <url>  <expectation>  <note>
 ```
 
 - `path` — relative to the repository root.
-- `expectation` — one of `pass`, `parse-fail`, `validation-fail`, `core-fail`, `eval-fail`.
+- `expectation` — one of `pass`, `parse-fail`, `validation-fail`,
+  `core-fail`, `eval-fail`.
 - `note` — free-text description shown in failure output.
+- `url` rows download the URL into `--cache-dir` (default `e2e/cache`) using
+  `curl`, and then run the parser on the cached file.
 
-Lines starting with `#` and blank lines are ignored.
-
-`e2e/desugar-manifest.txt` uses the same format but is run with:
-
-```sh
-lake exe nixparserlean --desugar --file
-```
-
-It keeps a focused set of fixtures for the surface-to-core pipeline, including
-static dotted bindings, dynamic attribute names, scoped inherit lowering, and a
-surface validation failure that must still fail before core output is printed.
-
-`e2e/eval-manifest.txt` is run with:
-
-```sh
-lake exe nixparserlean --eval --file
-```
-
-It checks the supported evaluation fragment and records explicit `eval-fail`
-cases for accepted syntax that the evaluator intentionally does not implement
-yet.
-
-`e2e/core-validation-manifest.txt` is run with:
-
-```sh
-lake exe nixparserlean --core-validation-smoke --file
-```
-
-It exercises the runner contract for `core error:` diagnostics by sending an
-intentionally invalid core expression through `CoreValidate.lean`.
+Lines starting with `#` and blank lines are ignored. See
+`e2e/external-manifest.example.txt` for an annotated example of the
+file/url forms.
 
 ### e2e runner
 
-The Rust program at `e2e/runner/src/main.rs` reads the manifest and runs the parser once per case.
+The Rust program at `e2e/runner/src/main.rs` reads a manifest and runs the
+parser once per case.
 
 **Invocation:**
 ```sh
 cargo run --manifest-path e2e/runner/Cargo.toml -- \
     --manifest e2e/manifest.txt \
-    [--parser "lake exe nixparserlean --file"]
+    [--parser "lake exe nixparserlean --file"] \
+    [--cache-dir e2e/cache]
 ```
 
-**Classification:** The runner inspects the parser's exit code and the first line of stderr:
+**Classification:** the runner inspects the parser's exit code and the first
+line of stderr:
 
 | First line of stderr | Classified as |
 |---|---|
@@ -116,8 +111,9 @@ cargo run --manifest-path e2e/runner/Cargo.toml -- \
 | anything else | `OtherFail` |
 
 **Outcome:**
-- Expected match → counted as passed or expected failure.
-- Unexpected failure or unexpected success → printed to stderr and exits 1.
+- Expected match → counted as `passed` or `expected_*_failures`.
+- Unexpected failure or unexpected success → printed to stderr and the
+  runner exits 1.
 
 **Summary line (stdout):**
 ```
@@ -129,16 +125,24 @@ e2e: N passed, N expected parse failures, N expected validation failures,
 ## Adding a new fixture
 
 1. Create a `.nix` file under `e2e/corpus/smoke/`.
-2. Add a line to `e2e/manifest.txt` with the correct expectation.
-3. Run the e2e runner to confirm the outcome matches.
+2. Add a row to the appropriate manifest with the correct expectation.
+3. If it covers an evaluator behavior, also exercise it with `--eval` or
+   `--eval-imports`, as appropriate.
+4. Run the e2e runner to confirm the outcome matches.
 
-## Validation pass
+## Surface validation pass
 
-Semantic validation (`NixParserLean/Validate.lean`) runs after parsing and checks for:
+Semantic validation (`NixParserLean/Validate.lean`) runs after parsing and
+checks for:
 
 - **Duplicate bindings** — two `assign` bindings with the same attribute path.
-- **Prefix conflicts** — one attribute path is a prefix of another (e.g. `a.b = 1; a = 2;`).
-- Both forms of `inherit` contribute their names as single-part attribute paths for conflict checking.
+- **Prefix conflicts** — one attribute path is a prefix of another
+  (e.g. `a.b = 1; a = 2;`).
+- **Duplicate `inherit` names** — `inherit` and `inherit (scope)` contribute
+  their names as single-part attribute paths for conflict checking.
+- **Duplicate destructured lambda parameters** — `{ a, a }: ...` is rejected.
+- **Recursive validation** of expressions inside string interpolations and
+  dynamic attribute path segments.
 
 Validation errors are formatted as:
 ```
@@ -148,14 +152,17 @@ semantic error: <description>
 ## Core validation pass
 
 `NixParserLean/CoreValidate.lean` runs after desugaring and is invoked by
-`Main.lean` whenever `--desugar` or `--eval` is requested. Core-validation
-errors are prefixed with `core error:` and match the runner's `core-fail`
-expectation.
+`Main.lean` whenever `--desugar` or `--eval` is requested. See
+[core.md](core.md) for the invariants it checks. Core-validation errors are
+prefixed with `core error:` and match the runner's `core-fail` expectation.
+`e2e/core-validation-manifest.txt` exercises this contract with a small CLI
+smoke mode that constructs an invalid core expression directly.
 
 ## CI
 
 `flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
-the full parser/validator e2e runner, the core-validation contract manifest,
-the focused desugar e2e manifest, and the focused eval e2e manifest. This check
-runs on all four supported systems via
+the parser/validator e2e runner, the core-validation contract manifest, the
+focused desugar manifest, the eval manifest, the host import manifest, the
+fuel manifest, and JSON output checks. This check runs on all supported
+systems via
 `nix flake check`.

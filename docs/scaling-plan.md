@@ -88,11 +88,38 @@ CI should eventually have three tiers:
 
 ## Near-Term Milestones
 
-1. Add parser CLI support for `--file`, so large fixtures do not need to travel
-   through command-line arguments.
-2. Add committed smoke fixtures and a minimal Rust e2e runner.
-3. Add expected-failure entries for syntax we know is missing, such as lambdas
-   and operators.
-4. Add a first external corpus manifest, initially disabled or marked expected
-   failure.
-5. Extend the parser based on the most common real-world failures.
+These were the original near-term milestones. They are all complete:
+
+1. ✅ `--file` CLI support so fixtures don't ride on `argv`.
+2. ✅ A committed smoke fixture set (`e2e/corpus/smoke/`) and a minimal Rust
+   e2e runner with manifest-driven expectations.
+3. ✅ Expected-failure entries for currently-missing syntax tracked through
+   the `parse-fail`, `validation-fail`, and `eval-fail` expectations.
+4. ✅ A first external manifest format (`url` rows in the runner, plus
+   `e2e/external-manifest.example.txt`).
+5. ✅ Parser surface coverage for lambdas, operator table, attribute paths
+   (including dynamic ones), strings (quoted + indented + interpolation),
+   `with`, `assert`, `inherit`/`inherit (scope)`, and path literals.
+
+## Current Tracks
+
+Surface coverage is now wide enough that the next gains come from depth, not
+breadth:
+
+- **Surface→Core pipeline.** A first desugaring (`Desugar.lean`) lowers
+  surface `Expr` into `Core.Expr` with explicit static/dynamic bindings.
+  `CoreValidate.lean` enforces post-desugaring invariants. The first
+  evaluator (`CoreEval.lean`) handles a sizeable fragment (see `core.md`).
+- **Examples as integration tests.** `examples/current-core-showcase` is a
+  combined-feature `.nix` file referenced from the eval manifest.
+- **Host boundaries.** `HostEval.lean` is the first explicit IO layer: pure
+  `--eval` stays filesystem-free, while `--eval-imports` handles relative
+  local imports through a separate manifest.
+- **Backlog discipline.** `.tickets/` carries durable items that span multiple
+  commits, and `flagged.md` records remaining shortcuts that should turn into
+  future tickets when they become schedulable.
+
+The medium-term focus is the Lean payoff: replace `partial` with terminating
+or fuel-bounded definitions, introduce the first proofs about
+desugaring/evaluation, and stretch the corpus to real-world Nix files in
+`e2e/eval-manifest.txt` rather than only smoke fixtures.

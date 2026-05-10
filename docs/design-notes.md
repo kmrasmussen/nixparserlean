@@ -24,22 +24,29 @@ The blog post (`blog/2026-05-10-09-11-first-parser.md`) notes that the handwritt
 
 ---
 
-## The parser monad: `Except String`
+## The parser monad: `Except ParseError`
 
 ```lean
-abbrev ParserM := Except String
+abbrev ParserM := Except ParseError
 ```
 
-The entire parser runs in `Except String`. This is the simplest possible error monad: either you get a value, or you get an error string. There is no error recovery, no multiple errors, no source spans in the error type.
+The entire parser runs in `Except ParseError`: either you get a value, or you
+get one structured error with byte-like offset plus line/column position. There
+is still no error recovery and no multiple-error reporting.
 
-This is a conscious simplification. A production parser would want structured errors, source locations in a richer form, and recovery strategies. Here, the goal is to get something working and testable quickly. The `failAt` function bakes the offset into the *string*, which is cheap to implement but makes the error impossible to process programmatically later:
+This is still a conscious simplification. A production parser would want source
+spans and recovery strategies. Here, the goal is to keep errors cheap while
+making the source position explicit enough for testable diagnostics:
 
 ```lean
-private def failAt (s : ParserState) (msg : String) : ParserM α :=
-  throw s!"parse error at offset {s.offset}: {msg}"
+def failAt (s : ParserState) (msg : String) : ParserM α :=
+  throw { offset := s.offset, line := s.line, column := s.column, message := msg }
 ```
 
-There is one important consequence of this choice: the Rust e2e runner classifies failures by pattern-matching on the first line of stderr. That only works because the error format is stable and consistent. The design of `failAt` and `bindingConflictMessage` is therefore part of an implicit protocol between the Lean and Rust layers.
+There is one important consequence of this choice: the Rust e2e runner
+classifies failures by pattern-matching on the first line of stderr. That only
+works because `ParseError.toString`, `bindingConflictMessage`, core validation
+errors, and eval errors keep stable prefixes.
 
 ---
 
@@ -49,13 +56,17 @@ There is one important consequence of this choice: the Rust e2e runner classifie
 structure ParserState where
   remaining : List Char
   offset    : Nat := 0
+  line      : Nat := 1
+  column    : Nat := 1
 ```
 
 The input is stored as a `List Char` rather than a `String` with an index. In Lean 4, `String` is internally UTF-8 encoded, and random-access indexing requires `O(n)` traversal. Using a `List Char` means `curr?` and `bump` are `O(1)` pattern matches — exactly what a character-at-a-time parser needs.
 
 The tradeoff is memory: a `List Char` has one heap allocation per character (cons cell + payload), which is much more expensive than a flat byte array. For the file sizes being parsed (small Nix expressions, not multi-megabyte files), this is fine. If the parser ever needed to handle large inputs efficiently, the state type would need to change.
 
-`offset` is kept separately as a `Nat` and incremented in `bump`. It is only used for error messages — the parser never seeks backwards by offset, it only inspects `remaining` and calls `bump`.
+`offset`, `line`, and `column` are kept separately and updated in `bump`. They
+are only used for error messages — the parser never seeks backwards by
+position, it only inspects `remaining` and calls `bump`.
 
 ---
 

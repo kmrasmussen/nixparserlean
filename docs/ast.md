@@ -1,6 +1,11 @@
-# AST Reference
+# Surface AST Reference
 
-All types are defined in `NixParserLean/Syntax.lean` inside the `NixParserLean` namespace.
+All types here are defined in `NixParserLean/Syntax.lean` inside the
+`NixParserLean` namespace. They describe the *surface* AST produced directly
+by the parser. There is also a separate **Core AST** in
+`NixParserLean/Core.lean` (`NixParserLean.Core` namespace) which is the target
+of `Desugar.lean`. The Core AST is described in [core.md](core.md). When a
+field below has a counterpart in Core, the relationship is noted there.
 
 ## `Expr`
 
