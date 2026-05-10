@@ -14,6 +14,9 @@ e2e/corpus/smoke/eval-paramset-ellipsis.nix	pass	attrset lambda ellipsis accepts
 e2e/corpus/smoke/eval-paramset-default.nix	pass	attrset lambda default fills missing field
 e2e/corpus/smoke/eval-paramset-default-override.nix	pass	explicit attrset lambda field overrides default
 e2e/corpus/smoke/eval-paramset-default-earlier.nix	pass	attrset lambda default can reference earlier bound field
+e2e/corpus/smoke/eval-aliased-paramset-lambda.nix	pass	aliased attrset lambda binds the full argument
+e2e/corpus/smoke/eval-reverse-aliased-paramset-lambda.nix	pass	reverse alias attrset lambda binds the full argument
+e2e/corpus/smoke/eval-aliased-paramset-default.nix	pass	aliased attrset lambda default can inspect the full argument
 e2e/corpus/smoke/eval-paramset-missing.nix	eval-fail	missing required attrset lambda field should fail
 e2e/corpus/smoke/eval-paramset-extra.nix	eval-fail	extra attrset lambda field without ellipsis should fail
 e2e/corpus/smoke/eval-paramset-default-later.nix	eval-fail	attrset lambda default cannot reference later field yet

@@ -184,7 +184,9 @@ partial def bindParam (fuel : Nat) (stack : List String) (param : LambdaParam) (
   match param with
   | .ident name => pure ((name, .value argument) :: env)
   | .attrset paramSet => bindParamSet fuel stack paramSet argument env
-  | .alias _ _ => unsupported "aliased lambda parameter evaluation"
+  | .alias name (.attrset paramSet) =>
+      bindParamSet fuel stack paramSet argument ((name, .value argument) :: env)
+  | .alias _ _ => unsupported "aliased non-attrset lambda parameter evaluation"
 
 partial def paramEntryNames : List ParamEntry -> List String
   | [] => []
