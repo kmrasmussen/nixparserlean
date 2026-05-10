@@ -53,7 +53,8 @@ inductive Expr where
   | lambda : (param : LambdaParam) -> (body : Expr) -> Expr
   | ifThenElse : (condition : Expr) -> (thenBranch : Expr) -> (elseBranch : Expr) -> Expr
   | withExpr : (scope : Expr) -> (body : Expr) -> Expr
-  | select : (base : Expr) -> (path : AttrPath) -> Expr
+  | select : (base : Expr) -> (path : AttrPath) -> (default? : Option Expr) -> Expr
+  | hasAttr : (base : Expr) -> (path : AttrPath) -> Expr
   | app : (function : Expr) -> (argument : Expr) -> Expr
   | unary : (op : UnaryOp) -> (expr : Expr) -> Expr
   | binary : (op : BinaryOp) -> (left : Expr) -> (right : Expr) -> Expr

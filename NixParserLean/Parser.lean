@@ -279,18 +279,28 @@ partial def parseAnd (s : ParserState) : ParserM (Expr × ParserState) := do
   loop left s
 
 partial def parseEquality (s : ParserState) : ParserM (Expr × ParserState) := do
-  let (left, s) ← parseComparison s
+  let (left, s) ← parseHasAttr s
   let rec loop (expr : Expr) (st : ParserState) := do
     match token "==" st with
     | .ok st =>
-        let (right, st) ← parseComparison st
+        let (right, st) ← parseHasAttr st
         loop (.binary .equal expr right) st
     | .error _ =>
         match token "!=" st with
         | .ok st =>
-            let (right, st) ← parseComparison st
+            let (right, st) ← parseHasAttr st
             loop (.binary .notEqual expr right) st
         | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseHasAttr (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseComparison s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "?" st with
+    | .ok st =>
+        let (path, st) ← parseAttrPath st
+        loop (.hasAttr expr path) st
+    | .error _ => pure (expr, st)
   loop left s
 
 partial def parseComparison (s : ParserState) : ParserM (Expr × ParserState) := do
@@ -380,7 +390,11 @@ partial def parseSelect (s : ParserState) : ParserM (Expr × ParserState) := do
     match curr? st with
     | some '.' =>
         let (path, st) ← parseAttrPath (bump st)
-        loop (.select expr path) st
+        match ident st with
+        | .ok ("or", st) =>
+            let (defaultExpr, st) ← parseExpr st
+            loop (.select expr path (some defaultExpr)) st
+        | _ => loop (.select expr path none) st
     | _ => pure (expr, st)
   loop base s
 

@@ -77,7 +77,11 @@ partial def validateExpr : Expr -> Except String Unit
   | .withExpr scope body => do
       validateExpr scope
       validateExpr body
-  | .select base _ => validateExpr base
+  | .select base _ none => validateExpr base
+  | .select base _ (some defaultExpr) => do
+      validateExpr base
+      validateExpr defaultExpr
+  | .hasAttr base _ => validateExpr base
   | .app function argument => do
       validateExpr function
       validateExpr argument
