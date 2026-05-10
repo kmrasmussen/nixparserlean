@@ -5,6 +5,7 @@ e2e/corpus/smoke/eval-arithmetic.nix	pass	let-bound integer arithmetic
 e2e/corpus/smoke/eval-direct-lambda.nix	pass	direct identifier lambda application
 e2e/corpus/smoke/eval-select-default.nix	pass	static selection with default
 e2e/corpus/smoke/eval-if-assert.nix	pass	assertion and conditional
+e2e/corpus/smoke/eval-import-path.nix	eval-fail	import evaluation is explicitly outside the pure evaluator
 e2e/corpus/smoke/eval-let-lambda.nix	pass	let-bound identifier lambda application
 e2e/corpus/smoke/eval-lexical-closure.nix	pass	identifier lambda captures lexical environment
 e2e/corpus/smoke/eval-let-recursive-later.nix	pass	recursive let can reference a later binding

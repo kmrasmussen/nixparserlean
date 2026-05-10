@@ -189,6 +189,7 @@ partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Valu
   | .hasAttr base path => do
       let names ← evalAttrPath fuel stack env path
       pure (.bool ((selectPath? (← eval fuel stack env base) names).isSome))
+  | .app (.ident "import") _ => unsupported "import evaluation"
   | .app function argument => do
       match ← eval fuel stack env function with
       | .closure closureEnv param body => do
