@@ -4,17 +4,6 @@ structure AttrPath where
   parts : List String
   deriving Repr, BEq, Inhabited
 
-structure ParamSet where
-  names : List String
-  ellipsis : Bool := false
-  deriving Repr, BEq, Inhabited
-
-inductive LambdaParam where
-  | ident : String -> LambdaParam
-  | attrset : ParamSet -> LambdaParam
-  | alias : String -> LambdaParam -> LambdaParam
-  deriving Repr, BEq, Inhabited
-
 inductive BinaryOp where
   | equal
   | notEqual
@@ -36,6 +25,22 @@ inductive UnaryOp where
   deriving Repr, BEq, Inhabited
 
 mutual
+inductive LambdaParam where
+  | ident : String -> LambdaParam
+  | attrset : ParamSet -> LambdaParam
+  | alias : String -> LambdaParam -> LambdaParam
+  deriving Repr, BEq, Inhabited
+
+structure ParamEntry where
+  name : String
+  default? : Option Expr := none
+  deriving Repr, BEq, Inhabited
+
+structure ParamSet where
+  entries : List ParamEntry
+  ellipsis : Bool := false
+  deriving Repr, BEq, Inhabited
+
 inductive StringPart where
   | text : String -> StringPart
   | interpolation : Expr -> StringPart

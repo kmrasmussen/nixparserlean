@@ -69,7 +69,9 @@ partial def validateExpr : Expr -> Except String Unit
       validateBindingPaths "let expression" bindings
       validateBindings bindings
       validateExpr body
-  | .lambda _ body => validateExpr body
+  | .lambda param body => do
+      validateLambdaParam param
+      validateExpr body
   | .ifThenElse condition thenBranch elseBranch => do
       validateExpr condition
       validateExpr thenBranch
@@ -105,6 +107,19 @@ partial def validateStringParts : List StringPart -> Except String Unit
   | .interpolation expr :: parts => do
       validateExpr expr
       validateStringParts parts
+
+partial def validateLambdaParam : LambdaParam -> Except String Unit
+  | .ident _ => pure ()
+  | .attrset paramSet => validateParamEntries paramSet.entries
+  | .alias _ param => validateLambdaParam param
+
+partial def validateParamEntries : List ParamEntry -> Except String Unit
+  | [] => pure ()
+  | entry :: entries => do
+      match entry.default? with
+      | none => pure ()
+      | some expr => validateExpr expr
+      validateParamEntries entries
 
 partial def validateBindings : List Binding -> Except String Unit
   | [] => pure ()

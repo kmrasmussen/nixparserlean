@@ -505,26 +505,35 @@ partial def parseLambda (s : ParserState) : ParserM (Expr × ParserState) := do
 
 partial def parseParamSet (s : ParserState) : ParserM (ParamSet × ParserState) := do
   let s ← char '{' s
-  let rec loop (names : List String) (ellipsis : Bool) (st : ParserState) := do
+  let rec loop (entries : List ParamEntry) (ellipsis : Bool) (st : ParserState) := do
     let st := skipSpace st
     match curr? st with
-    | some '}' => pure ({ names := names.reverse, ellipsis }, bump st)
+    | some '}' => pure ({ entries := entries.reverse, ellipsis }, bump st)
     | some '.' =>
         let st ← token "..." st
         let st ← char '}' st
-        pure ({ names := names.reverse, ellipsis := true }, st)
+        pure ({ entries := entries.reverse, ellipsis := true }, st)
     | none => failAt st "unterminated function parameter set"
     | _ =>
-        let (name, st) ← ident st
+        let (entry, st) ← parseParamEntry st
         let st := skipSpace st
         match curr? st with
-        | some ',' => loop (name :: names) ellipsis (bump st)
-        | some '}' => pure ({ names := (name :: names).reverse, ellipsis }, bump st)
+        | some ',' => loop (entry :: entries) ellipsis (bump st)
+        | some '}' => pure ({ entries := (entry :: entries).reverse, ellipsis }, bump st)
         | some c =>
             failAt st
               ("expected ',' or '}' in function parameter set, found '" ++ String.singleton c ++ "'")
         | none => failAt st "unterminated function parameter set"
   loop [] false s
+
+partial def parseParamEntry (s : ParserState) : ParserM (ParamEntry × ParserState) := do
+  let (name, s) ← ident s
+  let s' := skipSpace s
+  if curr? s' == some '?' then
+    let (defaultExpr, s) ← parseExpr (bump s')
+    pure ({ name, default? := some defaultExpr }, s)
+  else
+    pure ({ name }, s)
 
 partial def parseAttrPath (s : ParserState) : ParserM (AttrPath × ParserState) := do
   let (first, s) ← ident s
