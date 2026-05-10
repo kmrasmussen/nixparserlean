@@ -64,6 +64,16 @@ Current smoke fixtures:
 
 Lines starting with `#` and blank lines are ignored.
 
+`e2e/desugar-manifest.txt` uses the same format but is run with:
+
+```sh
+lake exe nixparserlean --desugar --file
+```
+
+It keeps a focused set of fixtures for the surface-to-core pipeline, including
+static dotted bindings, dynamic attribute names, scoped inherit lowering, and a
+surface validation failure that must still fail before core output is printed.
+
 ### e2e runner
 
 The Rust program at `e2e/runner/src/main.rs` reads the manifest and runs the parser once per case.
@@ -115,4 +125,6 @@ semantic error: <description>
 
 ## CI
 
-`flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build` followed by the full e2e runner. This check runs on all four supported systems via `nix flake check`.
+`flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
+the full parser/validator e2e runner, and the focused desugar e2e manifest.
+This check runs on all four supported systems via `nix flake check`.
