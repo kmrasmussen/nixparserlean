@@ -7,24 +7,39 @@ namespace Desugar
 
 abbrev M := Except String
 
-partial def staticNames? : List Core.AttrPathPart -> Option (List String)
+def staticNames? : List Core.AttrPathPart -> Option (List String)
   | [] => some []
   | .static name :: parts => do
       let names ← staticNames? parts
       some (name :: names)
   | .dynamicString _ :: _ => none
 
-partial def nestedStaticAssign : List String -> Core.Expr -> Core.Binding
+def nestedStaticAssign : List String -> Core.Expr -> Core.Binding
   | [], value => .dynamicAssign [] value
   | [name], value => .staticAssign name value
   | name :: names, value =>
       .staticAssign name (.attrset false [nestedStaticAssign names value])
 
-partial def bindingFromPath (path : List Core.AttrPathPart) (value : Core.Expr) :
+def bindingFromPath (path : List Core.AttrPathPart) (value : Core.Expr) :
     Core.Binding :=
   match staticNames? path with
   | some names => nestedStaticAssign names value
   | none => .dynamicAssign path value
+
+def bindingStaticName? : Core.Binding -> Option String
+  | .staticAssign name _ => some name
+  | .inheritAssign name => some name
+  | .dynamicAssign _ _ => none
+
+theorem bindingFromPath_static_top_name
+    {path : List Core.AttrPathPart} {value : Core.Expr} {name : String} {names : List String}
+    (h : staticNames? path = some (name :: names)) :
+    bindingStaticName? (bindingFromPath path value) = some name := by
+  unfold bindingFromPath
+  rw [h]
+  cases names with
+  | nil => simp [nestedStaticAssign, bindingStaticName?]
+  | cons next rest => simp [nestedStaticAssign, bindingStaticName?]
 
 partial def inheritBindings : List String -> List Core.Binding
   | [] => []
