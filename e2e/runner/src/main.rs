@@ -24,6 +24,21 @@ struct Case {
     note: String,
 }
 
+#[derive(Debug)]
+enum ManifestEntry {
+    File {
+        path: PathBuf,
+        expectation: Expectation,
+        note: String,
+    },
+    Url {
+        name: String,
+        url: String,
+        expectation: Expectation,
+        note: String,
+    },
+}
+
 #[derive(Default)]
 struct Summary {
     passed: usize,
@@ -34,12 +49,13 @@ struct Summary {
 }
 
 fn usage() -> &'static str {
-    "usage: nixparserlean-e2e [--manifest PATH] [--parser COMMAND]"
+    "usage: nixparserlean-e2e [--manifest PATH] [--parser COMMAND] [--cache-dir PATH]"
 }
 
-fn parse_args() -> Result<(PathBuf, String), String> {
+fn parse_args() -> Result<(PathBuf, String, PathBuf), String> {
     let mut manifest = PathBuf::from("e2e/manifest.txt");
     let mut parser = String::from("lake exe nixparserlean --file");
+    let mut cache_dir = PathBuf::from("e2e/cache");
     let mut args = env::args().skip(1);
 
     while let Some(arg) = args.next() {
@@ -51,6 +67,10 @@ fn parse_args() -> Result<(PathBuf, String), String> {
             "--parser" => {
                 parser = args.next().ok_or_else(|| format!("missing value\n{}", usage()))?;
             }
+            "--cache-dir" => {
+                let value = args.next().ok_or_else(|| format!("missing value\n{}", usage()))?;
+                cache_dir = PathBuf::from(value);
+            }
             "-h" | "--help" => {
                 println!("{}", usage());
                 std::process::exit(0);
@@ -59,13 +79,26 @@ fn parse_args() -> Result<(PathBuf, String), String> {
         }
     }
 
-    Ok((manifest, parser))
+    Ok((manifest, parser, cache_dir))
 }
 
-fn parse_manifest(path: &Path) -> Result<Vec<Case>, String> {
+fn parse_expectation(raw: &str, manifest: &Path, line: usize) -> Result<Expectation, String> {
+    match raw {
+        "pass" => Ok(Expectation::Pass),
+        "parse-fail" => Ok(Expectation::ParseFail),
+        "validation-fail" => Ok(Expectation::ValidationFail),
+        other => Err(format!(
+            "{}:{}: unknown expectation {other:?}",
+            manifest.display(),
+            line
+        )),
+    }
+}
+
+fn parse_manifest(path: &Path) -> Result<Vec<ManifestEntry>, String> {
     let text = std::fs::read_to_string(path)
         .map_err(|err| format!("could not read {}: {err}", path.display()))?;
-    let mut cases = Vec::new();
+    let mut entries = Vec::new();
 
     for (line_idx, raw_line) in text.lines().enumerate() {
         let line = raw_line.trim();
@@ -73,34 +106,96 @@ fn parse_manifest(path: &Path) -> Result<Vec<Case>, String> {
             continue;
         }
 
-        let mut parts = line.splitn(3, '\t');
-        let case_path = parts
-            .next()
-            .ok_or_else(|| format!("{}:{}: missing path", path.display(), line_idx + 1))?;
-        let expectation = match parts
-            .next()
-            .ok_or_else(|| format!("{}:{}: missing expectation", path.display(), line_idx + 1))?
-        {
-            "pass" => Expectation::Pass,
-            "parse-fail" => Expectation::ParseFail,
-            "validation-fail" => Expectation::ValidationFail,
-            other => {
-                return Err(format!(
-                    "{}:{}: unknown expectation {other:?}",
-                    path.display(),
-                    line_idx + 1
-                ))
+        let fields: Vec<&str> = line.split('\t').collect();
+        let line_no = line_idx + 1;
+        match fields.as_slice() {
+            ["file", case_path, expectation, note] => {
+                entries.push(ManifestEntry::File {
+                    path: PathBuf::from(case_path),
+                    expectation: parse_expectation(expectation, path, line_no)?,
+                    note: (*note).to_owned(),
+                });
             }
-        };
-        let note = parts.next().unwrap_or("").to_owned();
-
-        cases.push(Case {
-            path: PathBuf::from(case_path),
-            expectation,
-            note,
-        });
+            ["url", name, url, expectation, note] => {
+                entries.push(ManifestEntry::Url {
+                    name: (*name).to_owned(),
+                    url: (*url).to_owned(),
+                    expectation: parse_expectation(expectation, path, line_no)?,
+                    note: (*note).to_owned(),
+                });
+            }
+            [case_path, expectation, note] => {
+                entries.push(ManifestEntry::File {
+                    path: PathBuf::from(case_path),
+                    expectation: parse_expectation(expectation, path, line_no)?,
+                    note: (*note).to_owned(),
+                });
+            }
+            _ => {
+                return Err(format!(
+                    "{}:{}: expected path/expectation/note, file/path/expectation/note, or url/name/url/expectation/note",
+                    path.display(),
+                    line_no
+                ));
+            }
+        }
     }
 
+    Ok(entries)
+}
+
+fn cache_url(name: &str, url: &str, cache_dir: &Path) -> Result<PathBuf, String> {
+    std::fs::create_dir_all(cache_dir)
+        .map_err(|err| format!("could not create cache dir {}: {err}", cache_dir.display()))?;
+
+    let path = cache_dir.join(name);
+    if path.exists() {
+        return Ok(path);
+    }
+
+    let status = Command::new("curl")
+        .arg("--fail")
+        .arg("--location")
+        .arg("--silent")
+        .arg("--show-error")
+        .arg("--output")
+        .arg(&path)
+        .arg(url)
+        .status()
+        .map_err(|err| format!("could not run curl for {url}: {err}"))?;
+
+    if status.success() {
+        Ok(path)
+    } else {
+        Err(format!("curl failed for {url} with status {status}"))
+    }
+}
+
+fn resolve_cases(entries: &[ManifestEntry], cache_dir: &Path) -> Result<Vec<Case>, String> {
+    let mut cases = Vec::new();
+    for entry in entries {
+        match entry {
+            ManifestEntry::File {
+                path,
+                expectation,
+                note,
+            } => cases.push(Case {
+                path: path.clone(),
+                expectation: *expectation,
+                note: note.clone(),
+            }),
+            ManifestEntry::Url {
+                name,
+                url,
+                expectation,
+                note,
+            } => cases.push(Case {
+                path: cache_url(name, url, cache_dir)?,
+                expectation: *expectation,
+                note: note.clone(),
+            }),
+        }
+    }
     Ok(cases)
 }
 
@@ -134,7 +229,7 @@ fn run_parser(command: &str, path: &Path) -> Result<Outcome, String> {
 }
 
 fn main() {
-    let (manifest, parser) = match parse_args() {
+    let (manifest, parser, cache_dir) = match parse_args() {
         Ok(config) => config,
         Err(err) => {
             eprintln!("{err}");
@@ -142,7 +237,14 @@ fn main() {
         }
     };
 
-    let cases = match parse_manifest(&manifest) {
+    let entries = match parse_manifest(&manifest) {
+        Ok(entries) => entries,
+        Err(err) => {
+            eprintln!("{err}");
+            std::process::exit(2);
+        }
+    };
+    let cases = match resolve_cases(&entries, &cache_dir) {
         Ok(cases) => cases,
         Err(err) => {
             eprintln!("{err}");

@@ -1,0 +1,11 @@
+# format:
+# file<TAB>path<TAB>expectation<TAB>note
+# url<TAB>cache-name<TAB>url<TAB>expectation<TAB>note
+#
+# expectations: pass, parse-fail, validation-fail
+#
+# Existing smoke manifests may still use the legacy three-column form:
+# path<TAB>expectation<TAB>note
+
+file	e2e/corpus/smoke/attrset.nix	pass	local fixture through explicit file record
+url	example-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/master/pkgs/top-level/default.nix	parse-fail	example external corpus entry
