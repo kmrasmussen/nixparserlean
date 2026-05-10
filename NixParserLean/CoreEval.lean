@@ -59,14 +59,27 @@ private def lookupAttr (name : String) : List (String × Value) -> Option Value
   | (candidate, value) :: rest =>
       if candidate == name then some value else lookupAttr name rest
 
-private def insertAttr (name : String) (value : Value) : List (String × Value) ->
+private def duplicateAttrError (names : List String) : M α :=
+  throw ("eval error: duplicate attribute '" ++ ".".intercalate names ++ "'")
+
+private def addAttr (path : List String) (name : String) (value : Value) :
+    List (String × Value) -> M (List (String × Value))
+  | [] => pure [(name, value)]
+  | (candidate, existing) :: rest =>
+      if candidate == name then
+        duplicateAttrError path
+      else do
+        let rest ← addAttr path name value rest
+        pure ((candidate, existing) :: rest)
+
+private def replaceAttr (name : String) (value : Value) : List (String × Value) ->
     List (String × Value)
-  | [] => [(name, value)]
+  | [] => []
   | (candidate, existing) :: rest =>
       if candidate == name then
         (candidate, value) :: rest
       else
-        (candidate, existing) :: insertAttr name value rest
+        (candidate, existing) :: replaceAttr name value rest
 
 private def singletonPathAttr : List String -> Value -> M Value
   | [], _ => throw "eval error: empty attribute path"
@@ -74,20 +87,28 @@ private def singletonPathAttr : List String -> Value -> M Value
   | name :: names, value => do
       pure (.attrset [(name, ← singletonPathAttr names value)])
 
-private def insertPathAttr (names : List String) (value : Value) :
+private def insertPathAttrFrom (pathPrefix names : List String) (value : Value) :
     List (String × Value) -> M (List (String × Value))
   | attrs => do
       match names with
       | [] => throw "eval error: empty attribute path"
-      | [name] => pure (insertAttr name value attrs)
+      | [name] => addAttr (pathPrefix ++ [name]) name value attrs
       | name :: rest =>
           let child ←
             match lookupAttr name attrs with
             | none => singletonPathAttr rest value
-            | some (.attrset childAttrs) => pure (.attrset (← insertPathAttr rest value childAttrs))
+            | some (.attrset childAttrs) => do
+                let childAttrs ← insertPathAttrFrom (pathPrefix ++ [name]) rest value childAttrs
+                pure (.attrset childAttrs)
             | some _ =>
                 throw s!"eval error: dynamic attribute path prefix '{name}' is not an attrset"
-          pure (insertAttr name child attrs)
+          match lookupAttr name attrs with
+          | none => addAttr (pathPrefix ++ [name]) name child attrs
+          | some _ => pure (replaceAttr name child attrs)
+
+private def insertPathAttr (names : List String) (value : Value) :
+    List (String × Value) -> M (List (String × Value)) :=
+  insertPathAttrFrom [] names value
 
 private def hasDynamicBinding : List Binding -> Bool
   | [] => false
@@ -262,10 +283,10 @@ partial def evalBindingInto (fuel : Nat) (stack : List String) (env : Env) (bind
   match binding with
   | .staticAssign name expr => do
       let value ← eval fuel stack env expr
-      pure (insertAttr name value attrs)
+      addAttr [name] name value attrs
   | .inheritAssign name => do
       let value ← lookupName fuel stack name env
-      pure (insertAttr name value attrs)
+      addAttr [name] name value attrs
   | .dynamicAssign path expr => do
       let names ← evalAttrPath fuel stack env path
       let value ← eval fuel stack env expr
