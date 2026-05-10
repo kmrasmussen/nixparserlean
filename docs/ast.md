@@ -47,18 +47,24 @@ Represents one binding inside an attribute set or `let` expression.
 
 Returns `some path` for `assign`, `none` for the two `inherit` forms.
 
-## `AttrPath`
+## `AttrPath` and `AttrPathPart`
 
-A dot-separated static attribute path such as `a.b.c` or `a."foo-bar"`.
-Quoted static segments are stored as plain strings. Dynamic/interpolated
-attribute names are not modeled yet.
+A dot-separated attribute path such as `a.b.c`, `a."foo-bar"`, or
+`a.${name}`.
 
 ```lean
 structure AttrPath where
-  parts : List String
+  parts : List AttrPathPart
+
+inductive AttrPathPart where
+  | static : String -> AttrPathPart
+  | dynamicString : List StringPart -> AttrPathPart
 ```
 
-`AttrPath.toString` joins `parts` with `"."`.
+Static segments store a known attribute name. Dynamic string segments store the
+parsed string parts so interpolated expressions remain visible to validation
+and later desugaring. `AttrPath.toString` joins static parts with `"."` and
+prints dynamic parts as `"<dynamic>"`.
 
 ## `LambdaParam`
 

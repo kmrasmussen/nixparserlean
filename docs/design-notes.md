@@ -262,7 +262,9 @@ Nix's attribute set semantics allows *nested* paths to be defined separately:
 { a.b = 1; a   = 2; }   # error — a conflicts with a.b
 ```
 
-The validation rule is: two attribute paths conflict if one is a prefix of the other. The `isPrefix` function checks exactly this:
+For fully static paths, the validation rule is: two attribute paths conflict if
+one is a prefix of the other. The `isPrefix` function checks exactly this after
+the path has been projected to `List String`:
 
 ```lean
 private def isPrefix : List String -> List String -> Bool
@@ -271,7 +273,14 @@ private def isPrefix : List String -> List String -> Bool
   | x :: xs, y :: ys => x == y && isPrefix xs ys
 ```
 
-`pathsConflict` checks both directions (either could be a prefix of the other), and `firstPathConflict?` runs an O(n²) scan over all binding paths at each level. For the binding counts expected in real Nix code, this is fine.
+`pathsConflict` checks both directions (either could be a prefix of the other),
+and `firstPathConflict?` runs an O(n²) scan over all binding paths at each
+level. For the binding counts expected in real Nix code, this is fine.
+
+Dynamic attribute path segments are different. The validator still validates
+the expressions embedded in those segments, but it does not claim to know their
+runtime names. Conflict detection therefore only compares paths whose segments
+are all statically known.
 
 The error message distinguishes the two cases: if the paths are identical, it says "duplicate binding"; if one is a proper prefix of the other, it says "conflicting binding paths."
 

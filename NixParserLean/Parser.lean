@@ -270,15 +270,21 @@ partial def staticStringParts? : List StringPart -> Option String
       some (text ++ rest)
   | .interpolation _ :: _ => none
 
-partial def attrName (s : ParserState) : ParserM (String × ParserState) := do
+partial def attrName (s : ParserState) : ParserM (AttrPathPart × ParserState) := do
   let s := skipSpace s
-  match curr? s with
-  | some '"' =>
+  match curr? s, next? s with
+  | some '"', _ =>
       let (parts, s') ← quotedString s
       match staticStringParts? parts with
-      | some name => pure (name, s')
-      | none => failAt s "expected static attribute name"
-  | _ => ident s
+      | some name => pure (.static name, s')
+      | none => pure (.dynamicString parts, s')
+  | some '$', some '{' =>
+      let (expr, s') ← parseExpr (bump (bump s))
+      let s' ← char '}' s'
+      pure (.dynamicString [.interpolation expr], s')
+  | _, _ => do
+      let (name, s') ← ident s
+      pure (.static name, s')
 
 partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
@@ -578,7 +584,7 @@ partial def parseParamEntry (s : ParserState) : ParserM (ParamEntry × ParserSta
 
 partial def parseAttrPath (s : ParserState) : ParserM (AttrPath × ParserState) := do
   let (first, s) ← attrName s
-  let rec loop (parts : List String) (st : ParserState) := do
+  let rec loop (parts : List AttrPathPart) (st : ParserState) := do
     let st := skipSpace st
     if curr? st == some '.' then
       let (part, st') ← attrName (bump st)

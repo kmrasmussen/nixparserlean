@@ -45,6 +45,7 @@ Current smoke fixtures:
 | `duplicate-inherit.nix` | validation-fail | duplicate name in `inherit` |
 | `duplicate-let.nix` | validation-fail | duplicate binding in `let` |
 | `duplicate-param-lambda.nix` | validation-fail | duplicate destructured lambda parameter |
+| `dynamic-attr-names.nix` | pass | dynamic attribute names in binding and selection |
 | `prefix-attr-conflict.nix` | validation-fail | `a.b = 1; a = 2;` prefix conflict |
 | `reverse-prefix-attr-conflict.nix` | validation-fail | same conflict, reversed order |
 | `missing-equals.nix` | parse-fail | binding without `=` |

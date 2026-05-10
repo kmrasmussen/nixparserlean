@@ -75,17 +75,22 @@ Angle-bracket paths (`<...>`) are read until `>`. All other paths are read until
 
 ## Attribute paths
 
-`parseAttrPath` accepts identifier segments and static quoted string segments:
+`parseAttrPath` accepts identifier segments, quoted string segments, and bare
+`${...}` dynamic segments:
 
 ```nix
 a.b
 a."foo-bar"
 "foo-bar".nested
+a.${name}
+a."prefix-${name}"
 ```
 
-Quoted segments reuse the string parser, but only text-only strings are accepted
-as static attribute names. Interpolated names such as `"${name}"` need a richer
-attribute-path AST and are intentionally left for a later slice.
+Quoted text-only segments become static names. Quoted strings with
+interpolation, and bare `${...}` segments, become dynamic `AttrPathPart`
+values. Validation still checks duplicate and prefix conflicts for fully static
+paths only; dynamic names are preserved for later desugaring instead of guessed
+at validation time.
 
 ## Lambda detection
 

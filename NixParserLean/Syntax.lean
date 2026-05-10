@@ -1,9 +1,5 @@
 namespace NixParserLean
 
-structure AttrPath where
-  parts : List String
-  deriving Repr, BEq, Inhabited
-
 inductive BinaryOp where
   | equal
   | notEqual
@@ -28,6 +24,15 @@ inductive UnaryOp where
   deriving Repr, BEq, Inhabited
 
 mutual
+structure AttrPath where
+  parts : List AttrPathPart
+  deriving Repr, BEq, Inhabited
+
+inductive AttrPathPart where
+  | static : String -> AttrPathPart
+  | dynamicString : List StringPart -> AttrPathPart
+  deriving Repr, BEq, Inhabited
+
 inductive LambdaParam where
   | ident : String -> LambdaParam
   | attrset : ParamSet -> LambdaParam
@@ -77,8 +82,12 @@ inductive Binding where
   deriving Repr, BEq, Inhabited
 end
 
+def AttrPathPart.toString : AttrPathPart -> String
+  | .static name => name
+  | .dynamicString _ => "<dynamic>"
+
 def AttrPath.toString (path : AttrPath) : String :=
-  ".".intercalate path.parts
+  ".".intercalate (path.parts.map AttrPathPart.toString)
 
 def Binding.path? : Binding -> Option AttrPath
   | .assign path _ => some path

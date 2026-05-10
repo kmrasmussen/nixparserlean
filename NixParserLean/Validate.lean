@@ -4,7 +4,7 @@ namespace NixParserLean
 
 private def namesToPaths : List String -> List AttrPath
   | [] => []
-  | name :: names => { parts := [name] } :: namesToPaths names
+  | name :: names => { parts := [.static name] } :: namesToPaths names
 
 private def bindingPaths : Binding -> List AttrPath
   | .assign path _ => [path]
@@ -25,8 +25,21 @@ private def isPrefix : List String -> List String -> Bool
   | _ :: _, [] => false
   | x :: xs, y :: ys => x == y && isPrefix xs ys
 
+private def staticPartNames? : List AttrPathPart -> Option (List String)
+  | [] => some []
+  | .static name :: parts => do
+      let names ← staticPartNames? parts
+      some (name :: names)
+  | .dynamicString _ :: _ => none
+
+private def AttrPath.staticParts? (path : AttrPath) : Option (List String) :=
+  staticPartNames? path.parts
+
 private def pathsConflict (left right : AttrPath) : Bool :=
-  isPrefix left.parts right.parts || isPrefix right.parts left.parts
+  match left.staticParts?, right.staticParts? with
+  | some leftParts, some rightParts =>
+      isPrefix leftParts rightParts || isPrefix rightParts leftParts
+  | _, _ => false
 
 private def findConflictWith (path : AttrPath) : List AttrPath -> Option (AttrPath × AttrPath)
   | [] => none
@@ -74,6 +87,22 @@ private def validateParamEntryNames (entries : List ParamEntry) : Except String 
   | some name => throw s!"semantic error: duplicate lambda parameter '{name}'"
   | none => pure ()
 
+private def stringPartExprs : List StringPart -> List Expr
+  | [] => []
+  | .text _ :: parts => stringPartExprs parts
+  | .interpolation expr :: parts => expr :: stringPartExprs parts
+
+private def attrPathPartExprs : AttrPathPart -> List Expr
+  | .static _ => []
+  | .dynamicString parts => stringPartExprs parts
+
+private def attrPathExprs : List AttrPathPart -> List Expr
+  | [] => []
+  | part :: parts => attrPathPartExprs part ++ attrPathExprs parts
+
+private def AttrPath.exprs (path : AttrPath) : List Expr :=
+  attrPathExprs path.parts
+
 mutual
 partial def validateExpr : Expr -> Except String Unit
   | .int _ | .bool _ | .null | .ident _ | .path _ => pure ()
@@ -99,11 +128,16 @@ partial def validateExpr : Expr -> Except String Unit
   | .withExpr scope body => do
       validateExpr scope
       validateExpr body
-  | .select base _ none => validateExpr base
-  | .select base _ (some defaultExpr) => do
+  | .select base path none => do
       validateExpr base
+      validateExprs path.exprs
+  | .select base path (some defaultExpr) => do
+      validateExpr base
+      validateExprs path.exprs
       validateExpr defaultExpr
-  | .hasAttr base _ => validateExpr base
+  | .hasAttr base path => do
+      validateExpr base
+      validateExprs path.exprs
   | .app function argument => do
       validateExpr function
       validateExpr argument
@@ -147,6 +181,9 @@ partial def validateBindings : List Binding -> Except String Unit
   | [] => pure ()
   | binding :: bindings => do
       validateExprs (bindingValues binding)
+      match binding with
+      | .assign path _ => validateExprs path.exprs
+      | .inherit _ | .inheritFrom _ _ => pure ()
       validateBindings bindings
 end
 
