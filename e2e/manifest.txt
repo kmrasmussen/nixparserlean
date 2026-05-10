@@ -18,6 +18,7 @@ e2e/corpus/smoke/let-list.nix	pass	let expression and list
 e2e/corpus/smoke/lambda.nix	pass	attrset lambda parameter
 e2e/corpus/smoke/missing-equals.nix	parse-fail	missing equals should fail parsing
 e2e/corpus/smoke/open-param-lambda.nix	pass	open attrset lambda parameter
+e2e/corpus/smoke/operator-table.nix	pass	expanded binary and unary operator coverage
 e2e/corpus/smoke/parenthesized.nix	pass	parenthesized expression
 e2e/corpus/smoke/prefix-attr-conflict.nix	validation-fail	attrpath prefix conflict should fail validation
 e2e/corpus/smoke/relative-path.nix	pass	relative path literal

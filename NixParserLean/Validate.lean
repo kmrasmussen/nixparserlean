@@ -81,6 +81,7 @@ partial def validateExpr : Expr -> Except String Unit
   | .app function argument => do
       validateExpr function
       validateExpr argument
+  | .unary _ expr => validateExpr expr
   | .binary _ left right => do
       validateExpr left
       validateExpr right

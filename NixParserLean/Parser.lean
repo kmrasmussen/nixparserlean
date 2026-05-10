@@ -92,6 +92,17 @@ private def token (expected : String) (s : ParserState) : ParserM ParserState :=
         | none => failAt st s!"expected '{String.ofList chars}', found end of input"
   loop expected.toList s
 
+private def operatorToken (expected : String) (s : ParserState) : ParserM ParserState := do
+  let s' ← token expected s
+  if expected == "+" && curr? s' == some '+' then
+    failAt s "expected '+'"
+  else if expected == "<" && curr? s' == some '=' then
+    failAt s "expected '<'"
+  else if expected == ">" && curr? s' == some '=' then
+    failAt s "expected '>'"
+  else
+    pure s'
+
 private def isIdentStart (c : Char) : Bool :=
   c.isAlpha || c == '_'
 
@@ -124,14 +135,14 @@ private def isPathStart (s : ParserState) : Bool :=
   | some '/', some '/', _ => false
   | some '/', _, _ => true
   | some '~', some '/', _ => true
-  | some '<', _, _ => true
+  | some '<', some c, _ => !c.isWhitespace && c != '='
   | _, _, _ => false
 
 private def isAppArgumentStart (s : ParserState) : Bool :=
   let s := skipSpace s
   isPathStart s ||
     match curr? s with
-    | some '"' | some '[' | some '{' | some '-' => true
+    | some '"' | some '[' | some '{' | some '-' | some '!' => true
     | some c => c.isDigit || isIdentStart c
     | none => false
 
@@ -176,7 +187,11 @@ private partial def anglePathGo (acc : List Char) (s : ParserState) :
   match curr? s with
   | none => failAt s "unterminated angle path"
   | some '>' => pure ("<" ++ String.ofList acc.reverse ++ ">", bump s)
-  | some c => anglePathGo (c :: acc) (bump s)
+  | some c =>
+      if c.isWhitespace then
+        failAt s "unterminated angle path"
+      else
+        anglePathGo (c :: acc) (bump s)
 
 private def anglePath (s : ParserState) : ParserM (String × ParserState) := do
   let s ← char '<' s
@@ -233,7 +248,15 @@ partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   | _ =>
     match parseLambda s with
     | .ok result => pure result
-    | .error _ => parseOr s
+    | .error _ => parseImplies s
+
+partial def parseImplies (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseOr s
+  match token "->" s with
+  | .ok s =>
+      let (right, s) ← parseImplies s
+      pure (.binary .implies left right, s)
+  | .error _ => pure (left, s)
 
 partial def parseOr (s : ParserState) : ParserM (Expr × ParserState) := do
   let (left, s) ← parseAnd s
@@ -256,34 +279,89 @@ partial def parseAnd (s : ParserState) : ParserM (Expr × ParserState) := do
   loop left s
 
 partial def parseEquality (s : ParserState) : ParserM (Expr × ParserState) := do
-  let (left, s) ← parseUpdate s
+  let (left, s) ← parseComparison s
   let rec loop (expr : Expr) (st : ParserState) := do
     match token "==" st with
     | .ok st =>
-        let (right, st) ← parseUpdate st
+        let (right, st) ← parseComparison st
         loop (.binary .equal expr right) st
-    | .error _ => pure (expr, st)
+    | .error _ =>
+        match token "!=" st with
+        | .ok st =>
+            let (right, st) ← parseComparison st
+            loop (.binary .notEqual expr right) st
+        | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseComparison (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseUpdate s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match token "<=" st with
+    | .ok st =>
+        let (right, st) ← parseUpdate st
+        loop (.binary .lessOrEqual expr right) st
+    | .error _ =>
+        match token ">=" st with
+        | .ok st =>
+            let (right, st) ← parseUpdate st
+            loop (.binary .greaterOrEqual expr right) st
+        | .error _ =>
+            match operatorToken "<" st with
+            | .ok st =>
+                let (right, st) ← parseUpdate st
+                loop (.binary .less expr right) st
+            | .error _ =>
+                match operatorToken ">" st with
+                | .ok st =>
+                    let (right, st) ← parseUpdate st
+                    loop (.binary .greater expr right) st
+                | .error _ => pure (expr, st)
   loop left s
 
 partial def parseUpdate (s : ParserState) : ParserM (Expr × ParserState) := do
-  let (left, s) ← parseAdd s
+  let (left, s) ← parseConcat s
   let rec loop (expr : Expr) (st : ParserState) := do
     match token "//" st with
     | .ok st =>
-        let (right, st) ← parseAdd st
+        let (right, st) ← parseConcat st
         loop (.binary .update expr right) st
     | .error _ => pure (expr, st)
   loop left s
 
-partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
-  let (left, s) ← parseApp s
+partial def parseConcat (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseAdd s
   let rec loop (expr : Expr) (st : ParserState) := do
-    match token "+" st with
+    match token "++" st with
     | .ok st =>
-        let (right, st) ← parseApp st
+        let (right, st) ← parseAdd st
+        loop (.binary .concat expr right) st
+    | .error _ => pure (expr, st)
+  loop left s
+
+partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseUnary s
+  let rec loop (expr : Expr) (st : ParserState) := do
+    match operatorToken "+" st with
+    | .ok st =>
+        let (right, st) ← parseUnary st
         loop (.binary .add expr right) st
     | .error _ => pure (expr, st)
   loop left s
+
+partial def parseUnary (s : ParserState) : ParserM (Expr × ParserState) := do
+  let s := skipSpace s
+  match curr? s, next? s with
+  | some '!', _ =>
+      let (expr, s) ← parseUnary (bump s)
+      pure (.unary .not expr, s)
+  | some '-', some c =>
+      if c.isDigit then
+        let (v, s) ← integer s
+        pure (.int v, s)
+      else
+        let (expr, s) ← parseUnary (bump s)
+        pure (.unary .negate expr, s)
+  | _, _ => parseApp s
 
 partial def parseApp (s : ParserState) : ParserM (Expr × ParserState) := do
   let (function, s) ← parseSelect s
@@ -323,9 +401,6 @@ partial def parseAtom (s : ParserState) : ParserM (Expr × ParserState) := do
       pure (expr, s)
   | some '[' => parseList s
   | some '{' => parseAttrset false s
-  | some '-' =>
-      let (v, s') ← integer s
-      pure (.int v, s')
   | some c =>
       if c.isDigit then
         let (v, s') ← integer s

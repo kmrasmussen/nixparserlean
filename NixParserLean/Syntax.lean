@@ -16,10 +16,22 @@ inductive LambdaParam where
 
 inductive BinaryOp where
   | equal
+  | notEqual
+  | less
+  | greater
+  | lessOrEqual
+  | greaterOrEqual
   | and
   | or
+  | implies
   | add
+  | concat
   | update
+  deriving Repr, BEq, Inhabited
+
+inductive UnaryOp where
+  | not
+  | negate
   deriving Repr, BEq, Inhabited
 
 mutual
@@ -43,6 +55,7 @@ inductive Expr where
   | withExpr : (scope : Expr) -> (body : Expr) -> Expr
   | select : (base : Expr) -> (path : AttrPath) -> Expr
   | app : (function : Expr) -> (argument : Expr) -> Expr
+  | unary : (op : UnaryOp) -> (expr : Expr) -> Expr
   | binary : (op : BinaryOp) -> (left : Expr) -> (right : Expr) -> Expr
   deriving Repr, BEq, Inhabited
 
