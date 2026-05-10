@@ -86,15 +86,18 @@ fragment. It currently supports:
 - static attribute selection and selection defaults
 - conditionals and assertions
 - identifier-parameter lambdas and function application
-- required attribute-set lambda parameters, including `...` for extra attrs
+- attribute-set lambda parameters, including defaults and `...` for extra attrs
 - boolean negation and integer negation
 - integer `+`, `-`, `*`, `/`
 - equality, inequality, `&&`, `||`, and implication over supported values
 
+Default parameter expressions are evaluated when the corresponding argument
+field is absent. A default can refer to earlier bound parameters, but not later
+ones.
+
 Unsupported forms fail explicitly with an `eval error:` prefix. The evaluator
-does not yet implement default lambda parameters, aliased lambda parameters,
-recursive attrsets, dynamic attribute names, imports, paths, `with`, or string
-interpolation.
+does not yet implement aliased lambda parameters, recursive attrsets, dynamic
+attribute names, imports, paths, `with`, or string interpolation.
 
 ## Core validation
 

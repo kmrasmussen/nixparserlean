@@ -78,47 +78,6 @@ private def textOnlyString : List StringPart -> Option String
       some (text ++ rest)
   | .interpolation _ :: _ => none
 
-mutual
-partial def bindParam (param : LambdaParam) (argument : Value) (env : Env) : M Env :=
-  match param with
-  | .ident name => pure ((name, argument) :: env)
-  | .attrset paramSet => bindParamSet paramSet argument env
-  | .alias _ _ => unsupported "aliased lambda parameter evaluation"
-
-partial def paramEntryNames : List ParamEntry -> List String
-  | [] => []
-  | entry :: entries => entry.name :: paramEntryNames entries
-
-partial def containsName (name : String) : List String -> Bool
-  | [] => false
-  | candidate :: names => candidate == name || containsName name names
-
-partial def findExtraAttr? (allowed : List String) : List (String × Value) -> Option String
-  | [] => none
-  | (name, _) :: attrs =>
-      if containsName name allowed then findExtraAttr? allowed attrs else some name
-
-partial def bindParamSet (paramSet : ParamSet) (argument : Value) (env : Env) : M Env :=
-  match argument with
-  | .attrset attrs => do
-      if !paramSet.ellipsis then
-        match findExtraAttr? (paramEntryNames paramSet.entries) attrs with
-        | some name => throw s!"eval error: unexpected function argument attribute '{name}'"
-        | none => pure ()
-      bindParamEntries attrs paramSet.entries env
-  | _ => throw "eval error: attribute-set lambda parameter expects an attrset"
-
-partial def bindParamEntries (attrs : List (String × Value)) : List ParamEntry -> Env -> M Env
-  | [], env => pure env
-  | entry :: entries, env => do
-      match entry.default? with
-      | some _ => unsupported "default parameter evaluation"
-      | none =>
-          match lookupAttr entry.name attrs with
-          | some value => bindParamEntries attrs entries ((entry.name, value) :: env)
-          | none => throw s!"eval error: missing function argument attribute '{entry.name}'"
-end
-
 partial def evalUnary : UnaryOp -> Value -> M Value
   | .not, .bool value => pure (.bool (!value))
   | .not, _ => throw "eval error: boolean negation expects a bool"
@@ -193,6 +152,47 @@ partial def eval (env : Env) : Expr -> M Value
       evalUnary op (← eval env inner)
   | .binary op left right => do
       evalBinary op (← eval env left) (← eval env right)
+
+partial def bindParam (param : LambdaParam) (argument : Value) (env : Env) : M Env :=
+  match param with
+  | .ident name => pure ((name, argument) :: env)
+  | .attrset paramSet => bindParamSet paramSet argument env
+  | .alias _ _ => unsupported "aliased lambda parameter evaluation"
+
+partial def paramEntryNames : List ParamEntry -> List String
+  | [] => []
+  | entry :: entries => entry.name :: paramEntryNames entries
+
+partial def containsName (name : String) : List String -> Bool
+  | [] => false
+  | candidate :: names => candidate == name || containsName name names
+
+partial def findExtraAttr? (allowed : List String) : List (String × Value) -> Option String
+  | [] => none
+  | (name, _) :: attrs =>
+      if containsName name allowed then findExtraAttr? allowed attrs else some name
+
+partial def bindParamSet (paramSet : ParamSet) (argument : Value) (env : Env) : M Env :=
+  match argument with
+  | .attrset attrs => do
+      if !paramSet.ellipsis then
+        match findExtraAttr? (paramEntryNames paramSet.entries) attrs with
+        | some name => throw s!"eval error: unexpected function argument attribute '{name}'"
+        | none => pure ()
+      bindParamEntries attrs paramSet.entries env
+  | _ => throw "eval error: attribute-set lambda parameter expects an attrset"
+
+partial def bindParamEntries (attrs : List (String × Value)) : List ParamEntry -> Env -> M Env
+  | [], env => pure env
+  | entry :: entries, env => do
+      let value ←
+        match lookupAttr entry.name attrs with
+        | some value => pure value
+        | none =>
+            match entry.default? with
+            | some defaultExpr => eval env defaultExpr
+            | none => throw s!"eval error: missing function argument attribute '{entry.name}'"
+      bindParamEntries attrs entries ((entry.name, value) :: env)
 
 partial def evalList (env : Env) : List Expr -> M (List Value)
   | [] => pure []
