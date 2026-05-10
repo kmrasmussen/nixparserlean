@@ -67,12 +67,26 @@ private def insertAttr (name : String) (value : Value) : List (String × Value) 
       else
         (candidate, existing) :: insertAttr name value rest
 
-private def staticPath? : List AttrPathPart -> Option (List String)
-  | [] => some []
-  | .static name :: parts => do
-      let names ← staticPath? parts
-      some (name :: names)
-  | .dynamicString _ :: _ => none
+private def singletonPathAttr : List String -> Value -> M Value
+  | [], _ => throw "eval error: empty attribute path"
+  | [name], value => pure (.attrset [(name, value)])
+  | name :: names, value => do
+      pure (.attrset [(name, ← singletonPathAttr names value)])
+
+private def insertPathAttr (names : List String) (value : Value) :
+    List (String × Value) -> M (List (String × Value))
+  | attrs => do
+      match names with
+      | [] => throw "eval error: empty attribute path"
+      | [name] => pure (insertAttr name value attrs)
+      | name :: rest =>
+          let child ←
+            match lookupAttr name attrs with
+            | none => singletonPathAttr rest value
+            | some (.attrset childAttrs) => pure (.attrset (← insertPathAttr rest value childAttrs))
+            | some _ =>
+                throw s!"eval error: dynamic attribute path prefix '{name}' is not an attrset"
+          pure (insertAttr name child attrs)
 
 private def textOnlyString : List StringPart -> Option String
   | [] => some ""
@@ -123,8 +137,8 @@ partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Valu
   | .list items => do
       pure (.list (← evalList fuel stack env items))
   | .attrset recursive bindings => do
-      if hasDynamicBinding bindings then
-        unsupported "dynamic attribute binding evaluation"
+      if recursive && hasDynamicBinding bindings then
+        unsupported "dynamic recursive attribute binding evaluation"
       else if recursive then
         pure (.attrset (← evalBindings fuel stack (recursiveEnv "attribute" env bindings) bindings))
       else
@@ -150,15 +164,15 @@ partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Valu
       | .attrset attrs => eval fuel stack (env ++ attrEnv attrs) body
       | _ => throw "eval error: with scope must be an attrset"
   | .select base path none => do
-      let names ← evalStaticPath path
+      let names ← evalAttrPath fuel stack env path
       selectPath (← eval fuel stack env base) names
   | .select base path (some defaultExpr) => do
-      let names ← evalStaticPath path
+      let names ← evalAttrPath fuel stack env path
       match selectPath? (← eval fuel stack env base) names with
       | some value => pure value
       | none => eval fuel stack env defaultExpr
   | .hasAttr base path => do
-      let names ← evalStaticPath path
+      let names ← evalAttrPath fuel stack env path
       pure (.bool ((selectPath? (← eval fuel stack env base) names).isSome))
   | .app function argument => do
       match ← eval fuel stack env function with
@@ -255,7 +269,10 @@ partial def evalBindingInto (fuel : Nat) (stack : List String) (env : Env) (bind
   | .staticAssign name expr => do
       let value ← eval fuel stack env expr
       pure (insertAttr name value attrs)
-  | .dynamicAssign _ _ => unsupported "dynamic attribute binding evaluation"
+  | .dynamicAssign path expr => do
+      let names ← evalAttrPath fuel stack env path
+      let value ← eval fuel stack env expr
+      insertPathAttr names value attrs
 
 partial def letEnv (baseEnv : Env) (bindings : List Binding) : Env :=
   recursiveEnv "let" baseEnv bindings
@@ -274,11 +291,41 @@ partial def thunkEntriesGo (context : String) (baseEnv : Env) (allBindings : Lis
         thunkEntriesGo context baseEnv allBindings bindings
   | .dynamicAssign _ _ :: bindings => thunkEntriesGo context baseEnv allBindings bindings
 
-partial def evalStaticPath (path : List AttrPathPart) : M (List String) :=
-  match staticPath? path with
-  | some [] => throw "eval error: empty attribute path"
-  | some names => pure names
-  | none => unsupported "dynamic attribute path evaluation"
+partial def evalAttrPath (fuel : Nat) (stack : List String) (env : Env)
+    (path : List AttrPathPart) : M (List String) :=
+  match path with
+  | [] => throw "eval error: empty attribute path"
+  | part :: parts => do
+      let name ← evalAttrPathPart fuel stack env part
+      let names ← evalAttrPathRest fuel stack env parts
+      pure (name :: names)
+
+partial def evalAttrPathRest (fuel : Nat) (stack : List String) (env : Env) :
+    List AttrPathPart -> M (List String)
+  | [] => pure []
+  | part :: parts => do
+      let name ← evalAttrPathPart fuel stack env part
+      let names ← evalAttrPathRest fuel stack env parts
+      pure (name :: names)
+
+partial def evalAttrPathPart (fuel : Nat) (stack : List String) (env : Env) :
+    AttrPathPart -> M String
+  | .static name => pure name
+  | .dynamicString parts => evalDynamicString fuel stack env parts
+
+partial def evalDynamicString (fuel : Nat) (stack : List String) (env : Env) :
+    List StringPart -> M String
+  | [] => pure ""
+  | .text text :: parts => do
+      let rest ← evalDynamicString fuel stack env parts
+      pure (text ++ rest)
+  | .interpolation expr :: parts => do
+      let text ←
+        match ← eval fuel stack env expr with
+        | .str text => pure text
+        | _ => throw "eval error: dynamic attribute interpolation expects a string"
+      let rest ← evalDynamicString fuel stack env parts
+      pure (text ++ rest)
 
 partial def selectPath? : Value -> List String -> Option Value
   | value, [] => some value
