@@ -17,6 +17,7 @@ e2e/corpus/smoke/eval-with-lambda-shadow.nix	pass	lambda parameter shadows with 
 e2e/corpus/smoke/eval-dynamic-attr-binding.nix	pass	dynamic attr binding evaluates a string key
 e2e/corpus/smoke/eval-dynamic-attr-selection.nix	pass	dynamic attr selection evaluates a string key
 e2e/corpus/smoke/eval-dynamic-quoted-attr.nix	pass	quoted dynamic attr name evaluates interpolation
+examples/current-core-showcase/showcase.nix	pass	showcase combines recursive attrsets, aliases, dynamic attrs, and with
 e2e/corpus/smoke/eval-paramset-lambda.nix	pass	attrset lambda parameter binds required fields
 e2e/corpus/smoke/eval-paramset-ellipsis.nix	pass	attrset lambda ellipsis accepts extra fields
 e2e/corpus/smoke/eval-paramset-default.nix	pass	attrset lambda default fills missing field
