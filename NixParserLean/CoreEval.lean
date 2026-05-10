@@ -88,13 +88,6 @@ private def insertPathAttr (names : List String) (value : Value) :
                 throw s!"eval error: dynamic attribute path prefix '{name}' is not an attrset"
           pure (insertAttr name child attrs)
 
-private def textOnlyString : List StringPart -> Option String
-  | [] => some ""
-  | .text text :: parts => do
-      let rest ← textOnlyString parts
-      some (text ++ rest)
-  | .interpolation _ :: _ => none
-
 private def hasDynamicBinding : List Binding -> Bool
   | [] => false
   | .dynamicAssign _ _ :: _ => true
@@ -126,10 +119,8 @@ partial def evalBinary : BinaryOp -> Value -> Value -> M Value
 mutual
 partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Value
   | .int value => pure (.int value)
-  | .str parts =>
-      match textOnlyString parts with
-      | some text => pure (.str text)
-      | none => unsupported "string interpolation evaluation"
+  | .str parts => do
+      pure (.str (← evalStringParts fuel stack env "string" parts))
   | .bool value => pure (.bool value)
   | .null => pure .null
   | .ident name => lookupName fuel stack name env
@@ -311,20 +302,20 @@ partial def evalAttrPathRest (fuel : Nat) (stack : List String) (env : Env) :
 partial def evalAttrPathPart (fuel : Nat) (stack : List String) (env : Env) :
     AttrPathPart -> M String
   | .static name => pure name
-  | .dynamicString parts => evalDynamicString fuel stack env parts
+  | .dynamicString parts => evalStringParts fuel stack env "dynamic attribute" parts
 
-partial def evalDynamicString (fuel : Nat) (stack : List String) (env : Env) :
+partial def evalStringParts (fuel : Nat) (stack : List String) (env : Env) (context : String) :
     List StringPart -> M String
   | [] => pure ""
   | .text text :: parts => do
-      let rest ← evalDynamicString fuel stack env parts
+      let rest ← evalStringParts fuel stack env context parts
       pure (text ++ rest)
   | .interpolation expr :: parts => do
       let text ←
         match ← eval fuel stack env expr with
         | .str text => pure text
-        | _ => throw "eval error: dynamic attribute interpolation expects a string"
-      let rest ← evalDynamicString fuel stack env parts
+        | _ => throw s!"eval error: {context} interpolation expects a string"
+      let rest ← evalStringParts fuel stack env context parts
       pure (text ++ rest)
 
 partial def selectPath? : Value -> List String -> Option Value

@@ -18,6 +18,7 @@ e2e/corpus/smoke/eval-dynamic-attr-binding.nix	pass	dynamic attr binding evaluat
 e2e/corpus/smoke/eval-dynamic-attr-selection.nix	pass	dynamic attr selection evaluates a string key
 e2e/corpus/smoke/eval-dynamic-quoted-attr.nix	pass	quoted dynamic attr name evaluates interpolation
 examples/current-core-showcase/showcase.nix	pass	showcase combines recursive attrsets, aliases, dynamic attrs, and with
+e2e/corpus/smoke/eval-string-interpolation.nix	pass	string interpolation evaluates string values
 e2e/corpus/smoke/eval-paramset-lambda.nix	pass	attrset lambda parameter binds required fields
 e2e/corpus/smoke/eval-paramset-ellipsis.nix	pass	attrset lambda ellipsis accepts extra fields
 e2e/corpus/smoke/eval-paramset-default.nix	pass	attrset lambda default fills missing field
@@ -34,4 +35,6 @@ e2e/corpus/smoke/eval-rec-attrset-self.nix	eval-fail	recursive attrset self-refe
 e2e/corpus/smoke/eval-rec-attrset-mutual.nix	eval-fail	recursive attrset mutual recursion should fail
 e2e/corpus/smoke/eval-with-non-attr.nix	eval-fail	with scope must evaluate to an attrset
 e2e/corpus/smoke/eval-dynamic-attr-interpolation-type.nix	eval-fail	dynamic attr interpolation requires a string
+e2e/corpus/smoke/eval-string-interpolation-int.nix	eval-fail	string interpolation rejects integers without coercion
+e2e/corpus/smoke/eval-string-interpolation-attrset.nix	eval-fail	string interpolation rejects attrsets
 e2e/corpus/smoke/eval-let-dynamic-binding.nix	eval-fail	dynamic let binding remains unsupported
