@@ -17,7 +17,7 @@ inductive Value where
 
 inductive EnvValue where
   | value : Value -> EnvValue
-  | thunk : List (String × EnvValue) -> List Binding -> Expr -> EnvValue
+  | thunk : String -> List (String × EnvValue) -> List Binding -> Expr -> EnvValue
   deriving Repr, Inhabited
 end
 
@@ -119,8 +119,10 @@ partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Valu
   | .list items => do
       pure (.list (← evalList fuel stack env items))
   | .attrset recursive bindings => do
-      if recursive then
-        unsupported "recursive attribute sets"
+      if hasDynamicBinding bindings then
+        unsupported "dynamic attribute binding evaluation"
+      else if recursive then
+        pure (.attrset (← evalBindings fuel stack (recursiveEnv "attribute" env bindings) bindings))
       else
         pure (.attrset (← evalBindings fuel stack env bindings))
   | .letIn bindings body => do
@@ -169,13 +171,14 @@ partial def lookupName (fuel : Nat) (stack : List String) (name : String) : Env 
       if candidate == name then
         match entry with
         | .value value => pure value
-        | .thunk baseEnv bindings expr =>
+        | .thunk context baseEnv bindings expr =>
             if containsName name stack then
-              throw s!"eval error: recursive let binding '{name}'"
+              throw s!"eval error: recursive {context} binding '{name}'"
             else
               match fuel with
               | 0 => throw "eval error: evaluation fuel exhausted"
-              | fuel + 1 => eval fuel (name :: stack) (letEnv baseEnv bindings) expr
+              | fuel + 1 =>
+                  eval fuel (name :: stack) (recursiveEnv context baseEnv bindings) expr
       else
         lookupName fuel stack name rest
 
@@ -248,17 +251,21 @@ partial def evalBindingInto (fuel : Nat) (stack : List String) (env : Env) (bind
   | .dynamicAssign _ _ => unsupported "dynamic attribute binding evaluation"
 
 partial def letEnv (baseEnv : Env) (bindings : List Binding) : Env :=
-  letThunkEntries baseEnv bindings ++ baseEnv
+  recursiveEnv "let" baseEnv bindings
 
-partial def letThunkEntries (baseEnv : Env) (bindings : List Binding) : Env :=
-  letThunkEntriesGo baseEnv bindings bindings
+partial def recursiveEnv (context : String) (baseEnv : Env) (bindings : List Binding) : Env :=
+  thunkEntries context baseEnv bindings ++ baseEnv
 
-partial def letThunkEntriesGo (baseEnv : Env) (allBindings : List Binding) :
+partial def thunkEntries (context : String) (baseEnv : Env) (bindings : List Binding) : Env :=
+  thunkEntriesGo context baseEnv bindings bindings
+
+partial def thunkEntriesGo (context : String) (baseEnv : Env) (allBindings : List Binding) :
     List Binding -> Env
   | [] => []
   | .staticAssign name expr :: bindings =>
-      (name, .thunk baseEnv allBindings expr) :: letThunkEntriesGo baseEnv allBindings bindings
-  | .dynamicAssign _ _ :: bindings => letThunkEntriesGo baseEnv allBindings bindings
+      (name, .thunk context baseEnv allBindings expr) ::
+        thunkEntriesGo context baseEnv allBindings bindings
+  | .dynamicAssign _ _ :: bindings => thunkEntriesGo context baseEnv allBindings bindings
 
 partial def evalStaticPath (path : List AttrPathPart) : M (List String) :=
   match staticPath? path with
