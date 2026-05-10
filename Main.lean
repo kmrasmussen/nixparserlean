@@ -34,8 +34,13 @@ def printResult (options : Options) (expr : NixParserLean.Expr) : IO UInt32 := d
       if options.desugar then
         match NixParserLean.desugar expr with
         | .ok coreExpr =>
-            IO.println (repr coreExpr)
-            pure 0
+            match NixParserLean.Core.validate coreExpr with
+            | .ok () =>
+                IO.println (repr coreExpr)
+                pure 0
+            | .error err =>
+                IO.eprintln err
+                pure 1
         | .error err =>
             IO.eprintln err
             pure 1

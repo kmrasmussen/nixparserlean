@@ -12,6 +12,7 @@ The project is split into two layers with a clean boundary between them.
 │  Parser.lean   — parser     │
 │  Validate.lean — validator  │
 │  Core.lean     — core AST   │
+│  CoreValidate  — core checks│
 │  Desugar.lean  — lowering   │
 │  Main.lean     — CLI        │
 └────────────┬────────────────┘
@@ -73,6 +74,10 @@ Except String Unit
     │ optionally NixParserLean.desugar
     ▼
 Except String Core.Expr
+    │
+    │ NixParserLean.Core.validate
+    ▼
+Except String Unit
     │
     │ IO.println (repr expr/coreExpr)  on success
     │ IO.eprintln err         on failure

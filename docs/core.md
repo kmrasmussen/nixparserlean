@@ -2,6 +2,8 @@
 
 `NixParserLean/Core.lean` defines the first proof-oriented target language.
 `NixParserLean/Desugar.lean` lowers parsed surface syntax into that core.
+`NixParserLean/CoreValidate.lean` checks invariants that should hold after
+lowering.
 
 The core is intentionally close to the surface language for now, but it has one
 important difference: attribute bindings are explicit.
@@ -65,4 +67,18 @@ lake exe nixparserlean --desugar --file path/to/file.nix
 ```
 
 Parsing and validation still run first. Desugaring only happens after the
-surface tree is structurally and semantically accepted.
+surface tree is structurally and semantically accepted. The resulting core tree
+is validated before it is printed.
+
+## Core validation
+
+The first core validation pass checks:
+
+- static binding names are unique at each core binding level
+- dynamic assignments have a non-empty path
+- selections and attribute existence tests have non-empty paths
+- expressions inside dynamic path segments and string interpolations are valid
+
+Surface validation still owns source-language errors such as duplicate dotted
+bindings. Core validation is a backstop for the desugaring target: it records
+the invariants later evaluation and proofs should be able to assume.
