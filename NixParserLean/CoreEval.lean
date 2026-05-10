@@ -362,10 +362,16 @@ partial def selectPath (value : Value) (names : List String) : M Value :=
   | none => throw ("eval error: missing attribute '" ++ ".".intercalate names ++ "'")
 end
 
+def evaluateWithFuel (fuel : Nat) (expr : Expr) : M Value :=
+  eval fuel [] [] expr
+
 def evaluate (expr : Expr) : M Value :=
-  eval defaultFuel [] [] expr
+  evaluateWithFuel defaultFuel expr
 
 end Eval
+
+def evalWithFuel (fuel : Nat) (expr : Expr) : Except String Eval.Value :=
+  Eval.evaluateWithFuel fuel expr
 
 def eval (expr : Expr) : Except String Eval.Value :=
   Eval.evaluate expr

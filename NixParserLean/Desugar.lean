@@ -51,11 +51,11 @@ theorem bindingFromPath_static_nested_tail
   rw [h]
   rfl
 
-partial def inheritBindings : List String -> List Core.Binding
+def inheritBindings : List String -> List Core.Binding
   | [] => []
   | name :: names => .inheritAssign name :: inheritBindings names
 
-partial def inheritFromBindings (scope : Core.Expr) : List String -> List Core.Binding
+def inheritFromBindings (scope : Core.Expr) : List String -> List Core.Binding
   | [] => []
   | name :: names =>
       let selected := Core.Expr.select scope [.static name] none

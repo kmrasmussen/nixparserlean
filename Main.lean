@@ -5,6 +5,7 @@ structure Options where
   desugar : Bool := false
   eval : Bool := false
   coreValidationSmoke : Bool := false
+  fuel : Nat := NixParserLean.Core.Eval.defaultFuel
 
 def readFile (path : String) : IO (Except String String) := do
   try
@@ -38,6 +39,13 @@ def readInput : List String -> IO (Except String Options)
       match ← readFile path with
       | .ok input => pure (.ok { input, eval := true })
       | .error err => pure (.error err)
+  | ["--eval", "--fuel", rawFuel, "--file", path] => do
+      match rawFuel.toNat? with
+      | none => pure (.error s!"invalid fuel value: {rawFuel}")
+      | some fuel =>
+          match ← readFile path with
+          | .ok input => pure (.ok { input, eval := true, fuel })
+          | .error err => pure (.error err)
   | ["--file", path, "--eval"] => do
       match ← readFile path with
       | .ok input => pure (.ok { input, eval := true })
@@ -51,7 +59,7 @@ def printCoreResult (options : Options) (coreExpr : NixParserLean.Core.Expr) : I
   match NixParserLean.Core.validate coreExpr with
   | .ok () =>
       if options.eval then
-        match NixParserLean.Core.eval coreExpr with
+        match NixParserLean.Core.evalWithFuel options.fuel coreExpr with
         | .ok value =>
             IO.println (repr value)
             pure 0
