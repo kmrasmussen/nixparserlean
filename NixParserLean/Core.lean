@@ -53,6 +53,7 @@ inductive AttrPathPart where
 
 inductive Binding where
   | staticAssign : (name : String) -> (value : Expr) -> Binding
+  | inheritAssign : (name : String) -> Binding
   | dynamicAssign : (path : List AttrPathPart) -> (value : Expr) -> Binding
   deriving Repr, BEq, Inhabited
 end

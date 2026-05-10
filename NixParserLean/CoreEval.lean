@@ -17,6 +17,7 @@ inductive Value where
 
 inductive EnvValue where
   | value : Value -> EnvValue
+  | inherited : String -> List (String × EnvValue) -> EnvValue
   | thunk : String -> List (String × EnvValue) -> List Binding -> Expr -> EnvValue
   deriving Repr, Inhabited
 end
@@ -91,6 +92,7 @@ private def insertPathAttr (names : List String) (value : Value) :
 private def hasDynamicBinding : List Binding -> Bool
   | [] => false
   | .dynamicAssign _ _ :: _ => true
+  | .inheritAssign _ :: bindings => hasDynamicBinding bindings
   | .staticAssign _ _ :: bindings => hasDynamicBinding bindings
 
 private def attrEnv : List (String × Value) -> Env
@@ -183,6 +185,7 @@ partial def lookupName (fuel : Nat) (stack : List String) (name : String) : Env 
       if candidate == name then
         match entry with
         | .value value => pure value
+        | .inherited inheritedName baseEnv => lookupName fuel stack inheritedName baseEnv
         | .thunk context baseEnv bindings expr =>
             if containsName name stack then
               throw s!"eval error: recursive {context} binding '{name}'"
@@ -260,6 +263,9 @@ partial def evalBindingInto (fuel : Nat) (stack : List String) (env : Env) (bind
   | .staticAssign name expr => do
       let value ← eval fuel stack env expr
       pure (insertAttr name value attrs)
+  | .inheritAssign name => do
+      let value ← lookupName fuel stack name env
+      pure (insertAttr name value attrs)
   | .dynamicAssign path expr => do
       let names ← evalAttrPath fuel stack env path
       let value ← eval fuel stack env expr
@@ -279,6 +285,9 @@ partial def thunkEntriesGo (context : String) (baseEnv : Env) (allBindings : Lis
   | [] => []
   | .staticAssign name expr :: bindings =>
       (name, .thunk context baseEnv allBindings expr) ::
+        thunkEntriesGo context baseEnv allBindings bindings
+  | .inheritAssign name :: bindings =>
+      (name, .inherited name baseEnv) ::
         thunkEntriesGo context baseEnv allBindings bindings
   | .dynamicAssign _ _ :: bindings => thunkEntriesGo context baseEnv allBindings bindings
 

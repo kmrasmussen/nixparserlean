@@ -14,6 +14,7 @@ private def findDuplicateString? (seen : List String) : List String -> Option St
 private def staticBindingNames : List Binding -> List String
   | [] => []
   | .staticAssign name _ :: bindings => name :: staticBindingNames bindings
+  | .inheritAssign name :: bindings => name :: staticBindingNames bindings
   | .dynamicAssign _ _ :: bindings => staticBindingNames bindings
 
 private def validateStaticBindingNames (context : String) (bindings : List Binding) :
@@ -124,6 +125,7 @@ partial def validateParamEntryDefaults : List ParamEntry -> Except String Unit
 
 partial def validateBinding : Binding -> Except String Unit
   | .staticAssign _ value => validateExpr value
+  | .inheritAssign _ => pure ()
   | .dynamicAssign path value => do
       validateNonemptyPath "dynamic binding" path
       validateAttrPathParts path

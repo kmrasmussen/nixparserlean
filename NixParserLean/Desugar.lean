@@ -28,7 +28,7 @@ partial def bindingFromPath (path : List Core.AttrPathPart) (value : Core.Expr) 
 
 partial def inheritBindings : List String -> List Core.Binding
   | [] => []
-  | name :: names => .staticAssign name (.ident name) :: inheritBindings names
+  | name :: names => .inheritAssign name :: inheritBindings names
 
 partial def inheritFromBindings (scope : Core.Expr) : List String -> List Core.Binding
   | [] => []
@@ -52,6 +52,13 @@ partial def mergeBindingInto (binding : Core.Binding) : List Core.Binding -> Lis
             match mergeStaticAttrsets value existingValue with
             | some value => .staticAssign name value :: rest
             | none => binding :: existing :: rest
+          else
+            existing :: mergeBindingInto binding rest
+      | .inheritAssign name, .staticAssign existingName _
+      | .staticAssign name _, .inheritAssign existingName
+      | .inheritAssign name, .inheritAssign existingName =>
+          if name == existingName then
+            binding :: existing :: rest
           else
             existing :: mergeBindingInto binding rest
       | _, _ => existing :: mergeBindingInto binding rest

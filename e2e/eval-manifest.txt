@@ -11,6 +11,9 @@ e2e/corpus/smoke/eval-let-recursive-later.nix	pass	recursive let can reference a
 e2e/corpus/smoke/eval-let-recursive-chain.nix	pass	recursive let can follow a terminating reference chain
 e2e/corpus/smoke/eval-rec-attrset-later.nix	pass	recursive attrset can reference a later attribute
 e2e/corpus/smoke/eval-rec-attrset-chain.nix	pass	recursive attrset can follow a terminating reference chain
+e2e/corpus/smoke/eval-inherit-let-outer.nix	pass	bare inherit in let reads from the outer scope
+e2e/corpus/smoke/eval-inherit-rec-outer.nix	pass	bare inherit in rec reads from the outer scope
+e2e/corpus/smoke/eval-inherit-attrset-outer.nix	pass	bare inherit in attrset reads from the outer scope
 e2e/corpus/smoke/eval-with-simple.nix	pass	with scope contributes attribute names
 e2e/corpus/smoke/eval-with-lexical-shadow.nix	pass	lexical let binding shadows with attribute
 e2e/corpus/smoke/eval-with-lambda-shadow.nix	pass	lambda parameter shadows with attribute
