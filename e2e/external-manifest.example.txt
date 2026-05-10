@@ -8,4 +8,4 @@
 # path<TAB>expectation<TAB>note
 
 file	e2e/corpus/smoke/attrset.nix	pass	local fixture through explicit file record
-url	example-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/master/pkgs/top-level/default.nix	parse-fail	example external corpus entry
+url	example-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/top-level/default.nix	parse-fail	example pinned external corpus entry

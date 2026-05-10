@@ -1,0 +1,18 @@
+# Pinned external corpus.
+#
+# These cases are intentionally not part of the default smoke check because
+# they need network access on first run. The URLs are pinned to the nixpkgs
+# revision from flake.lock:
+#
+#   549bd84d6279f9852cae6225e372cc67fb91a4c1
+#
+# format:
+# file<TAB>path<TAB>expectation<TAB>note
+# url<TAB>cache-name<TAB>url<TAB>expectation<TAB>note
+#
+# expectations: pass, parse-fail, validation-fail, eval-fail
+
+url	nixpkgs-lib-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/default.nix	parse-fail	missing syntax: identifier lambda in let binding, currently stops at rattrs:
+url	nixpkgs-lib-lists.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/lists.nix	parse-fail	missing syntax: top-level attrset lambda after a block doc comment
+url	nixpkgs-shell.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/shell.nix	parse-fail	missing syntax: top-level attrset lambda with parameter defaults
+url	nixpkgs-top-level-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/top-level/default.nix	parse-fail	missing syntax: parenthesized lambda application inside let binding

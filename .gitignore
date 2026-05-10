@@ -1,6 +1,7 @@
 .lake/
 build/
 target/
+e2e/cache/
 result
 *.olean
 *.ilean
