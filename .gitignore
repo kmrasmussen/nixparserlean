@@ -1,0 +1,9 @@
+.lake/
+build/
+result
+*.olean
+*.ilean
+*.c
+*.o
+*.so
+*.a
