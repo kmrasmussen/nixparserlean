@@ -18,6 +18,9 @@ private def curr? (s : ParserState) : Option Char :=
 private def bump (s : ParserState) : ParserState :=
   if eof s then s else { s with pos := s.input.next s.pos }
 
+private def next? (s : ParserState) : Option Char :=
+  curr? (bump s)
+
 private def failAt (s : ParserState) (msg : String) : ParserM α :=
   throw s!"parse error at byte {s.pos.byteIdx}: {msg}"
 
@@ -31,11 +34,29 @@ private partial def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : Parser
 private def takeWhile (p : Char -> Bool) (s : ParserState) : String × ParserState :=
   takeWhileGo p [] s
 
+private partial def skipLineComment (s : ParserState) : ParserState :=
+  match curr? s with
+  | none => s
+  | some '\n' => bump s
+  | some _ => skipLineComment (bump s)
+
+private partial def skipBlockComment (s : ParserState) : ParserState :=
+  match curr? s with
+  | none => s
+  | some '*' =>
+      let s := bump s
+      if curr? s == some '/' then bump s else skipBlockComment s
+  | some _ => skipBlockComment (bump s)
+
 private partial def skipSpace (s : ParserState) : ParserState :=
   match curr? s with
   | some c =>
       if c.isWhitespace then
         skipSpace (bump s)
+      else if c == '#' then
+        skipSpace (skipLineComment (bump s))
+      else if c == '/' && next? s == some '*' then
+        skipSpace (skipBlockComment (bump (bump s)))
       else
         s
   | none => s
