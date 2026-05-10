@@ -1,0 +1,4 @@
+# format: path<TAB>expectation<TAB>note
+e2e/corpus/smoke/attrset.nix	pass	basic attrset with comments
+e2e/corpus/smoke/let-list.nix	pass	let expression and list
+e2e/corpus/smoke/lambda.nix	fail	lambda syntax is not modeled yet

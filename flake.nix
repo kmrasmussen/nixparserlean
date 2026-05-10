@@ -13,10 +13,33 @@
           f (import nixpkgs { inherit system; }));
     in
     {
+      checks = forAllSystems (pkgs: {
+        e2e-smoke = pkgs.runCommand "nixparserlean-e2e-smoke"
+          {
+            nativeBuildInputs = [
+              pkgs.lean4
+              pkgs.cargo
+              pkgs.rustc
+              pkgs.stdenv.cc
+            ];
+            src = self;
+          } ''
+          cp -R "$src" source
+          chmod -R u+w source
+          cd source
+          lake build
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/manifest.txt
+          touch "$out"
+        '';
+      });
+
       devShells = forAllSystems (pkgs: {
         default = pkgs.mkShell {
           packages = [
             pkgs.lean4
+            pkgs.cargo
+            pkgs.rustc
+            pkgs.curl
             pkgs.git
           ];
         };

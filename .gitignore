@@ -1,5 +1,6 @@
 .lake/
 build/
+target/
 result
 *.olean
 *.ilean

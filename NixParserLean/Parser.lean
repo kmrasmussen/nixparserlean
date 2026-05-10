@@ -3,26 +3,28 @@ import NixParserLean.Syntax
 namespace NixParserLean
 
 structure ParserState where
-  input : String
-  pos : String.Pos := 0
+  remaining : List Char
+  offset : Nat := 0
   deriving Repr, Inhabited
 
 abbrev ParserM := Except String
 
 private def eof (s : ParserState) : Bool :=
-  s.pos == s.input.endPos
+  s.remaining.isEmpty
 
 private def curr? (s : ParserState) : Option Char :=
-  if eof s then none else s.input.get? s.pos
+  s.remaining.head?
 
 private def bump (s : ParserState) : ParserState :=
-  if eof s then s else { s with pos := s.input.next s.pos }
+  match s.remaining with
+  | [] => s
+  | _ :: rest => { s with remaining := rest, offset := s.offset + 1 }
 
 private def next? (s : ParserState) : Option Char :=
   curr? (bump s)
 
 private def failAt (s : ParserState) (msg : String) : ParserM α :=
-  throw s!"parse error at byte {s.pos.byteIdx}: {msg}"
+  throw s!"parse error at offset {s.offset}: {msg}"
 
 private partial def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : ParserState) :
     String × ParserState :=
@@ -242,7 +244,7 @@ partial def parseLetBindings (bindings : List Binding) (s : ParserState) :
 end
 
 def parse (input : String) : Except String Expr := do
-  let (expr, s) ← parseExpr { input := input }
+  let (expr, s) ← parseExpr { remaining := input.toList }
   let s := skipSpace s
   if eof s then
     pure expr
