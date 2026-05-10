@@ -142,7 +142,7 @@ private def isAppArgumentStart (s : ParserState) : Bool :=
   let s := skipSpace s
   isPathStart s ||
     match curr? s with
-    | some '"' | some '[' | some '{' | some '-' | some '!' => true
+    | some '"' | some '\'' | some '[' | some '{' | some '-' | some '!' => true
     | some c => c.isDigit || isIdentStart c
     | none => false
 
@@ -235,6 +235,29 @@ partial def quotedStringGo (text : List Char) (parts : List StringPart) (s : Par
 partial def quotedString (s : ParserState) : ParserM (List StringPart × ParserState) := do
   let s ← char '"' s
   quotedStringGo [] [] s
+
+partial def indentedStringGo (text : List Char) (parts : List StringPart) (s : ParserState) :
+    ParserM (List StringPart × ParserState) := do
+  match curr? s with
+  | none => failAt s "unterminated indented string"
+  | some '\'' =>
+      if next? s == some '\'' then
+        pure ((flushStringText text parts).reverse, bump (bump s))
+      else
+        indentedStringGo ('\'' :: text) parts (bump s)
+  | some '$' =>
+      if next? s == some '{' then
+        let parts := flushStringText text parts
+        let (expr, s) ← parseExpr (bump (bump s))
+        let s ← char '}' s
+        indentedStringGo [] (.interpolation expr :: parts) s
+      else
+        indentedStringGo ('$' :: text) parts (bump s)
+  | some c => indentedStringGo (c :: text) parts (bump s)
+
+partial def indentedString (s : ParserState) : ParserM (List StringPart × ParserState) := do
+  let s ← token "''" s
+  indentedStringGo [] [] s
 
 partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
@@ -410,6 +433,12 @@ partial def parseAtom (s : ParserState) : ParserM (Expr × ParserState) := do
   | some '"' =>
       let (v, s') ← quotedString s
       pure (.str v, s')
+  | some '\'' =>
+      if next? s == some '\'' then
+        let (v, s') ← indentedString s
+        pure (.str v, s')
+      else
+        failAt s "expected expression"
   | some '(' =>
       let s ← char '(' s
       let (expr, s) ← parseExpr s
