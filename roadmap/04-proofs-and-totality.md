@@ -87,9 +87,9 @@ Parser termination should come after external corpus blockers are reduced.
 Recommended path:
 
 1. Convert lexer-level helpers first:
-   - `takeWhileGo`;
+   - `takeWhileGo` (complete as an input-length fuel wrapper);
    - comment skipping;
-   - angle path scanning;
+   - angle path scanning (complete as an input-length fuel wrapper);
    - string scanning.
 2. Then consider expression parser fuel.
 3. Preserve source positions exactly.

@@ -10,6 +10,16 @@ marked `partial`. The grammar is mutually recursive and backtracking-oriented,
 so this is acceptable for now, but structured termination or parser fuel would
 eventually make the parser model more proof-friendly.
 
+The first lexer helpers have moved off `partial`:
+
+- `takeWhileGo` delegates to `takeWhileGoFuel`, sized from remaining input;
+- `anglePathGo` delegates to `anglePathGoFuel`, also sized from remaining
+  input.
+
+Both wrappers preserve the existing public helper shape and source-position
+behavior. The remaining parser helper debt includes comment skipping,
+whitespace skipping, string scanning, and the expression parser.
+
 ## Validation
 
 `Validate.lean` and `CoreValidate.lean` now use total fuel-bounded validator

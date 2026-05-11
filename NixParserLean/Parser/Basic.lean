@@ -58,12 +58,19 @@ def charAt? (n : Nat) (s : ParserState) : Option Char :=
 def failAt (s : ParserState) (msg : String) : ParserM α :=
   throw { offset := s.offset, line := s.line, column := s.column, message := msg }
 
-partial def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : ParserState) :
+def takeWhileGoFuel (fuel : Nat) (p : Char -> Bool) (acc : List Char) (s : ParserState) :
     String × ParserState :=
-  match curr? s with
-  | some c =>
-      if p c then takeWhileGo p (c :: acc) (bump s) else (String.ofList acc.reverse, s)
-  | none => (String.ofList acc.reverse, s)
+  match fuel, curr? s with
+  | 0, _ => (String.ofList acc.reverse, s)
+  | Nat.succ fuel, some c =>
+      if p c then takeWhileGoFuel fuel p (c :: acc) (bump s) else (String.ofList acc.reverse, s)
+  | Nat.succ _, none => (String.ofList acc.reverse, s)
+termination_by fuel
+decreasing_by simp_wf
+
+def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : ParserState) :
+    String × ParserState :=
+  takeWhileGoFuel s.remaining.length p acc s
 
 def takeWhile (p : Char -> Bool) (s : ParserState) : String × ParserState :=
   takeWhileGo p [] s
@@ -237,16 +244,23 @@ def flushStringText (text : List Char) (parts : List StringPart) : List StringPa
 def isPathTerminator (c : Char) : Bool :=
   c.isWhitespace || c == ')' || c == ']' || c == '}' || c == ';' || c == ','
 
-partial def anglePathGo (acc : List Char) (s : ParserState) :
+def anglePathGoFuel (fuel : Nat) (acc : List Char) (s : ParserState) :
     ParserM (String × ParserState) := do
-  match curr? s with
-  | none => failAt s "unterminated angle path"
-  | some '>' => pure ("<" ++ String.ofList acc.reverse ++ ">", bump s)
-  | some c =>
+  match fuel, curr? s with
+  | 0, _ => failAt s "unterminated angle path"
+  | Nat.succ _, none => failAt s "unterminated angle path"
+  | Nat.succ _, some '>' => pure ("<" ++ String.ofList acc.reverse ++ ">", bump s)
+  | Nat.succ fuel, some c =>
       if c.isWhitespace then
         failAt s "unterminated angle path"
       else
-        anglePathGo (c :: acc) (bump s)
+        anglePathGoFuel fuel (c :: acc) (bump s)
+termination_by fuel
+decreasing_by simp_wf
+
+def anglePathGo (acc : List Char) (s : ParserState) :
+    ParserM (String × ParserState) := do
+  anglePathGoFuel s.remaining.length acc s
 
 def anglePath (s : ParserState) : ParserM (String × ParserState) := do
   let s ← char '<' s
