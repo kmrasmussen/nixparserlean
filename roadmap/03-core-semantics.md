@@ -1,0 +1,119 @@
+# Core Semantics Roadmap
+
+The core language is the project's main proof target. It is currently useful,
+but still too close to the surface language for the long-term goal.
+
+## Current Core
+
+Core currently keeps many surface-like forms:
+
+- literals, paths, lists, attrsets;
+- `letIn`, lambdas, control flow, `assert`, `with`;
+- selection/defaults, `hasAttr`, application;
+- unary and binary operators;
+- static, inherit, and dynamic bindings.
+
+This has been pragmatic because it lets evaluation grow quickly. The next
+stage should decide which constructs are truly core and which should lower
+away.
+
+## Design Target
+
+Core should become:
+
+- small enough that core validation invariants are easy to state;
+- explicit about effects and host boundaries;
+- friendly to evaluation and preservation theorems;
+- still close enough to Nix that debugging desugared output remains possible.
+
+## Milestone A: Name The Minimal Core
+
+Create a document or section in `docs/core.md` that distinguishes:
+
+- **surface forms retained temporarily**;
+- **permanent core forms**;
+- **forms that should lower away**;
+- **forms that require a separate semantic decision**.
+
+Candidate permanent core forms:
+
+- primitive values;
+- paths as inert values;
+- lists and attrsets;
+- static and dynamic bindings;
+- lambda/application;
+- selection;
+- conditionals;
+- a small operator set.
+
+Candidate lowering targets:
+
+- `inherit` is already mostly lowered.
+- scoped inherit is already lowered to selection.
+- selection defaults might lower into a smaller missing-value/conditional
+  representation later.
+- `with` may become an explicit environment operation rather than core syntax.
+
+## Milestone B: Core Validation As A Contract
+
+Core validation should stay even as proofs grow. Its role should become:
+
+- executable contract for CLI/e2e;
+- defense against desugar regressions;
+- theorem target for preservation.
+
+Next invariants to consider:
+
+- no empty static binding names if the parser allows edge cases;
+- normalized static nested attrset shape after merge;
+- dynamic path expressions are valid and side-effect-free;
+- no unsupported dynamic bindings in recursive scopes before eval.
+
+Acceptance criteria:
+
+- Each new core invariant has one direct `core-fail` or desugar/eval fixture.
+- Proofs can refer to the invariant predicate or helper, not reimplement it
+  from scratch.
+
+## Milestone C: Evaluator Coverage
+
+The evaluator now covers a real fragment. The next semantic gains should be
+chosen by whether they unlock real Nix patterns or proofs.
+
+High-value additions:
+
+1. Builtins as an explicit environment.
+2. Imported functions or a host-aware value shape.
+3. More exact string/path coercion policy.
+4. Recursive update semantics if needed by corpus.
+5. Better function value diagnostics and JSON representation.
+
+Keep unsupported cases classified as `eval-fail`, not `other-fail`.
+
+## Milestone D: Semantic Fuel
+
+Entry-step fuel is now deterministic. The next step is proof structure:
+
+- define a subset of expressions without thunks or host imports;
+- prove monotonicity for literals and binary expressions;
+- widen to lists and non-recursive attrsets;
+- later connect the evaluator to a small-step relation.
+
+Do not widen the theorem target to closures, thunks, or host imports until the
+small subset is clean.
+
+## Milestone E: Examples As Regression Specs
+
+`examples/current-core-showcase/showcase.nix` should evolve into a small suite
+of examples rather than one large file.
+
+Suggested examples:
+
+- pure expression core;
+- recursive attrs and let;
+- lambdas and attrset parameters;
+- dynamic attrs and interpolation;
+- host import boundary;
+- proof-oriented static attrset fragment.
+
+Each example should be referenced from the relevant e2e manifest.
