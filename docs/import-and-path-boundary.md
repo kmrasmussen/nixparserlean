@@ -18,6 +18,9 @@ The current boundary is:
   importing file's directory, reads the target file, parses/validates/desugars
   it, evaluates it in isolation, and reifies representable values, including
   path values, before the final pure evaluation pass.
+- Imported files that evaluate to functions are rejected with
+  `eval error: unsupported imported function values`, because closures cannot
+  currently be reified back into core syntax for the final pure pass.
 - `--eval-imports` still rejects absolute, home-relative, and angle imports.
 
 This is deliberate. Import needs host filesystem IO, path normalization, base
@@ -28,4 +31,5 @@ import layer interprets relative path text as filesystem input.
 
 The smoke corpus has parser coverage for `import ./foo.nix`, pure eval-fail
 coverage for an import attempt, pure eval coverage for path values, and
-`e2e/import-manifest.txt` coverage for the explicit host IO path.
+`e2e/import-manifest.txt` coverage for the explicit host IO path, including
+the imported-function rejection boundary.

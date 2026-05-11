@@ -3,6 +3,7 @@
 e2e/corpus/smoke/eval-host-import-path.nix	pass	relative import evaluates through the host IO layer
 e2e/corpus/smoke/eval-host-imported-path-value.nix	pass	imported representable values may include inert path values
 examples/host-boundary/main.nix	pass	example suite host import boundary
+e2e/corpus/smoke/eval-host-import-function.nix	eval-fail	imported functions cannot be reified into core syntax yet
 e2e/corpus/smoke/eval-host-import-angle-path.nix	eval-fail	angle-bracket imports are outside the first host boundary
 e2e/corpus/smoke/eval-host-import-absolute-path.nix	eval-fail	absolute imports remain outside the explicit host boundary
 e2e/corpus/smoke/eval-host-import-home-path.nix	eval-fail	home-relative imports remain outside the explicit host boundary
