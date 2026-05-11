@@ -196,6 +196,21 @@ Core validation errors are formatted as `core error: ...`; the Rust e2e runner
 classifies that prefix as `core-fail`, and
 `e2e/core-validation-manifest.txt` exercises the contract.
 
+## First validation theorem
+
+The first checked bridge from desugaring to core validation is intentionally
+restricted:
+
+```lean
+bindingFromPath_single_static_null_core_valid
+```
+
+It states that a singleton static attrpath with a non-empty name desugars into
+a one-binding core attrset that passes core validation. This excludes dynamic
+paths, nested paths, non-null values, recursive attrsets, duplicate bindings,
+and the full surface validator. Those exclusions keep the theorem connected to
+real code while leaving the broader preservation theorem for later tickets.
+
 ## Values
 
 The evaluator's value type is:

@@ -174,5 +174,15 @@ def validateExpr (expr : Expr) : Except String Unit :=
 def validate (expr : Expr) : Except String Unit :=
   validateExpr expr
 
+theorem validate_single_static_null_attrset_of_nonempty {name : String}
+    (h : (name == "") = false) :
+    validate (.attrset false [.staticAssign name .null]) = .ok () := by
+  unfold validate validateExpr validateExprFuel validateStaticBindingNames
+  unfold staticBindingNames containsEmptyString findDuplicateString?
+  unfold validateBindingsFuel validateBindingFuel
+  simp [defaultValidationFuel, h, staticBindingNames, containsEmptyString,
+    findDuplicateString?, validateExprFuel, validateBindingsFuel]
+  rfl
+
 end Core
 end NixParserLean

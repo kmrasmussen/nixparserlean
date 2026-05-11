@@ -1,4 +1,5 @@
 import NixParserLean.Core
+import NixParserLean.CoreValidate
 import NixParserLean.Syntax
 
 namespace NixParserLean
@@ -66,6 +67,14 @@ theorem bindingFromPath_empty_static_rejected {path : List Core.AttrPathPart}
   unfold bindingFromPath
   rw [h]
   rfl
+
+theorem bindingFromPath_single_static_null_core_valid {name : String}
+    (h : (name == "") = false) :
+    (bindingFromPath [.static name] .null).bind
+      (fun binding => Core.validate (.attrset false [binding])) = .ok () := by
+  unfold bindingFromPath staticNames? nestedStaticAssign nestedStaticAssignFromHead
+  change Core.validate (.attrset false [.staticAssign name .null]) = .ok ()
+  exact Core.validate_single_static_null_attrset_of_nonempty h
 
 def inheritBindings : List String -> List Core.Binding
   | [] => []
