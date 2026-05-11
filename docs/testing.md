@@ -85,6 +85,50 @@ Lines starting with `#` and blank lines are ignored. See
 `e2e/external-manifest.example.txt` for an annotated example of the
 file/url forms.
 
+### External corpus
+
+`e2e/external-manifest.txt` is a curated, pinned nixpkgs corpus. It is not
+part of the default flake check because the first run may need network access,
+but it should be run whenever parser coverage changes:
+
+```sh
+cargo run --manifest-path e2e/runner/Cargo.toml -- \
+    --manifest e2e/external-manifest.txt
+```
+
+The runner caches downloaded files under `e2e/cache`, so later runs are local
+unless a new URL row is added or the cache is cleared.
+
+Expected external failures should start their note with a stable blocker
+category:
+
+```text
+blocker: category-name; short description of the first failing construct
+```
+
+To summarize current expected external blockers:
+
+```sh
+awk -F '\t' '
+  $1 == "url" && $4 != "pass" {
+    blocker = $5
+    sub(/^blocker: /, "", blocker)
+    sub(/;.*/, "", blocker)
+    counts[blocker]++
+  }
+  END {
+    for (blocker in counts) {
+      print counts[blocker], blocker
+    }
+  }
+' e2e/external-manifest.txt | sort -nr
+```
+
+When a parser or evaluator change makes an expected external failure pass, keep
+the file in the manifest and change its expectation to `pass`. When a failure
+moves to a later construct, update the blocker category and note before
+committing the change.
+
 ### e2e runner
 
 The Rust program at `e2e/runner/src/main.rs` reads a manifest and runs the

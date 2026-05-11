@@ -31,3 +31,26 @@ guides parser and semantic work without making ordinary development noisy.
 4. Documentation explains how to refresh, cache, and interpret the corpus.
 5. At least one blocker category is represented by multiple files, so future
    syntax work can be prioritized by observed frequency.
+
+## Resolution
+Expanded `e2e/external-manifest.txt` to 15 pinned nixpkgs files at the existing
+flake-lock revision. The manifest now records 10 parser passes and 5 expected
+parse failures.
+
+Expected failure notes now start with a stable `blocker:` category. Current
+categories are:
+
+- `spaced-dynamic-selection` - 2 files
+- `quoted-inherit-name` - 1 file
+- `path-argument-dot-file` - 1 file
+- `indented-string-escape` - 1 file
+
+Documented the external corpus workflow in `docs/testing.md`, including the
+runner command, cache behavior, expectation update policy, and an `awk` command
+that summarizes blocker categories from the manifest.
+
+Verification:
+
+```text
+e2e: 10 passed, 5 expected parse failures, 0 expected validation failures, 0 expected core failures, 0 expected eval failures, 0 unexpected failures, 0 unexpected successes
+```
