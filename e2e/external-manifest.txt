@@ -18,12 +18,12 @@ url	nixpkgs-shell.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d62
 url	nixpkgs-top-level-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/top-level/default.nix	pass	parses top-level package set entry
 url	nixpkgs-lib-attrsets.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/attrsets.nix	pass	parses attrset library surface
 url	nixpkgs-lib-strings.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/strings.nix	parse-fail	blocker: indented-string-escape; stops at literal "''${path}" inside an indented string
-url	nixpkgs-lib-trivial.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/trivial.nix	parse-fail	blocker: path-argument-dot-file; stops at fileContents ./.version
+url	nixpkgs-lib-trivial.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/trivial.nix	pass	parses trivial helpers with dot-file path arguments
 url	nixpkgs-lib-fixed-points.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/fixed-points.nix	pass	parses fixed-point helper surface
 url	nixpkgs-lib-customisation.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/customisation.nix	pass	parses customisation helper surface
 url	nixpkgs-lib-options.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/options.nix	pass	parses options helper surface
 url	nixpkgs-lib-modules.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/modules.nix	pass	parses module system helper surface
-url	nixpkgs-lib-types.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/types.nix	parse-fail	blocker: spaced-dynamic-selection; stops at attrset newline .${commonType} selection
-url	nixpkgs-lib-systems-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/systems/default.nix	parse-fail	blocker: spaced-dynamic-selection; stops at attrset newline .${final.parsed.kernel.name} selection
+url	nixpkgs-lib-types.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/types.nix	pass	parses type helpers with spaced dynamic selection
+url	nixpkgs-lib-systems-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/systems/default.nix	pass	parses system defaults with spaced dynamic selection
 url	nixpkgs-trivial-builders-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/build-support/trivial-builders/default.nix	pass	parses trivial builders package helper
 url	nixpkgs-stdenv-generic-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/stdenv/generic/default.nix	pass	parses generic stdenv entry surface

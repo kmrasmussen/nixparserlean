@@ -1,0 +1,2 @@
+fileContents ./.version
+

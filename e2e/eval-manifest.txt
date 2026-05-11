@@ -20,6 +20,7 @@ e2e/corpus/smoke/eval-with-lexical-shadow.nix	pass	lexical let binding shadows w
 e2e/corpus/smoke/eval-with-lambda-shadow.nix	pass	lambda parameter shadows with attribute
 e2e/corpus/smoke/eval-dynamic-attr-binding.nix	pass	dynamic attr binding evaluates a string key
 e2e/corpus/smoke/eval-dynamic-attr-selection.nix	pass	dynamic attr selection evaluates a string key
+e2e/corpus/smoke/eval-spaced-dynamic-selection.nix	pass	spaced dynamic attr selection evaluates a string key
 e2e/corpus/smoke/eval-dynamic-quoted-attr.nix	pass	quoted dynamic attr name evaluates interpolation
 e2e/corpus/smoke/eval-equality-same-kind.nix	pass	same-kind equality evaluates normally
 e2e/corpus/smoke/eval-float-literal.nix	pass	float literals evaluate to explicit float values

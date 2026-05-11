@@ -28,6 +28,12 @@ private def isAppStop (s : ParserState) : Bool :=
       else
         false
 
+private def spacedDynamicSelection? (s : ParserState) : Option ParserState :=
+  let s := skipSpace s
+  match curr? s, next? s, charAt? 2 s with
+  | some '.', some '$', some '{' => some s
+  | _, _, _ => none
+
 mutual
 partial def quotedStringGo (text : List Char) (parts : List StringPart) (s : ParserState) :
     ParserM (List StringPart × ParserState) := do
@@ -287,7 +293,16 @@ partial def parseSelect (s : ParserState) : ParserM (Expr × ParserState) := do
             let (defaultExpr, st) ← parseExpr st
             loop (.select expr path (some defaultExpr)) st
         | _ => loop (.select expr path none) st
-    | _ => pure (expr, st)
+    | _ =>
+        match spacedDynamicSelection? st with
+        | some dot =>
+            let (path, st) ← parseAttrPath (bump dot)
+            match ident st with
+            | .ok ("or", st) =>
+                let (defaultExpr, st) ← parseExpr st
+                loop (.select expr path (some defaultExpr)) st
+            | _ => loop (.select expr path none) st
+        | none => pure (expr, st)
   loop base s
 
 partial def parseAtom (s : ParserState) : ParserM (Expr × ParserState) := do
@@ -425,7 +440,6 @@ partial def parseParamEntry (s : ParserState) : ParserM (ParamEntry × ParserSta
 partial def parseAttrPath (s : ParserState) : ParserM (AttrPath × ParserState) := do
   let (first, s) ← attrName s
   let rec loop (parts : List AttrPathPart) (st : ParserState) := do
-    let st := skipSpace st
     if curr? st == some '.' then
       let (part, st') ← attrName (bump st)
       loop (part :: parts) st'

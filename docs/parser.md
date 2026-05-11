@@ -106,6 +106,22 @@ values. Validation still checks duplicate and prefix conflicts for fully static
 paths only; dynamic names are preserved for later desugaring instead of guessed
 at validation time.
 
+## Selection and path disambiguation
+
+Plain attribute selection remains whitespace-tight: `pkg.meta` parses as
+selection, while `pkg .meta` does not. Dynamic selection has a narrow exception
+for real-world Nix code that formats the selector on the next line:
+
+```nix
+attrs
+  .${name}
+```
+
+`parseSelect` recognizes that pattern only when the dot is followed directly by
+`${`. This keeps path arguments such as `import ./default.nix` and
+`fileContents ./.version` available to `parseApp` as path literals instead of
+being claimed as spaced selections from the function name.
+
 ## Lambda detection
 
 `parseLambda` is attempted via backtracking inside `parseExpr`. If it fails (no `:` found after the parameter), the parser falls back to `parseOr`. This means lambda syntax is tried speculatively and never consumes input on failure.

@@ -16,6 +16,7 @@ e2e/corpus/smoke/duplicate-attr.nix	validation-fail	duplicate attr binding shoul
 e2e/corpus/smoke/duplicate-inherit.nix	validation-fail	duplicate inherit binding should fail validation
 e2e/corpus/smoke/duplicate-let.nix	validation-fail	duplicate let binding should fail validation
 e2e/corpus/smoke/duplicate-param-lambda.nix	validation-fail	duplicate lambda parameter should fail validation
+e2e/corpus/smoke/dot-file-path-argument.nix	pass	dot-file relative path as function argument
 e2e/corpus/smoke/dynamic-attr-names.nix	pass	dynamic attribute names in binding and selection
 e2e/corpus/smoke/float-literals.nix	pass	representative float literal forms
 e2e/corpus/smoke/identity-lambda.nix	pass	identifier lambda parameter
@@ -43,6 +44,7 @@ e2e/corpus/smoke/reverse-aliased-param-lambda.nix	pass	reverse aliased attrset l
 e2e/corpus/smoke/reverse-prefix-attr-conflict.nix	validation-fail	reverse attrpath prefix conflict should fail validation
 e2e/corpus/smoke/select.nix	pass	attribute selection
 e2e/corpus/smoke/select-default.nix	pass	attribute selection default
+e2e/corpus/smoke/spaced-dynamic-selection.nix	pass	dynamic selection may be split from its base by whitespace
 e2e/corpus/smoke/string-interpolation.nix	pass	quoted string interpolation
 e2e/corpus/smoke/unterminated-list.nix	parse-fail	unterminated list should report a structured parse error
 e2e/corpus/smoke/update-operator.nix	pass	attrset update operator
