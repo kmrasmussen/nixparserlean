@@ -33,6 +33,10 @@ e2e/corpus/smoke/eval-mixed-numeric-arithmetic.nix	pass	mixed int/float arithmet
 e2e/corpus/smoke/eval-path-values.nix	pass	relative, absolute, home, angle, and store-like paths evaluate as inert values
 e2e/corpus/smoke/eval-path-equality.nix	pass	path equality compares inert path text without filesystem access
 examples/current-core-showcase/showcase.nix	pass	showcase combines recursive attrsets, aliases, dynamic attrs, and with
+examples/pure-expressions/example.nix	pass	example suite pure expression fragment
+examples/recursion/example.nix	pass	example suite recursive let and attrset fragment
+examples/lambdas/example.nix	pass	example suite attrset lambda fragment
+examples/dynamic-attrs/example.nix	pass	example suite dynamic attr fragment
 e2e/corpus/smoke/eval-string-interpolation.nix	pass	string interpolation evaluates string values
 e2e/corpus/smoke/eval-indented-string-escaped-interpolation.nix	pass	indented string escaped interpolation remains literal
 e2e/corpus/smoke/eval-string-interpolation-int.nix	pass	string interpolation coerces integers

@@ -1,0 +1,4 @@
+{
+  service.name = "demo";
+  service.port = 8080;
+}

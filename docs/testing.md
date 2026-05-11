@@ -71,9 +71,11 @@ Smoke fixtures are grouped roughly into:
   exercise paths that the surface parser/validator accept but the evaluator
   deliberately rejects.
 
-The combined integration example `examples/current-core-showcase/showcase.nix`
-is also referenced from `e2e/eval-manifest.txt` so the example is both
-documentation and a regression test.
+Examples under `examples/` are also referenced from e2e manifests so they are
+both documentation and regression tests. The focused suite covers pure
+expressions, recursion, lambdas, dynamic attributes, host imports, and a
+proof-oriented static attrset fragment; `current-core-showcase/` remains as the
+combined integration example.
 
 ### Manifest format
 

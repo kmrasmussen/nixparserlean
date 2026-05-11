@@ -7,4 +7,5 @@ e2e/corpus/smoke/inherit-from.nix	pass	scoped inherit lowers into core selection
 e2e/corpus/smoke/select-default.nix	pass	static selection defaults lower through hasAttr and select
 e2e/corpus/smoke/static-select-default-lowering.nix	pass	static selection default simplification fixture
 e2e/corpus/smoke/string-interpolation.nix	pass	string interpolation lowers into core string parts
+examples/proof-static-attrsets/example.nix	pass	example suite static attrset proof fragment
 e2e/corpus/smoke/duplicate-attr.nix	validation-fail	surface validation still rejects duplicate bindings before core
