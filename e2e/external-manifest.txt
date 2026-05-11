@@ -12,7 +12,7 @@
 #
 # expectations: pass, parse-fail, validation-fail, core-fail, eval-fail
 
-url	nixpkgs-lib-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/default.nix	parse-fail	blocker: quoted-inherit-name; stops at inherit (self.trivial) "or"
+url	nixpkgs-lib-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/default.nix	pass	parses default library surface with quoted inherit names
 url	nixpkgs-lib-lists.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/lists.nix	pass	parses list library surface
 url	nixpkgs-shell.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/shell.nix	pass	parses nixpkgs development shell
 url	nixpkgs-top-level-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/top-level/default.nix	pass	parses top-level package set entry

@@ -16,6 +16,7 @@ e2e/corpus/smoke/duplicate-attr.nix	validation-fail	duplicate attr binding shoul
 e2e/corpus/smoke/duplicate-inherit.nix	validation-fail	duplicate inherit binding should fail validation
 e2e/corpus/smoke/duplicate-let.nix	validation-fail	duplicate let binding should fail validation
 e2e/corpus/smoke/duplicate-param-lambda.nix	validation-fail	duplicate lambda parameter should fail validation
+e2e/corpus/smoke/duplicate-quoted-inherit.nix	validation-fail	quoted inherit names participate in duplicate validation
 e2e/corpus/smoke/dot-file-path-argument.nix	pass	dot-file relative path as function argument
 e2e/corpus/smoke/dynamic-attr-names.nix	pass	dynamic attribute names in binding and selection
 e2e/corpus/smoke/float-literals.nix	pass	representative float literal forms
@@ -38,6 +39,7 @@ e2e/corpus/smoke/parenthesized-application-argument.nix	pass	parenthesized funct
 e2e/corpus/smoke/parenthesized-import-application.nix	pass	parenthesized import expression used as function argument
 e2e/corpus/smoke/prefix-attr-conflict.nix	validation-fail	attrpath prefix conflict should fail validation
 e2e/corpus/smoke/quoted-attr-names.nix	pass	quoted static attribute names
+e2e/corpus/smoke/quoted-inherit-names.nix	pass	quoted static inherit names
 e2e/corpus/smoke/relative-path.nix	pass	relative path literal
 e2e/corpus/smoke/reverse-alias-param-conflict.nix	validation-fail	reverse lambda alias cannot reuse a destructured parameter name
 e2e/corpus/smoke/reverse-aliased-param-lambda.nix	pass	reverse aliased attrset lambda parameter

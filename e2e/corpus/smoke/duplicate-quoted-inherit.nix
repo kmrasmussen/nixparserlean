@@ -1,0 +1,4 @@
+{
+  inherit or "or";
+}
+

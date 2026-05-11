@@ -141,7 +141,12 @@ being claimed as spaced selections from the function name.
 
 - `inherit (scope) a b;` → `Binding.inheritFrom`
 - `inherit a b;` → `Binding.inherit`
+- `inherit "or";` and `inherit (scope) "quoted-name";` preserve static quoted
+  names in the inherited name list
 - `a.b.c = expr;` → `Binding.assign`
+
+Dynamic quoted inherit names are still rejected at parse time; inherit names
+are currently static strings.
 
 `parseBindingsUntil endChar` loops until it sees `endChar` without consuming it. `parseLetBindings` loops until it peeks `in`.
 

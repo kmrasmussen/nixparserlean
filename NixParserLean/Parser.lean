@@ -484,6 +484,11 @@ partial def parseInheritNameList (acc : List String) (s : ParserState) :
   match curr? s with
   | some ';' => pure (acc.reverse, bump s)
   | none => failAt s "unterminated inherit binding"
+  | some '"' =>
+      let (parts, s') ← quotedString s
+      match staticStringParts? parts with
+      | some name => parseInheritNameList (name :: acc) s'
+      | none => failAt s "dynamic inherit names are unsupported"
   | _ =>
       let (name, s') ← ident s
       parseInheritNameList (name :: acc) s'
