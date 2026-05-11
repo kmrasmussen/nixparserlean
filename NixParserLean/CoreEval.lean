@@ -25,7 +25,7 @@ inductive EnvValue where
 end
 
 mutual
-partial def beqValue : Value -> Value -> Bool
+def beqValue : Value -> Value -> Bool
   | .int left, .int right => left == right
   | .float left, .float right => left == right
   | .str left, .str right => left == right
@@ -35,12 +35,12 @@ partial def beqValue : Value -> Value -> Bool
   | .attrset left, .attrset right => beqAttrs left right
   | _, _ => false
 
-partial def beqValues : List Value -> List Value -> Bool
+def beqValues : List Value -> List Value -> Bool
   | [], [] => true
   | left :: lefts, right :: rights => beqValue left right && beqValues lefts rights
   | _, _ => false
 
-partial def beqAttrs : List (String × Value) -> List (String × Value) -> Bool
+def beqAttrs : List (String × Value) -> List (String × Value) -> Bool
   | [], [] => true
   | (leftName, leftValue) :: lefts, (rightName, rightValue) :: rights =>
       leftName == rightName && beqValue leftValue rightValue && beqAttrs lefts rights
@@ -158,7 +158,7 @@ partial def evalUnary : UnaryOp -> Value -> M Value
   | .negate, _ => throw "eval error: numeric negation expects an int"
 
 mutual
-partial def equalValue : Value -> Value -> M Bool
+def equalValue : Value -> Value -> M Bool
   | .int left, .int right => pure (left == right)
   | .float left, .float right => pure (left == right)
   | .str left, .str right => pure (left == right)
@@ -169,14 +169,14 @@ partial def equalValue : Value -> Value -> M Bool
   | .closure _ _ _, .closure _ _ _ => throw "eval error: function values cannot be compared"
   | _, _ => throw "eval error: equality operands must have the same type"
 
-partial def equalValues : List Value -> List Value -> M Bool
+def equalValues : List Value -> List Value -> M Bool
   | [], [] => pure true
   | [], _ :: _ => pure false
   | _ :: _, [] => pure false
   | left :: lefts, right :: rights => do
       if ← equalValue left right then equalValues lefts rights else pure false
 
-partial def equalAttrs : List (String × Value) -> List (String × Value) -> M Bool
+def equalAttrs : List (String × Value) -> List (String × Value) -> M Bool
   | [], [] => pure true
   | [], _ :: _ => pure false
   | _ :: _, [] => pure false
@@ -229,6 +229,19 @@ partial def evalBinary : BinaryOp -> Value -> Value -> M Value
   | .or, .bool left, .bool right => pure (.bool (left || right))
   | .implies, .bool left, .bool right => pure (.bool ((!left) || right))
   | op, _, _ => throw s!"eval error: unsupported operands for binary operator {repr op}"
+
+def paramEntryNames : List ParamEntry -> List String
+  | [] => []
+  | entry :: entries => entry.name :: paramEntryNames entries
+
+def containsName (name : String) : List String -> Bool
+  | [] => false
+  | candidate :: names => candidate == name || containsName name names
+
+def findExtraAttr? (allowed : List String) : List (String × Value) -> Option String
+  | [] => none
+  | (name, _) :: attrs =>
+      if containsName name allowed then findExtraAttr? allowed attrs else some name
 
 mutual
 partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Value
@@ -319,19 +332,6 @@ partial def bindParam (fuel : Nat) (stack : List String) (param : LambdaParam) (
   | .alias name (.attrset paramSet) =>
       bindParamSet fuel stack paramSet argument ((name, .value argument) :: env)
   | .alias _ _ => unsupported "aliased non-attrset lambda parameter evaluation"
-
-partial def paramEntryNames : List ParamEntry -> List String
-  | [] => []
-  | entry :: entries => entry.name :: paramEntryNames entries
-
-partial def containsName (name : String) : List String -> Bool
-  | [] => false
-  | candidate :: names => candidate == name || containsName name names
-
-partial def findExtraAttr? (allowed : List String) : List (String × Value) -> Option String
-  | [] => none
-  | (name, _) :: attrs =>
-      if containsName name allowed then findExtraAttr? allowed attrs else some name
 
 partial def bindParamSet (fuel : Nat) (stack : List String) (paramSet : ParamSet)
     (argument : Value) (env : Env) : M Env :=

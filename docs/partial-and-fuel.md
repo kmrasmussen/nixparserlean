@@ -17,6 +17,14 @@ validators over expressions, string parts, lambda parameters, and bindings.
 Those definitions are structurally recursive over the AST, but Lean does not
 currently see the whole mutual termination argument.
 
+The simple list walkers around conflict and duplicate detection are total.
+An attempt to make the validator mutual blocks total showed the next precise
+obstacle: Lean cannot infer a shared decreasing measure through derived lists
+such as `path.exprs` in the surface validator and `paramSet.entries` in the
+core validator. The follow-up shape is to introduce direct attr-path and
+parameter-set validator functions, or to give the mutual blocks an explicit
+measure that accounts for those derived substructures.
+
 ## Desugaring
 
 The simple attrpath helpers are now total definitions:
@@ -48,3 +56,12 @@ eval error: evaluation fuel exhausted
 
 The default remains `200`. The CLI now exposes `--fuel N` for `--eval` so this
 boundary can be tested directly without constructing huge recursive chains.
+
+The low-risk evaluator equality and parameter helpers are now total:
+
+- `beqValue`, `beqValues`, `beqAttrs`
+- `equalValue`, `equalValues`, `equalAttrs`
+- `paramEntryNames`, `containsName`, `findExtraAttr?`
+
+They are pure structural recursion over values or lists and no longer live
+inside the large partial evaluator mutual block.

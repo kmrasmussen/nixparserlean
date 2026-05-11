@@ -33,3 +33,32 @@ the termination shape used.
    ticket explaining the remaining Lean termination obstacle.
 3. `lake build` and the relevant e2e manifests pass.
 4. `docs/partial-and-fuel.md` and the roadmap status are updated.
+
+## Resolution
+Removed `partial` from the low-risk evaluator helpers:
+
+- `beqValue`, `beqValues`, `beqAttrs`
+- `equalValue`, `equalValues`, `equalAttrs`
+- `paramEntryNames`, `containsName`, `findExtraAttr?`
+
+The parameter helper definitions were moved out of the large partial evaluator
+mutual block so Lean can check them independently.
+
+The validation-side duplicate/conflict list walkers were already total. I
+also attempted to make the surface and core validator mutual blocks total.
+Lean rejected both for the same precise reason: it cannot infer a shared
+decreasing measure through derived substructure lists such as surface
+`path.exprs` and core `paramSet.entries`. That obstacle is now documented in
+`docs/partial-and-fuel.md` and the partial/fuel roadmap. The precise follow-up
+ticket is `TICKET-0031`.
+
+Verification:
+
+```text
+lake build: pass
+e2e/manifest.txt: 36 passed, 3 expected parse failures, 8 expected validation failures
+e2e/core-validation-manifest.txt: 1 expected core failure
+e2e/eval-manifest.txt: 39 passed, 20 expected eval failures
+e2e/desugar-manifest.txt: 5 passed, 1 expected validation failure
+e2e/fuel-manifest.txt: 1 expected eval failure
+```

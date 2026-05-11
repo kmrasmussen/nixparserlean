@@ -31,7 +31,7 @@ Anchors:
 Phases are ordered by *risk*, not by file. Each phase should land as one or
 more tickets and leave the build green.
 
-### Phase 1: low-risk list walkers (in progress)
+### Phase 1: low-risk list walkers (complete for the named evaluator helpers)
 
 Pure structural recursion on `List`. Already partially done; remaining items
 are enumerated in TICKET-0007. No mutual recursion, no measure to invent.
@@ -41,7 +41,12 @@ are enumerated in TICKET-0007. No mutual recursion, no measure to invent.
 - `CoreValidate.lean`: `findDuplicateString?`, `staticBindingNames`,
   `paramEntryNames`.
 - `CoreEval.lean`: `paramEntryNames`, `containsName`, `findExtraAttr?`,
-  `beqAttrs` / `beqValues` / `beqValue`.
+  `beqAttrs` / `beqValues` / `beqValue`, plus the matching monadic equality
+  helpers.
+
+Status: the named evaluator helpers are total. The validation-side simple
+walkers were already total. The next blocker is not list recursion itself, but
+the AST-recursive validator mutual blocks in Phase 2.
 
 Risk: low. Blocking concern: Lean 4's auto-termination sometimes refuses
 recursion through `List` and needs `List.attach` or explicit `match`.
@@ -163,7 +168,9 @@ and should be tracked as separate tickets:
 
 ## Status
 
-Phase 1 is partially done (the simple desugaring helpers in
-`docs/partial-and-fuel.md` are already total). All other phases are
-unstarted. Per-phase tickets should be opened as the work begins, linking
-back to this document.
+Phase 1 is complete for the named evaluator/list helpers, and the simple
+desugaring helpers in `docs/partial-and-fuel.md` are already total. Phase 2
+has a known obstacle: Lean does not infer a decreasing measure through derived
+substructure lists such as surface `path.exprs` and core `paramSet.entries`.
+Per-phase tickets should be opened as the work begins, linking back to this
+document.
