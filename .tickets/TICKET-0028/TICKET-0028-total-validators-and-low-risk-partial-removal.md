@@ -34,6 +34,18 @@ the termination shape used.
 3. `lake build` and the relevant e2e manifests pass.
 4. `docs/partial-and-fuel.md` and the roadmap status are updated.
 
+## Plan
+1. Remove `partial` from the low-risk evaluator list and equality helpers that
+   Lean can check directly.
+2. Confirm the validation-side list walkers are already total, then attempt the
+   broader validator mutual blocks.
+3. If Lean rejects the validator mutual blocks, document the precise
+   termination obstacle and open a focused follow-up ticket.
+4. Use the existing behavior-preserving e2e manifests because this ticket is a
+   totality refactor, not a language semantics change.
+5. Update the partial/fuel docs, write the project log note, then commit and
+   push the completed chunk.
+
 ## Resolution
 Removed `partial` from the low-risk evaluator helpers:
 
