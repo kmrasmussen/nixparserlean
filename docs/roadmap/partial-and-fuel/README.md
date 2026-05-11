@@ -14,8 +14,9 @@ Anchors:
 
 ## End state
 
-1. Validators (`Validate.lean`, `CoreValidate.lean`) are total `def`s with
-   Lean-checked structural recursion.
+1. Validators (`Validate.lean`, `CoreValidate.lean`) are total `def`s. The
+   current implementation is fuel-bounded; a later refinement can replace the
+   fuel with Lean-checked structural recursion.
 2. Desugaring (`Desugar.lean`) is total, including the static-attrset merge
    helpers, with a documented termination measure.
 3. The parser is either fuel-bounded with an obvious decreasing argument
@@ -51,14 +52,20 @@ the AST-recursive validator mutual blocks in Phase 2.
 Risk: low. Blocking concern: Lean 4's auto-termination sometimes refuses
 recursion through `List` and needs `List.attach` or explicit `match`.
 
-### Phase 2: AST-recursive validators
+### Phase 2: AST-recursive validators (complete as fuel-bounded total defs)
 
 The `mutual` blocks in `Validate.lean` and `CoreValidate.lean` recurse over
 `Expr`, `Binding`, `LambdaParam`, `StringPart`, and `AttrPathPart`. They are
 structurally decreasing on the AST, but the kernel does not currently see
 the joint termination argument across the mutual block.
 
-Approach options, cheapest first:
+Landed shape: both validators now use explicit validation fuel. Recursive
+calls receive a smaller fuel value, which gives Lean a simple decreasing
+argument while preserving diagnostics for ordinary inputs. Empty list cases
+validate at any fuel; non-empty structures at fuel `0` fail with the relevant
+layer prefix.
+
+Future refinement options:
 
 - Pull the recursion into a single non-mutual function over a sum type,
   letting `sizeOf` carry the proof.
@@ -67,9 +74,9 @@ Approach options, cheapest first:
 - Introduce a `Sized` measure if `sizeOf` does not work through the existing
   `mutual` AST blocks (`Syntax.lean`, `Core.lean`).
 
-Risk: medium. Validators have a fixed result type (`Except String Unit`),
-so mechanical conversion should work; the friction is purely in convincing
-the kernel.
+Risk reduced. The remaining work is proof quality rather than runtime behavior:
+replace the conservative fuel with structural termination when it becomes worth
+the extra proof effort.
 
 ### Phase 3: desugaring as a total walk
 
@@ -176,8 +183,6 @@ and should be tracked as separate tickets:
 ## Status
 
 Phase 1 is complete for the named evaluator/list helpers, and the simple
-desugaring helpers in `docs/partial-and-fuel.md` are already total. Phase 2
-has a known obstacle: Lean does not infer a decreasing measure through derived
-substructure lists such as surface `path.exprs` and core `paramSet.entries`.
-Per-phase tickets should be opened as the work begins, linking back to this
-document.
+desugaring helpers in `docs/partial-and-fuel.md` are already total. Phase 2 is
+complete as fuel-bounded total validators. Per-phase tickets should be opened
+as the work begins, linking back to this document.

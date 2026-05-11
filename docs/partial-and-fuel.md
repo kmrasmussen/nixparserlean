@@ -12,18 +12,22 @@ eventually make the parser model more proof-friendly.
 
 ## Validation
 
-`Validate.lean` and `CoreValidate.lean` still contain mutually recursive
-validators over expressions, string parts, lambda parameters, and bindings.
-Those definitions are structurally recursive over the AST, but Lean does not
-currently see the whole mutual termination argument.
+`Validate.lean` and `CoreValidate.lean` now use total fuel-bounded validator
+walks. Each recursive descent through expressions, string parts, lambda
+parameters, parameter defaults, attribute paths, and bindings receives a
+smaller validation fuel value. Empty lists can validate at any fuel, while a
+non-empty structure at fuel `0` fails with the same layer prefix:
 
-The simple list walkers around conflict and duplicate detection are total.
-An attempt to make the validator mutual blocks total showed the next precise
-obstacle: Lean cannot infer a shared decreasing measure through derived lists
-such as `path.exprs` in the surface validator and `paramSet.entries` in the
-core validator. The follow-up shape is to introduce direct attr-path and
-parameter-set validator functions, or to give the mutual blocks an explicit
-measure that accounts for those derived substructures.
+```text
+semantic error: validation fuel exhausted
+core error: validation fuel exhausted
+```
+
+The public `validate` functions use `defaultValidationFuel = 100000`, so the
+fuel is a termination device for the checker rather than a user-facing CLI
+knob. The next proof-oriented improvement is replacing this conservative fuel
+with structural termination proofs over the AST, but the broad validator
+`partial` islands are gone.
 
 ## Desugaring
 

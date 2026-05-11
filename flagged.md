@@ -63,15 +63,13 @@ rather than convention.
 ## 4. `partial` still hides the termination story
 
 TICKET-0007 owns the remaining debt. The simple desugaring helpers have moved
-to total definitions, but the parser, validators, surface-to-core walk, and
-evaluator still have broad `partial` clusters.
+to total definitions, and the surface/core validators are now total
+fuel-bounded definitions. The parser, surface-to-core walk, and evaluator still
+have broad `partial` clusters.
 
-Low-risk examples remain in `CoreEval.lean:266-277`
-(`paramEntryNames`, `containsName`, `findExtraAttr?`) and in the equality
-helpers near `CoreEval.lean:27-45`. The larger clusters are real proof work:
+The remaining clusters are real proof work:
 
 - parser mutual recursion over shrinking `ParserState`
-- validator recursion over mutually-recursive ASTs
 - desugaring recursion over mutually-recursive surface/core forms
 - evaluation fuel and cycle detection
 

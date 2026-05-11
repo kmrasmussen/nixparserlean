@@ -110,92 +110,104 @@ private def attrPathExprs : List AttrPathPart -> List Expr
 private def AttrPath.exprs (path : AttrPath) : List Expr :=
   attrPathExprs path.parts
 
+def defaultValidationFuel : Nat := 100000
+
 mutual
-partial def validateExpr : Expr -> Except String Unit
-  | .int _ | .float _ | .bool _ | .null | .ident _ | .path _ => pure ()
-  | .str parts => validateStringParts parts
-  | .list items => validateExprs items
-  | .attrset _ bindings => do
+def validateExprFuel : Nat -> Expr -> Except String Unit
+  | 0, _ => throw "semantic error: validation fuel exhausted"
+  | fuel + 1, expr =>
+    match expr with
+    | .int _ | .float _ | .bool _ | .null | .ident _ | .path _ => pure ()
+    | .str parts => validateStringPartsFuel fuel parts
+    | .list items => validateExprsFuel fuel items
+    | .attrset _ bindings => do
       validateBindingPaths "attribute set" bindings
-      validateBindings bindings
-  | .letIn bindings body => do
+      validateBindingsFuel fuel bindings
+    | .letIn bindings body => do
       validateBindingPaths "let expression" bindings
-      validateBindings bindings
-      validateExpr body
-  | .lambda param body => do
-      validateLambdaParam param
-      validateExpr body
-  | .ifThenElse condition thenBranch elseBranch => do
-      validateExpr condition
-      validateExpr thenBranch
-      validateExpr elseBranch
-  | .assertExpr condition body => do
-      validateExpr condition
-      validateExpr body
-  | .withExpr scope body => do
-      validateExpr scope
-      validateExpr body
-  | .select base path none => do
-      validateExpr base
-      validateExprs path.exprs
-  | .select base path (some defaultExpr) => do
-      validateExpr base
-      validateExprs path.exprs
-      validateExpr defaultExpr
-  | .hasAttr base path => do
-      validateExpr base
-      validateExprs path.exprs
-  | .app function argument => do
-      validateExpr function
-      validateExpr argument
-  | .unary _ expr => validateExpr expr
-  | .binary _ left right => do
-      validateExpr left
-      validateExpr right
+      validateBindingsFuel fuel bindings
+      validateExprFuel fuel body
+    | .lambda param body => do
+      validateLambdaParamFuel fuel param
+      validateExprFuel fuel body
+    | .ifThenElse condition thenBranch elseBranch => do
+      validateExprFuel fuel condition
+      validateExprFuel fuel thenBranch
+      validateExprFuel fuel elseBranch
+    | .assertExpr condition body => do
+      validateExprFuel fuel condition
+      validateExprFuel fuel body
+    | .withExpr scope body => do
+      validateExprFuel fuel scope
+      validateExprFuel fuel body
+    | .select base path none => do
+      validateExprFuel fuel base
+      validateExprsFuel fuel path.exprs
+    | .select base path (some defaultExpr) => do
+      validateExprFuel fuel base
+      validateExprsFuel fuel path.exprs
+      validateExprFuel fuel defaultExpr
+    | .hasAttr base path => do
+      validateExprFuel fuel base
+      validateExprsFuel fuel path.exprs
+    | .app function argument => do
+      validateExprFuel fuel function
+      validateExprFuel fuel argument
+    | .unary _ expr => validateExprFuel fuel expr
+    | .binary _ left right => do
+      validateExprFuel fuel left
+      validateExprFuel fuel right
 
-partial def validateExprs : List Expr -> Except String Unit
-  | [] => pure ()
-  | x :: xs => do
-      validateExpr x
-      validateExprs xs
+def validateExprsFuel : Nat -> List Expr -> Except String Unit
+  | _, [] => pure ()
+  | 0, _ :: _ => throw "semantic error: validation fuel exhausted"
+  | fuel + 1, x :: xs => do
+      validateExprFuel fuel x
+      validateExprsFuel fuel xs
 
-partial def validateStringParts : List StringPart -> Except String Unit
-  | [] => pure ()
-  | .text _ :: parts => validateStringParts parts
-  | .interpolation expr :: parts => do
-      validateExpr expr
-      validateStringParts parts
+def validateStringPartsFuel : Nat -> List StringPart -> Except String Unit
+  | _, [] => pure ()
+  | 0, _ :: _ => throw "semantic error: validation fuel exhausted"
+  | fuel + 1, .text _ :: parts => validateStringPartsFuel fuel parts
+  | fuel + 1, .interpolation expr :: parts => do
+      validateExprFuel fuel expr
+      validateStringPartsFuel fuel parts
 
-partial def validateLambdaParam : LambdaParam -> Except String Unit
-  | .ident _ => pure ()
-  | .attrset paramSet => validateParamEntries paramSet.entries
-  | .alias name (.attrset paramSet) => do
-      validateParamEntries paramSet.entries
+def validateLambdaParamFuel : Nat -> LambdaParam -> Except String Unit
+  | 0, _ => throw "semantic error: validation fuel exhausted"
+  | _ + 1, .ident _ => pure ()
+  | fuel + 1, .attrset paramSet => validateParamEntriesFuel fuel paramSet.entries
+  | fuel + 1, .alias name (.attrset paramSet) => do
+      validateParamEntriesFuel fuel paramSet.entries
       validateParamAliasName name paramSet.entries
-  | .alias _ param => validateLambdaParam param
+  | fuel + 1, .alias _ param => validateLambdaParamFuel fuel param
 
-partial def validateParamEntries : List ParamEntry -> Except String Unit
-  | entries => do
+def validateParamEntriesFuel (fuel : Nat) (entries : List ParamEntry) : Except String Unit := do
       validateParamEntryNames entries
-      validateParamEntryDefaults entries
+      validateParamEntryDefaultsFuel fuel entries
 
-partial def validateParamEntryDefaults : List ParamEntry -> Except String Unit
-  | [] => pure ()
-  | entry :: entries => do
+def validateParamEntryDefaultsFuel : Nat -> List ParamEntry -> Except String Unit
+  | _, [] => pure ()
+  | 0, _ :: _ => throw "semantic error: validation fuel exhausted"
+  | fuel + 1, entry :: entries => do
       match entry.default? with
       | none => pure ()
-      | some expr => validateExpr expr
-      validateParamEntryDefaults entries
+      | some expr => validateExprFuel fuel expr
+      validateParamEntryDefaultsFuel fuel entries
 
-partial def validateBindings : List Binding -> Except String Unit
-  | [] => pure ()
-  | binding :: bindings => do
-      validateExprs (bindingValues binding)
+def validateBindingsFuel : Nat -> List Binding -> Except String Unit
+  | _, [] => pure ()
+  | 0, _ :: _ => throw "semantic error: validation fuel exhausted"
+  | fuel + 1, binding :: bindings => do
+      validateExprsFuel fuel (bindingValues binding)
       match binding with
-      | .assign path _ => validateExprs path.exprs
+      | .assign path _ => validateExprsFuel fuel path.exprs
       | .inherit _ | .inheritFrom _ _ => pure ()
-      validateBindings bindings
+      validateBindingsFuel fuel bindings
 end
+
+def validateExpr (expr : Expr) : Except String Unit :=
+  validateExprFuel defaultValidationFuel expr
 
 def validate (expr : Expr) : Except String Unit :=
   validateExpr expr
