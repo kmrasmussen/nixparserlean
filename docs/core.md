@@ -27,13 +27,13 @@ stopped carrying surface conveniences forward.
 | Mostly lowered already | dotted static bindings, scoped inherit | Keep the lowered shapes; continue proving that desugaring preserves validation. |
 | Semantic boundary forms | imports, path normalization, derivations, store/search-path behavior | Keep outside pure core evaluation; model through explicit host-effect layers. |
 
-The first concrete simplification target is `with`: it currently lives in core
-because the evaluator can implement it directly, but it is a surface lookup
-convenience rather than an obviously permanent core primitive. The next tickets
-should either lower `with` away or document why it deserves a stable core rule.
-Selection defaults are the second candidate: they may lower into an explicit
-missing-selection form or conditional-like core rule once missing attributes are
-modeled more precisely.
+Static selection defaults are the first simplification slice: `a.b or fallback`
+lowers to a core `ifThenElse` over `hasAttr a b`, selecting `a.b` only when the
+path exists. Dynamic-path defaults still use the core select-default branch so
+dynamic path expressions are not duplicated. The next candidate is `with`: it
+currently lives in core because the evaluator can implement it directly, but it
+is a surface lookup convenience rather than an obviously permanent core
+primitive.
 
 ## Core bindings
 

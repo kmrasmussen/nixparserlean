@@ -77,6 +77,14 @@ def inheritFromBindings (scope : Core.Expr) : List String -> List Core.Binding
       let selected := Core.Expr.select scope [.static name] none
       .staticAssign name selected :: inheritFromBindings scope names
 
+def staticAttrPath? (path : List Core.AttrPathPart) : Bool :=
+  match staticNames? path with
+  | some (_ :: _) => true
+  | _ => false
+
+-- TODO theorem: for static non-empty paths, the selection-default lowering
+-- below preserves evaluator results relative to Core.Expr.select with default.
+
 mutual
 def mergeStaticAttrsetsFuel : Nat -> Core.Expr -> Core.Expr -> Option Core.Expr
   | 0, _, _ => none
@@ -207,11 +215,20 @@ partial def expr : Expr -> M Core.Expr
   | .withExpr scope body => do
       pure (.withExpr (← expr scope) (← expr body))
   | .select base path default? => do
+      let base ← expr base
+      let path ← attrPathParts path.parts
       let default? ←
         match default? with
         | none => pure none
         | some defaultExpr => pure (some (← expr defaultExpr))
-      pure (.select (← expr base) (← attrPathParts path.parts) default?)
+      match default? with
+      | some defaultExpr =>
+          if staticAttrPath? path then
+            -- Static defaults lower away from the core select-default branch.
+            pure (.ifThenElse (.hasAttr base path) (.select base path none) defaultExpr)
+          else
+            pure (.select base path (some defaultExpr))
+      | none => pure (.select base path none)
   | .hasAttr base path => do
       pure (.hasAttr (← expr base) (← attrPathParts path.parts))
   | .app function argument => do

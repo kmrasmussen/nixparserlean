@@ -63,7 +63,20 @@ Candidate lowering targets:
   representation later.
 - `with` may become an explicit environment operation rather than core syntax.
 
-## Milestone B: Core Validation As A Contract
+## Milestone B: First Core Simplification (started)
+
+Static selection defaults now lower away for static non-empty paths: desugaring
+uses `hasAttr` plus `select` inside `ifThenElse`, while dynamic-path defaults
+retain the existing core select-default branch.
+
+Follow-up simplifications remain:
+
+- decide whether `with` lowers away or becomes a stable core environment rule;
+- decide whether dynamic selection defaults need a no-duplication core helper;
+- prove the static selection-default preservation claim named in
+  `NixParserLean/Desugar.lean`.
+
+## Milestone C: Core Validation As A Contract
 
 Core validation should stay even as proofs grow. Its role should become:
 
@@ -84,7 +97,7 @@ Acceptance criteria:
 - Proofs can refer to the invariant predicate or helper, not reimplement it
   from scratch.
 
-## Milestone C: Evaluator Coverage
+## Milestone D: Evaluator Coverage
 
 The evaluator now covers a real fragment. The next semantic gains should be
 chosen by whether they unlock real Nix patterns or proofs.
@@ -99,7 +112,7 @@ High-value additions:
 
 Keep unsupported cases classified as `eval-fail`, not `other-fail`.
 
-## Milestone D: Semantic Fuel
+## Milestone E: Semantic Fuel
 
 Entry-step fuel is now deterministic. The next step is proof structure:
 
@@ -111,7 +124,7 @@ Entry-step fuel is now deterministic. The next step is proof structure:
 Do not widen the theorem target to closures, thunks, or host imports until the
 small subset is clean.
 
-## Milestone E: Examples As Regression Specs
+## Milestone F: Examples As Regression Specs
 
 `examples/current-core-showcase/showcase.nix` should evolve into a small suite
 of examples rather than one large file.
