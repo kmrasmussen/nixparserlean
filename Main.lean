@@ -87,7 +87,7 @@ def readInput (args : List String) : IO (Except String Options) :=
   parseArgs args { input := defaultInput } []
 
 def coreValidationSmokeExpr : NixParserLean.Core.Expr :=
-  .select .null [] none
+  .attrset false [.staticAssign "" .null]
 
 def jsonEscapeChar : Char -> String
   | '"' => "\\\""

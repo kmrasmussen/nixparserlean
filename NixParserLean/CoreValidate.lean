@@ -17,11 +17,19 @@ private def staticBindingNames : List Binding -> List String
   | .inheritAssign name :: bindings => name :: staticBindingNames bindings
   | .dynamicAssign _ _ :: bindings => staticBindingNames bindings
 
+private def containsEmptyString : List String -> Bool
+  | [] => false
+  | name :: names => name == "" || containsEmptyString names
+
 private def validateStaticBindingNames (context : String) (bindings : List Binding) :
     Except String Unit :=
-  match findDuplicateString? [] (staticBindingNames bindings) with
-  | some name => throw s!"core error: duplicate static binding '{name}' in {context}"
-  | none => pure ()
+  let names := staticBindingNames bindings
+  if containsEmptyString names then
+    throw s!"core error: empty static binding name in {context}"
+  else
+    match findDuplicateString? [] names with
+    | some name => throw s!"core error: duplicate static binding '{name}' in {context}"
+    | none => pure ()
 
 private def validateNonemptyPath (context : String) : List AttrPathPart -> Except String Unit
   | [] => throw s!"core error: empty attribute path in {context}"

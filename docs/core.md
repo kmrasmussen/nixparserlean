@@ -181,6 +181,7 @@ absolute path policy, store paths, and network fetchers remain unsupported.
 The core validation pass (`Core.validate`) checks:
 
 - static binding names are unique at each binding level
+- static binding names are non-empty
 - dynamic assignments have a non-empty path
 - selections and attribute-existence tests have non-empty paths
 - expressions inside dynamic path segments and string interpolations are valid

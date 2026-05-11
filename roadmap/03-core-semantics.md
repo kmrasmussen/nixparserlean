@@ -84,9 +84,13 @@ Core validation should stay even as proofs grow. Its role should become:
 - defense against desugar regressions;
 - theorem target for preservation.
 
+Current extra contract slice:
+
+- static binding names must be non-empty before evaluation or proof work sees
+  them.
+
 Next invariants to consider:
 
-- no empty static binding names if the parser allows edge cases;
 - normalized static nested attrset shape after merge;
 - dynamic path expressions are valid and side-effect-free;
 - no unsupported dynamic bindings in recursive scopes before eval.
