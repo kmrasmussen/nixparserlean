@@ -14,17 +14,20 @@ def staticNames? : List Core.AttrPathPart -> Option (List String)
       some (name :: names)
   | .dynamicString _ :: _ => none
 
-def nestedStaticAssign : List String -> Core.Expr -> Core.Binding
-  | [], value => .dynamicAssign [] value
-  | [name], value => .staticAssign name value
-  | name :: names, value =>
-      .staticAssign name (.attrset false [nestedStaticAssign names value])
+def nestedStaticAssignFromHead (name : String) : List String -> Core.Expr -> Core.Binding
+  | [], value => .staticAssign name value
+  | next :: names, value =>
+      .staticAssign name (.attrset false [nestedStaticAssignFromHead next names value])
+
+def nestedStaticAssign : List String -> Core.Expr -> M Core.Binding
+  | [], _ => throw "desugar error: empty attribute path"
+  | name :: names, value => pure (nestedStaticAssignFromHead name names value)
 
 def bindingFromPath (path : List Core.AttrPathPart) (value : Core.Expr) :
-    Core.Binding :=
+    M Core.Binding :=
   match staticNames? path with
   | some names => nestedStaticAssign names value
-  | none => .dynamicAssign path value
+  | none => pure (.dynamicAssign path value)
 
 def bindingStaticName? : Core.Binding -> Option String
   | .staticAssign name _ => some name
@@ -40,19 +43,26 @@ def staticBindingNames : List Core.Binding -> List String
 theorem bindingFromPath_static_top_name
     {path : List Core.AttrPathPart} {value : Core.Expr} {name : String} {names : List String}
     (h : staticNames? path = some (name :: names)) :
-    bindingStaticName? (bindingFromPath path value) = some name := by
+    (bindingFromPath path value).map bindingStaticName? = .ok (some name) := by
   unfold bindingFromPath
   rw [h]
   cases names with
-  | nil => simp [nestedStaticAssign, bindingStaticName?]
-  | cons next rest => simp [nestedStaticAssign, bindingStaticName?]
+  | nil => rfl
+  | cons next rest => rfl
 
 theorem bindingFromPath_static_nested_tail
     {path : List Core.AttrPathPart} {value : Core.Expr}
     {name next : String} {names : List String}
     (h : staticNames? path = some (name :: next :: names)) :
     bindingFromPath path value =
-      .staticAssign name (.attrset false [nestedStaticAssign (next :: names) value]) := by
+      .ok (.staticAssign name (.attrset false [nestedStaticAssignFromHead next names value])) := by
+  unfold bindingFromPath
+  rw [h]
+  rfl
+
+theorem bindingFromPath_empty_static_rejected {path : List Core.AttrPathPart}
+    {value : Core.Expr} (h : staticNames? path = some []) :
+    bindingFromPath path value = .error "desugar error: empty attribute path" := by
   unfold bindingFromPath
   rw [h]
   rfl
@@ -221,7 +231,7 @@ partial def exprs : List Expr -> M (List Core.Expr)
 partial def binding : Binding -> M (List Core.Binding)
   | .assign path value => do
       let value ← expr value
-      pure [bindingFromPath (← attrPathParts path.parts) value]
+      pure [← bindingFromPath (← attrPathParts path.parts) value]
   | .inherit names => pure (inheritBindings names)
   | .inheritFrom scope names => do
       let scope ← expr scope

@@ -44,22 +44,19 @@ angle imports remain expected `eval-fail` cases.
 
 ---
 
-## 3. `Desugar.bindingFromPath` has an unreachable empty-path fallback
+## 3. Empty attribute paths are still a cross-layer invariant
 
-`Desugar.lean:17-27` still contains:
+`Desugar.bindingFromPath` now rejects a statically empty lowered path with:
 
-```lean
-def nestedStaticAssign : List String -> Core.Expr -> Core.Binding
-  | [], value => .dynamicAssign [] value
+```text
+desugar error: empty attribute path
 ```
 
 The parser should never produce an empty surface attribute path, and
-`CoreValidate` would reject this with a `core error:` if it somehow happened.
-Still, desugaring is supposed to maintain core invariants, not construct an
-invalid core node and rely on the next pass.
-
-This should eventually become an impossible input type, an `Except` failure, or
-a theorem tying parser-produced paths to non-emptiness.
+`CoreValidate` would reject empty core paths in selection, existence tests, and
+dynamic bindings. The remaining proof gap is connecting parser-produced surface
+paths to non-emptiness so the desugar error becomes unreachable by theorem
+rather than convention.
 
 ---
 

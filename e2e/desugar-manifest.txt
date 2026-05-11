@@ -1,6 +1,7 @@
 # format: path<TAB>expectation<TAB>note
 # parser command: lake exe nixparserlean --desugar --file
 e2e/corpus/smoke/attrpath-siblings.nix	pass	static dotted bindings lower into nested core attrsets
+e2e/corpus/smoke/attrset.nix	pass	single static attrset bindings lower without relying on empty-path fallback
 e2e/corpus/smoke/dynamic-attr-names.nix	pass	dynamic attribute names lower into dynamic core assignments
 e2e/corpus/smoke/inherit-from.nix	pass	scoped inherit lowers into core selections
 e2e/corpus/smoke/select-default.nix	pass	selection defaults lower into core selections
