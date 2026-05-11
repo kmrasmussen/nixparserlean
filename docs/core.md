@@ -142,7 +142,6 @@ fuel only when they evaluate contained expressions. Exhausting fuel produces an
 Unsupported forms fail explicitly with an `eval error:` prefix. The evaluator
 does **not** currently implement:
 
-- path values (`./foo.nix`, `<nixpkgs>`, `~/x`) — `unsupported "path values"`
 - pure `--eval` import evaluation, derivations, store paths, network access
 - aliased *non-attrset* lambda parameters (`x@y` shapes the AST does not
   produce today, but the evaluator still rejects them defensively)
@@ -186,6 +185,7 @@ inductive Value where
   | str : String -> Value
   | bool : Bool -> Value
   | null : Value
+  | path : String -> Value
   | list : List Value -> Value
   | attrset : List (String × Value) -> Value
   | closure : List (String × EnvValue) -> LambdaParam -> Expr -> Value
@@ -194,5 +194,5 @@ inductive Value where
 `EnvValue` is either a forced `Value` or an unforced `thunk` that captures the
 context (`"let"` or `"attribute"`), the base environment, the sibling bindings
 needed to reconstruct a recursive scope, and the body expression. Equality
-on values is structural for primitives, lists, and attrsets, and is always
-`false` for closures.
+on values is structural for primitives, paths, lists, and attrsets, and is
+always `false` for closures.

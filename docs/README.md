@@ -30,7 +30,7 @@ of Nix expressions, with a separate Rust harness for end-to-end corpus testing.
 | [testing.md](testing.md) | Testing strategy, manifest formats, and e2e runner |
 | [scaling-plan.md](scaling-plan.md) | Roadmap for growing the parser and corpus |
 | [design-notes.md](design-notes.md) | Implementation tradeoffs and the "why" behind specific choices |
-| [roadmap/](roadmap/) | Long-horizon plans that span multiple tickets |
+| [../roadmap/](../roadmap/) | Active long-horizon plans that span multiple tickets |
 
 ## Quick start
 
@@ -96,7 +96,7 @@ examples/
 blog/                       — development notes (one entry per significant change)
 .tickets/                   — durable backlog (semantic milestones, debt)
 docs/                       — this documentation
-docs/roadmap/               — long-horizon implementation plans
+roadmap/                    — active long-horizon implementation plans
 flake.nix                   — Nix flake (devShell + checks.e2e-smoke)
 flagged.md                  — running list of shortcuts and debt worth tracking
 ```

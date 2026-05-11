@@ -2,8 +2,8 @@
 
 ## Layers
 
-The project has five end-to-end manifests, each driven by the same Rust runner
-with a different `--parser` command line:
+The project has one default smoke manifest plus focused end-to-end manifests,
+each driven by the same Rust runner with a different `--parser` command line:
 
 | Manifest | Parser command | Purpose |
 |---|---|---|
@@ -12,9 +12,14 @@ with a different `--parser` command line:
 | `e2e/desugar-manifest.txt` | `lake exe nixparserlean --desugar --file` | parser + surface validator + desugar + core validator |
 | `e2e/eval-manifest.txt` | `lake exe nixparserlean --eval --file` | the full pipeline including the evaluator |
 | `e2e/import-manifest.txt` | `lake exe nixparserlean --eval-imports --file` | explicit host IO path for relative imports |
+| `e2e/fuel-manifest.txt` | `lake exe nixparserlean --eval --fuel 0 --file` | fuel exhaustion at entry |
+| `e2e/fuel-low-manifest.txt` | `lake exe nixparserlean --eval --fuel 1 --file` | deterministic low-fuel failure |
+| `e2e/fuel-success-manifest.txt` | `lake exe nixparserlean --eval --fuel 2 --file` | sufficient-fuel success |
+| `e2e/json-manifest.txt` | `lake exe nixparserlean --format json --file` and desugar/eval JSON variants | JSON output contract |
 
 All manifests use the same row format. The `flake.nix` `checks.e2e-smoke`
-derivation runs all five.
+derivation runs these manifests, JSON in surface/desugar/eval modes, and CLI
+help/unknown-flag checks.
 
 ### Smoke corpus
 
@@ -34,7 +39,8 @@ Smoke fixtures are grouped roughly into:
   `angle-path.nix`, `import-path.nix`, `inherit-from.nix`, `with-expr.nix`,
   `addition.nix`, `arithmetic-operators.nix`, `update-operator.nix`,
   `boolean-operators.nix`, `operator-table.nix`, `string-interpolation.nix`,
-  `indented-string.nix`, `attrpath-siblings.nix`, `dynamic-attr-names.nix`.
+  `indented-string.nix`, `attrpath-siblings.nix`, `dynamic-attr-names.nix`,
+  `spaced-dynamic-selection.nix`, and `dot-file-path-argument.nix`.
 - **Surface validation failures:** `duplicate-attr.nix`,
   `duplicate-inherit.nix`, `duplicate-let.nix`,
   `duplicate-param-lambda.nix`, `prefix-attr-conflict.nix`,
@@ -43,9 +49,11 @@ Smoke fixtures are grouped roughly into:
 - **Eval pass cases (`eval-*.nix`):** integer arithmetic, lambda application
   forms, lexical closures, recursive `let` and `rec { ... }`, with-scope
   fallback and lexical shadowing, dynamic attribute binding/selection,
-  quoted dynamic attribute names, string interpolation/coercion, floats as
-  values, attribute-set lambda parameters with defaults / overrides /
-  ellipsis / aliases.
+  spaced dynamic selection, quoted dynamic attribute names, string
+  interpolation/coercion, floats and paths as values, path equality,
+  list concatenation, shallow attrset update, numeric comparisons,
+  attribute-set lambda parameters with defaults / overrides / ellipsis /
+  aliases.
 - **Host import cases (`eval-host-*.nix`):** relative import success through
   `--eval-imports`, plus unsupported import/path cases that must remain
   classified as eval failures.
@@ -55,10 +63,13 @@ Smoke fixtures are grouped roughly into:
   `eval-rec-attrset-self.nix`, `eval-rec-attrset-mutual.nix`,
   `eval-with-non-attr.nix`,
   `eval-dynamic-attr-interpolation-type.nix`,
-  `eval-string-interpolation-int.nix`,
+  `eval-equality-cross-kind.nix`, `eval-inequality-cross-kind.nix`,
+  `eval-string-interpolation-float.nix`,
   `eval-string-interpolation-attrset.nix`,
-  `eval-let-dynamic-binding.nix`. These exercise paths that the surface
-  parser/validator accept but the evaluator deliberately rejects.
+  `eval-let-dynamic-binding.nix`, duplicate dynamic attribute fixtures,
+  list-concat/attrset-update type fixtures, and float division by zero. These
+  exercise paths that the surface parser/validator accept but the evaluator
+  deliberately rejects.
 
 The combined integration example `examples/current-core-showcase/showcase.nix`
 is also referenced from `e2e/eval-manifest.txt` so the example is both
@@ -207,6 +218,6 @@ smoke mode that constructs an invalid core expression directly.
 `flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
 the parser/validator e2e runner, the core-validation contract manifest, the
 focused desugar manifest, the eval manifest, the host import manifest, the
-fuel manifests, and JSON output checks. This check runs on all supported
-systems via
+fuel manifests, JSON output checks, CLI help text checks, and the unknown-flag
+diagnostic check. This check runs on all supported systems via
 `nix flake check`.

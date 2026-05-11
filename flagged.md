@@ -27,7 +27,8 @@ That is a useful first IO boundary, but it is not full Nix import semantics:
   (`HostEval.lean:37-44`).
 
 The behavior is documented and covered by `e2e/import-manifest.txt`, but any
-claim that "imports work" needs this qualifier.
+claim that "imports work" needs this qualifier. Future host-effect work is
+tracked in `roadmap/05-host-effects.md`.
 
 ---
 
@@ -41,6 +42,9 @@ the parsed path text and performs no filesystem access, existence check,
 normalization, copying to the store, or angle-path lookup. `--eval-imports`
 still interprets relative paths only in import position; absolute, home, and
 angle imports remain expected `eval-fail` cases.
+
+Future path and import policy work is tracked in `roadmap/05-host-effects.md`
+and `roadmap/03-core-semantics.md`.
 
 ---
 
@@ -56,16 +60,17 @@ The parser should never produce an empty surface attribute path, and
 `CoreValidate` would reject empty core paths in selection, existence tests, and
 dynamic bindings. The remaining proof gap is connecting parser-produced surface
 paths to non-emptiness so the desugar error becomes unreachable by theorem
-rather than convention.
+rather than convention. The next proof contract slice is tracked in
+`roadmap/04-proofs-and-totality.md` and `TICKET-0042`.
 
 ---
 
 ## 4. `partial` still hides the termination story
 
-TICKET-0007 owns the remaining debt. The simple desugaring helpers have moved
-to total definitions, and the surface/core validators are now total
-fuel-bounded definitions. The parser, surface-to-core walk, and evaluator still
-have broad `partial` clusters.
+The simple desugaring helpers have moved to total definitions, and the
+surface/core validators are now total fuel-bounded definitions. The parser,
+surface-to-core walk, host import walk, and evaluator still have broad
+`partial` clusters.
 
 The remaining clusters are real proof work:
 
@@ -73,8 +78,8 @@ The remaining clusters are real proof work:
 - desugaring recursion over mutually-recursive surface/core forms
 - evaluation fuel and cycle detection
 
-The roadmap in `docs/roadmap/partial-and-fuel/README.md` describes the order
-to attack this without blocking language coverage.
+The active plan is in `roadmap/04-proofs-and-totality.md`; concrete follow-up
+tickets include `TICKET-0043`, `TICKET-0044`, and `TICKET-0050`.
 
 ---
 
@@ -88,19 +93,8 @@ semantics.
 
 For proof-oriented semantics, the next step is a monotonicity theorem for a
 small expression subset, then determinism modulo fuel, then a connection to a
-separate step relation.
-
----
-
-## 6. The repo-local AGENTS checklist under-runs current e2e coverage
-
-`AGENTS.md:23-25` tells contributors to run `lake build` and the default
-`e2e/manifest.txt` after parser, validator, CLI, or corpus changes. The flake
-check now runs more: parser/validator, core validation, desugar, eval, host
-import, fuel, JSON output, and CLI-help checks.
-
-This is a process gap, not a code bug. Contributors following only AGENTS.md
-can miss regressions that `nix flake check` would catch.
+separate step relation. This is tracked in
+`roadmap/04-proofs-and-totality.md` and `TICKET-0045`.
 
 ---
 

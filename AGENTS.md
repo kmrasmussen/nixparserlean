@@ -23,6 +23,9 @@ increments.
 - Run `nix develop -c lake build` after Lean changes.
 - Run `nix develop -c cargo run --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/manifest.txt`
   after parser, validator, CLI, or corpus changes.
+- Use `docs/testing.md` as the full gate reference; run `nix flake check`
+  when touching manifests, CLI behavior, JSON output, fuel, imports,
+  evaluation, or the flake itself.
 - Write a blog note for every significant contribution.
 - Commit every significant contribution before starting the next one.
 - Do not absorb unrelated worktree changes into a commit.
