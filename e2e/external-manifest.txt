@@ -11,6 +11,15 @@
 # url<TAB>cache-name<TAB>url<TAB>expectation<TAB>note
 #
 # expectations: pass, parse-fail, validation-fail, core-fail, eval-fail
+#
+# Provenance policy:
+# - URL rows should use immutable upstream revisions, not branch names.
+# - cache-name should stay stable when the URL content is intentionally the
+#   same source file.
+# - Optional content pins use a preceding comment:
+#   # sha256<TAB>cache-name<TAB>hex-encoded-sha256
+#   The current runner ignores these comments; they document refresh intent
+#   without changing the manifest row format.
 
 url	nixpkgs-lib-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/default.nix	pass	parses default library surface with quoted inherit names
 url	nixpkgs-lib-lists.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/lists.nix	pass	parses list library surface

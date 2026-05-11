@@ -6,6 +6,10 @@
 #
 # Existing smoke manifests may still use the legacy three-column form:
 # path<TAB>expectation<TAB>note
+#
+# Optional content pins are comment rows so old runner versions stay
+# compatible:
+# sha256<TAB>cache-name<TAB>hex-encoded-sha256
 
 file	e2e/corpus/smoke/attrset.nix	pass	local fixture through explicit file record
 url	example-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/top-level/default.nix	parse-fail	example pinned external corpus entry

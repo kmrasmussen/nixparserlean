@@ -120,25 +120,25 @@ blocker: category-name; short description of the first failing construct
 To summarize current expected external blockers:
 
 ```sh
-awk -F '\t' '
-  $1 == "url" && $4 != "pass" {
-    blocker = $5
-    sub(/^blocker: /, "", blocker)
-    sub(/;.*/, "", blocker)
-    counts[blocker]++
-  }
-  END {
-    for (blocker in counts) {
-      print counts[blocker], blocker
-    }
-  }
-' e2e/external-manifest.txt | sort -nr
+e2e/external-summary.sh e2e/external-manifest.txt
 ```
 
 When a parser or evaluator change makes an expected external failure pass, keep
 the file in the manifest and change its expectation to `pass`. When a failure
 moves to a later construct, update the blocker category and note before
 committing the change.
+
+External URL rows should be pinned to immutable upstream revisions. Optional
+content hashes are recorded as comment rows immediately before the URL row:
+
+```text
+# sha256<TAB>cache-name<TAB>hex-encoded-sha256
+url<TAB>cache-name<TAB>url<TAB>expectation<TAB>note
+```
+
+The runner ignores comment rows, so this provenance format remains compatible
+with existing manifest behavior. The policy is documentation-first for now;
+hash enforcement can be added later without changing URL row parsing.
 
 ### e2e runner
 
