@@ -34,3 +34,27 @@ ordinary pure operators that do not require host IO or derivation semantics.
 4. Float arithmetic fixtures that are currently expected eval failures are
    either moved to pass or have more precise unsupported notes.
 5. The evaluator documentation names the exact supported operator matrix.
+
+## Resolution
+Implemented evaluation for the pure parsed operators that were still missing:
+
+- list concatenation with `++`
+- shallow attrset update with `//`
+- numeric comparisons over ints, floats, and mixed int/float operands
+- float arithmetic and mixed int/float arithmetic
+
+Integer-only arithmetic still returns integer values. Any arithmetic involving
+a float computes with Lean `Float` and returns a float value formatted with
+`Float.toString`.
+
+Added eval fixtures for list concatenation, attrset update, numeric
+comparisons, float arithmetic, mixed numeric arithmetic, operator type errors,
+and float division by zero. Updated `docs/core.md` with the supported operator
+matrix and float policy.
+
+Verification:
+
+```text
+lake build: pass
+eval e2e: 39 passed, 20 expected eval failures, 0 unexpected failures, 0 unexpected successes
+```

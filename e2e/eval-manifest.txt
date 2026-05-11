@@ -23,6 +23,11 @@ e2e/corpus/smoke/eval-dynamic-attr-selection.nix	pass	dynamic attr selection eva
 e2e/corpus/smoke/eval-dynamic-quoted-attr.nix	pass	quoted dynamic attr name evaluates interpolation
 e2e/corpus/smoke/eval-equality-same-kind.nix	pass	same-kind equality evaluates normally
 e2e/corpus/smoke/eval-float-literal.nix	pass	float literals evaluate to explicit float values
+e2e/corpus/smoke/eval-list-concat.nix	pass	list concatenation evaluates with ++
+e2e/corpus/smoke/eval-attrset-update.nix	pass	shallow attrset update evaluates with right-hand override
+e2e/corpus/smoke/eval-comparison.nix	pass	numeric comparisons evaluate for ints, floats, and mixed numeric values
+e2e/corpus/smoke/eval-float-arithmetic.nix	pass	float arithmetic evaluates using Lean Float formatting
+e2e/corpus/smoke/eval-mixed-numeric-arithmetic.nix	pass	mixed int/float arithmetic evaluates to a float value
 examples/current-core-showcase/showcase.nix	pass	showcase combines recursive attrsets, aliases, dynamic attrs, and with
 e2e/corpus/smoke/eval-string-interpolation.nix	pass	string interpolation evaluates string values
 e2e/corpus/smoke/eval-string-interpolation-int.nix	pass	string interpolation coerces integers
@@ -49,8 +54,9 @@ e2e/corpus/smoke/eval-inequality-cross-kind.nix	eval-fail	heterogeneous inequali
 e2e/corpus/smoke/eval-duplicate-static-dynamic-attr.nix	eval-fail	static and dynamic attr bindings cannot produce the same key
 e2e/corpus/smoke/eval-duplicate-dynamic-attr.nix	eval-fail	dynamic attr bindings cannot produce the same key
 e2e/corpus/smoke/eval-duplicate-dynamic-prefix-attr.nix	eval-fail	dynamic attr binding cannot overwrite an existing attrset prefix
-e2e/corpus/smoke/eval-float-arithmetic.nix	eval-fail	float arithmetic is intentionally unsupported
-e2e/corpus/smoke/eval-mixed-numeric-arithmetic.nix	eval-fail	mixed int/float arithmetic is intentionally unsupported
+e2e/corpus/smoke/eval-list-concat-type.nix	eval-fail	list concatenation rejects non-list operands
+e2e/corpus/smoke/eval-attrset-update-type.nix	eval-fail	attrset update rejects non-attrset operands
+e2e/corpus/smoke/eval-float-division-zero.nix	eval-fail	float division by zero should fail
 e2e/corpus/smoke/eval-string-interpolation-float.nix	eval-fail	string interpolation rejects unsupported float values
 e2e/corpus/smoke/eval-string-interpolation-attrset.nix	eval-fail	string interpolation rejects attrsets
 e2e/corpus/smoke/eval-let-dynamic-binding.nix	eval-fail	dynamic let binding remains unsupported

@@ -1,3 +1,4 @@
+import Lean
 import NixParserLean.Core
 
 namespace NixParserLean
@@ -122,6 +123,34 @@ private def attrEnv : List (String × Value) -> Env
   | [] => []
   | (name, value) :: attrs => (name, .value value) :: attrEnv attrs
 
+private def intToFloat : Int -> Float
+  | .ofNat n => n.toFloat
+  | .negSucc n => -((n + 1).toFloat)
+
+private def parseFloatValue (raw : String) : M Float :=
+  match Lean.Json.parse raw with
+  | .ok (.num number) => pure number.toFloat
+  | _ => throw s!"eval error: invalid float literal '{raw}'"
+
+private def numericToFloat : Value -> M Float
+  | .int value => pure (intToFloat value)
+  | .float raw => parseFloatValue raw
+  | _ => throw "eval error: numeric operator expects an int or float"
+
+private def setAttr (name : String) (value : Value) : List (String × Value) ->
+    List (String × Value)
+  | [] => [(name, value)]
+  | (candidate, existing) :: rest =>
+      if candidate == name then
+        (candidate, value) :: rest
+      else
+        (candidate, existing) :: setAttr name value rest
+
+private def updateAttrs : List (String × Value) -> List (String × Value) ->
+    List (String × Value)
+  | attrs, [] => attrs
+  | attrs, (name, value) :: rest => updateAttrs (setAttr name value attrs) rest
+
 partial def evalUnary : UnaryOp -> Value -> M Value
   | .not, .bool value => pure (.bool (!value))
   | .not, _ => throw "eval error: boolean negation expects a bool"
@@ -160,10 +189,38 @@ end
 
 partial def evalBinary : BinaryOp -> Value -> Value -> M Value
   | .add, .int left, .int right => pure (.int (left + right))
+  | .add, left, right => do
+      pure (.float (Float.toString ((← numericToFloat left) + (← numericToFloat right))))
   | .subtract, .int left, .int right => pure (.int (left - right))
+  | .subtract, left, right => do
+      pure (.float (Float.toString ((← numericToFloat left) - (← numericToFloat right))))
   | .multiply, .int left, .int right => pure (.int (left * right))
+  | .multiply, left, right => do
+      pure (.float (Float.toString ((← numericToFloat left) * (← numericToFloat right))))
   | .divide, .int _, .int 0 => throw "eval error: division by zero"
   | .divide, .int left, .int right => pure (.int (left / right))
+  | .divide, left, right => do
+      let right ← numericToFloat right
+      if right == 0.0 then
+        throw "eval error: division by zero"
+      else
+        pure (.float (Float.toString ((← numericToFloat left) / right)))
+  | .less, .int left, .int right => pure (.bool (left < right))
+  | .less, left, right => do
+      pure (.bool ((← numericToFloat left) < (← numericToFloat right)))
+  | .greater, .int left, .int right => pure (.bool (left > right))
+  | .greater, left, right => do
+      pure (.bool ((← numericToFloat left) > (← numericToFloat right)))
+  | .lessOrEqual, .int left, .int right => pure (.bool (left <= right))
+  | .lessOrEqual, left, right => do
+      pure (.bool ((← numericToFloat left) <= (← numericToFloat right)))
+  | .greaterOrEqual, .int left, .int right => pure (.bool (left >= right))
+  | .greaterOrEqual, left, right => do
+      pure (.bool ((← numericToFloat left) >= (← numericToFloat right)))
+  | .concat, .list left, .list right => pure (.list (left ++ right))
+  | .concat, _, _ => throw "eval error: list concatenation expects lists"
+  | .update, .attrset left, .attrset right => pure (.attrset (updateAttrs left right))
+  | .update, _, _ => throw "eval error: attribute update expects attrsets"
   | .equal, left, right => do
       pure (.bool (← equalValue left right))
   | .notEqual, left, right => do

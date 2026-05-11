@@ -112,8 +112,17 @@ supports:
 - dynamic attribute names in non-recursive attrsets and in selection paths
 - string interpolation of strings, integers, booleans, and null
 - boolean negation, integer negation
-- integer `+`, `-`, `*`, `/` (with division-by-zero check)
+- integer and float `+`, `-`, `*`, `/` (with division-by-zero check)
+- list concatenation with `++`
+- shallow attrset update with `//`, where right-hand attributes override
+  same-named left-hand attributes
+- numeric comparisons (`<`, `>`, `<=`, `>=`) over integers, floats, and
+  mixed integer/float operands
 - equality, inequality, `&&`, `||`, and implication over supported values
+
+Float arithmetic uses Lean's `Float` for computation and stores the resulting
+value with `Float.toString` formatting. Integer-only arithmetic keeps returning
+integer values; mixed integer/float arithmetic returns a float value.
 
 Default parameter expressions are evaluated when the corresponding argument
 field is absent. A default can refer to earlier-bound parameters, but not
