@@ -84,6 +84,11 @@ First acceptable implementation:
 - e2e fixture using a temp or repo-local search root;
 - no default dependency on system `<nixpkgs>`.
 
+The proposed shape is documented in
+`docs/angle-search-path-design.md`: use explicit `--search-path NAME=PATH`
+entries, keep `CoreEval` pure, and preserve the current angle-import rejection
+when no mapping is supplied.
+
 ## Milestone D: Store Paths And Realization
 
 Store paths should remain inert until the project has a store model. Copying

@@ -22,6 +22,8 @@ The current boundary is:
   `eval error: unsupported imported function values`, because closures cannot
   currently be reified back into core syntax for the final pure pass.
 - `--eval-imports` still rejects absolute, home-relative, and angle imports.
+  The future angle-import design is documented in
+  [angle-search-path-design.md](angle-search-path-design.md).
 
 This is deliberate. Import needs host filesystem IO, path normalization, base
 directory policy, and a decision about how much Nix path behavior to model.

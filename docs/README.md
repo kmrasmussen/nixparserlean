@@ -28,6 +28,7 @@ of Nix expressions, with a separate Rust harness for end-to-end corpus testing.
 | [parser.md](parser.md) | Parser internals and operator precedence |
 | [core.md](core.md) | Core AST, desugaring, core validation, and evaluator |
 | [testing.md](testing.md) | Testing strategy, manifest formats, and e2e runner |
+| [angle-search-path-design.md](angle-search-path-design.md) | Deterministic design for future `<name>` host imports |
 | [scaling-plan.md](scaling-plan.md) | Roadmap for growing the parser and corpus |
 | [design-notes.md](design-notes.md) | Implementation tradeoffs and the "why" behind specific choices |
 | [../roadmap/](../roadmap/) | Active long-horizon plans that span multiple tickets |
