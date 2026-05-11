@@ -27,7 +27,7 @@ def helpText : String :=
   "  --desugar                   Print validated core AST\n" ++
   "  --eval                      Evaluate validated core AST\n" ++
   "  --eval-imports              Evaluate with host IO for relative path imports\n" ++
-  "  --fuel N                    Set evaluator thunk-forcing fuel for --eval\n" ++
+  "  --fuel N                    Set evaluator step fuel for --eval\n" ++
   "  --format repr|json          Select output format (default: repr)\n" ++
   "  --core-validation-smoke     Internal e2e smoke mode for core validation\n" ++
   "  --help                      Show this help text"

@@ -118,8 +118,9 @@ into every fixture.
 Nix evaluation is not strongly normalizing; total evaluation is not the
 goal. Instead:
 
-1. Redefine fuel to count *evaluation steps*, not just thunk forces. The
-   current 200 default becomes meaningful as a step budget.
+1. ✅ Redefine fuel to count entries into `Core.Eval.eval`, not just thunk
+   forces. Structural walkers spend fuel only when they evaluate contained
+   expressions.
 2. Prove fuel monotonicity: if `eval n e = ok v` then `eval (n+k) e = ok v`.
 3. Prove determinism modulo fuel: any two runs that both succeed agree on
    the value.
@@ -129,6 +130,10 @@ goal. Instead:
 Phase 5 is gated on Phase 3 (desugaring must be total before eval theorems
 are worth stating) and benefits from Phase 2 (validator invariants become
 preservation lemmas).
+
+The next theorem target after the step-budget slice is fuel monotonicity for a
+small expression subset without recursive thunks. That subset can start with
+literals and binary expressions before widening to environments and closures.
 
 Risk: high. This is where the project transitions from "model" to
 "verified model".
@@ -145,6 +150,8 @@ and should be tracked as separate tickets:
 - Preservation: `CoreValidate` invariants are preserved across every
   evaluation step.
 - Fuel monotonicity and determinism (from Phase 5).
+- First target: monotonicity for literals and binary expressions under the
+  entry-step fuel policy.
 
 ## Cross-cutting concerns
 

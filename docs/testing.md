@@ -207,6 +207,6 @@ smoke mode that constructs an invalid core expression directly.
 `flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
 the parser/validator e2e runner, the core-validation contract manifest, the
 focused desugar manifest, the eval manifest, the host import manifest, the
-fuel manifest, and JSON output checks. This check runs on all supported
+fuel manifests, and JSON output checks. This check runs on all supported
 systems via
 `nix flake check`.

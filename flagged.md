@@ -80,15 +80,17 @@ to attack this without blocking language coverage.
 
 ---
 
-## 5. Fuel is configurable, but not yet semantic enough
+## 5. Fuel is a first step budget, not a proven semantics
 
-`CoreEval.lean:54` sets `defaultFuel = 200`, and `Main.lean` exposes `--fuel N`.
-That makes the limit testable, but the counter still mainly decrements when a
-thunk is forced (`CoreEval.lean:239-255`), not on every evaluation step.
+`CoreEval.lean` now spends fuel on each entry into `Core.Eval.eval`.
+Structural walkers do not spend fuel by themselves; they spend when they
+evaluate contained expressions. This is deterministic and testable, but it is
+still an interpreter budget rather than a separately proved small-step
+semantics.
 
-For proof-oriented semantics, fuel should eventually count a well-defined step
-relation and support monotonicity/determinism lemmas. Today it is still an
-implementation boundary for recursive thunks.
+For proof-oriented semantics, the next step is a monotonicity theorem for a
+small expression subset, then determinism modulo fuel, then a connection to a
+separate step relation.
 
 ---
 

@@ -46,16 +46,26 @@ mutual AST recursion rather than list-shaped merge recursion.
 
 ## Evaluation
 
-Evaluation remains `partial` and fuelled. Fuel is semantic today only as an
-implementation boundary for recursive thunk forcing: every forced thunk
-decrements fuel, and `0` fails with:
+Evaluation remains `partial` and fuelled. Fuel is now a deterministic
+core-expression evaluation budget: every entry into `Core.Eval.eval` consumes
+one fuel step before inspecting the expression constructor. Structural list,
+binding, and parameter walkers do not spend fuel by themselves; they spend
+fuel when they evaluate contained expressions. Thunk forcing no longer has a
+separate counter rule, because forcing a thunk evaluates its stored expression
+through the same `eval` entry point.
+
+Exhausting the budget fails with:
 
 ```text
 eval error: evaluation fuel exhausted
 ```
 
-The default remains `200`. The CLI now exposes `--fuel N` for `--eval` so this
-boundary can be tested directly without constructing huge recursive chains.
+The default remains `200`. The CLI exposes `--fuel N` for `--eval` so this
+boundary can be tested directly. For example, `1 + 2` needs fuel two: the
+binary expression consumes one step, then each literal operand sees one
+remaining step.
+Recursive binding cycles still report cycle diagnostics when the budget is
+sufficient to reach the recursive force.
 
 The low-risk evaluator equality and parameter helpers are now total:
 

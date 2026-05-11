@@ -59,6 +59,10 @@ def defaultFuel : Nat := 200
 private def unsupported (feature : String) : M α :=
   throw s!"eval error: unsupported {feature}"
 
+private def spendEvalFuel : Nat -> M Nat
+  | 0 => throw "eval error: evaluation fuel exhausted"
+  | fuel + 1 => pure fuel
+
 private def lookupAttr (name : String) : List (String × Value) -> Option Value
   | [] => none
   | (candidate, value) :: rest =>
@@ -248,65 +252,68 @@ def findExtraAttr? (allowed : List String) : List (String × Value) -> Option St
 
 mutual
 partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Value
-  | .int value => pure (.int value)
-  | .float value => pure (.float value)
-  | .str parts => do
+  | expr => do
+    let fuel ← spendEvalFuel fuel
+    match expr with
+    | .int value => pure (.int value)
+    | .float value => pure (.float value)
+    | .str parts => do
       pure (.str (← evalStringParts fuel stack env "string" parts))
-  | .bool value => pure (.bool value)
-  | .null => pure .null
-  | .ident name => lookupName fuel stack name env
-  | .path path => pure (.path path)
-  | .list items => do
+    | .bool value => pure (.bool value)
+    | .null => pure .null
+    | .ident name => lookupName fuel stack name env
+    | .path path => pure (.path path)
+    | .list items => do
       pure (.list (← evalList fuel stack env items))
-  | .attrset recursive bindings => do
+    | .attrset recursive bindings => do
       if recursive && hasDynamicBinding bindings then
         unsupported "dynamic recursive attribute binding evaluation"
       else if recursive then
         pure (.attrset (← evalBindings fuel stack (recursiveEnv "attribute" env bindings) bindings))
       else
         pure (.attrset (← evalBindings fuel stack env bindings))
-  | .letIn bindings body => do
+    | .letIn bindings body => do
       if hasDynamicBinding bindings then
         unsupported "dynamic let binding evaluation"
       else
         eval fuel stack (letEnv env bindings) body
-  | .lambda param body => pure (.closure env param body)
-  | .ifThenElse condition thenBranch elseBranch => do
+    | .lambda param body => pure (.closure env param body)
+    | .ifThenElse condition thenBranch elseBranch => do
       match ← eval fuel stack env condition with
       | .bool true => eval fuel stack env thenBranch
       | .bool false => eval fuel stack env elseBranch
       | _ => throw "eval error: if condition must be a bool"
-  | .assertExpr condition body => do
+    | .assertExpr condition body => do
       match ← eval fuel stack env condition with
       | .bool true => eval fuel stack env body
       | .bool false => throw "eval error: assertion failed"
       | _ => throw "eval error: assertion condition must be a bool"
-  | .withExpr scope body => do
+    | .withExpr scope body => do
       match ← eval fuel stack env scope with
       | .attrset attrs => eval fuel stack (env ++ attrEnv attrs) body
       | _ => throw "eval error: with scope must be an attrset"
-  | .select base path none => do
+    | .select base path none => do
       let names ← evalAttrPath fuel stack env path
       selectPath (← eval fuel stack env base) names
-  | .select base path (some defaultExpr) => do
+    | .select base path (some defaultExpr) => do
       let names ← evalAttrPath fuel stack env path
       match selectPath? (← eval fuel stack env base) names with
       | some value => pure value
       | none => eval fuel stack env defaultExpr
-  | .hasAttr base path => do
+    | .hasAttr base path => do
       let names ← evalAttrPath fuel stack env path
       pure (.bool ((selectPath? (← eval fuel stack env base) names).isSome))
-  | .app (.ident "import") _ => unsupported "import evaluation"
-  | .app function argument => do
+    | .app (.ident "import") _ => unsupported "import evaluation"
+    | .app function argument => do
       match ← eval fuel stack env function with
       | .closure closureEnv param body => do
           let argument ← eval fuel stack env argument
           let env ← bindParam fuel stack param argument closureEnv
           eval fuel stack env body
       | _ => throw "eval error: function application expects a function"
-  | .unary op inner => do
+    | .unary op inner => do
       evalUnary op (← eval fuel stack env inner)
-  | .binary op left right => do
+    | .binary op left right => do
       evalBinary op (← eval fuel stack env left) (← eval fuel stack env right)
 
 partial def lookupName (fuel : Nat) (stack : List String) (name : String) : Env -> M Value
@@ -320,10 +327,7 @@ partial def lookupName (fuel : Nat) (stack : List String) (name : String) : Env 
             if containsName name stack then
               throw s!"eval error: recursive {context} binding '{name}'"
             else
-              match fuel with
-              | 0 => throw "eval error: evaluation fuel exhausted"
-              | fuel + 1 =>
-                  eval fuel (name :: stack) (recursiveEnv context baseEnv bindings) expr
+              eval fuel (name :: stack) (recursiveEnv context baseEnv bindings) expr
       else
         lookupName fuel stack name rest
 

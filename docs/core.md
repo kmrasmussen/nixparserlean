@@ -134,8 +134,10 @@ of looping. Mutual recursion that bottoms out (e.g. `a = b; b = 1`) succeeds;
 mutual recursion without a base case (e.g. `a = b; b = a`) is detected as a
 cycle.
 
-The evaluator decrements a fuel counter (`defaultFuel = 200`) on each thunk
-force. Exhausting fuel produces an `eval error: evaluation fuel exhausted`.
+The evaluator decrements a fuel counter (`defaultFuel = 200`) on each entry
+into `Core.Eval.eval`. Structural list, binding, and parameter walkers spend
+fuel only when they evaluate contained expressions. Exhausting fuel produces an
+`eval error: evaluation fuel exhausted`.
 
 Unsupported forms fail explicitly with an `eval error:` prefix. The evaluator
 does **not** currently implement:

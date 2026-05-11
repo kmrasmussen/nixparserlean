@@ -35,6 +35,8 @@
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/eval-manifest.txt --parser "lake exe nixparserlean --eval --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/import-manifest.txt --parser "lake exe nixparserlean --eval-imports --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/fuel-manifest.txt --parser "lake exe nixparserlean --eval --fuel 0 --file"
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/fuel-low-manifest.txt --parser "lake exe nixparserlean --eval --fuel 1 --file"
+          cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/fuel-success-manifest.txt --parser "lake exe nixparserlean --eval --fuel 2 --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/json-manifest.txt --parser "lake exe nixparserlean --format json --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/json-manifest.txt --parser "lake exe nixparserlean --desugar --format json --file"
           cargo run --locked --manifest-path e2e/runner/Cargo.toml -- --manifest e2e/json-manifest.txt --parser "lake exe nixparserlean --eval --format json --file"
