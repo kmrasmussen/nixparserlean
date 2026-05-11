@@ -94,6 +94,8 @@ def staticAttrPath? (path : List Core.AttrPathPart) : Bool :=
 -- TODO theorem: for static non-empty paths, the selection-default lowering
 -- below preserves evaluator results relative to Core.Expr.select with default.
 
+def defaultDesugarFuel : Nat := 100000
+
 mutual
 def mergeStaticAttrsetsFuel : Nat -> Core.Expr -> Core.Expr -> Option Core.Expr
   | 0, _, _ => none
@@ -161,75 +163,81 @@ theorem mergeBindingIntoFuel_static_unmergeable_collision_exposes_duplicate_name
   simp [mergeBindingIntoFuel, h, staticBindingNames]
 
 mutual
-partial def stringParts : List StringPart -> M (List Core.StringPart)
-  | [] => pure []
-  | .text text :: parts => do
-      let rest ← stringParts parts
+def stringPartsFuel : Nat -> List StringPart -> M (List Core.StringPart)
+  | _, [] => pure []
+  | 0, _ :: _ => throw "desugar error: fuel exhausted"
+  | fuel + 1, .text text :: parts => do
+      let rest ← stringPartsFuel fuel parts
       pure (.text text :: rest)
-  | .interpolation surfaceExpr :: parts => do
-      let expr ← expr surfaceExpr
-      let rest ← stringParts parts
+  | fuel + 1, .interpolation surfaceExpr :: parts => do
+      let expr ← exprFuel fuel surfaceExpr
+      let rest ← stringPartsFuel fuel parts
       pure (.interpolation expr :: rest)
 
-partial def attrPathPart : AttrPathPart -> M Core.AttrPathPart
-  | .static name => pure (.static name)
-  | .dynamicString parts => do
-      pure (.dynamicString (← stringParts parts))
+def attrPathPartFuel : Nat -> AttrPathPart -> M Core.AttrPathPart
+  | 0, _ => throw "desugar error: fuel exhausted"
+  | _ + 1, .static name => pure (.static name)
+  | fuel + 1, .dynamicString parts => do
+      pure (.dynamicString (← stringPartsFuel fuel parts))
 
-partial def attrPathParts : List AttrPathPart -> M (List Core.AttrPathPart)
-  | [] => pure []
-  | part :: parts => do
-      let part ← attrPathPart part
-      let parts ← attrPathParts parts
+def attrPathPartsFuel : Nat -> List AttrPathPart -> M (List Core.AttrPathPart)
+  | _, [] => pure []
+  | 0, _ :: _ => throw "desugar error: fuel exhausted"
+  | fuel + 1, part :: parts => do
+      let part ← attrPathPartFuel fuel part
+      let parts ← attrPathPartsFuel fuel parts
       pure (part :: parts)
 
-partial def lambdaParam : LambdaParam -> M Core.LambdaParam
-  | .ident name => pure (.ident name)
-  | .attrset paramSet => do
-      pure (.attrset { paramSet with entries := (← paramEntries paramSet.entries) })
-  | .alias name param => do
-      pure (.alias name (← lambdaParam param))
+def lambdaParamFuel : Nat -> LambdaParam -> M Core.LambdaParam
+  | 0, _ => throw "desugar error: fuel exhausted"
+  | _ + 1, .ident name => pure (.ident name)
+  | fuel + 1, .attrset paramSet => do
+      pure (.attrset { paramSet with entries := (← paramEntriesFuel fuel paramSet.entries) })
+  | fuel + 1, .alias name param => do
+      pure (.alias name (← lambdaParamFuel fuel param))
 
-partial def paramEntries : List ParamEntry -> M (List Core.ParamEntry)
-  | [] => pure []
-  | entry :: entries => do
+def paramEntriesFuel : Nat -> List ParamEntry -> M (List Core.ParamEntry)
+  | _, [] => pure []
+  | 0, _ :: _ => throw "desugar error: fuel exhausted"
+  | fuel + 1, entry :: entries => do
       let default? ←
         match entry.default? with
         | none => pure none
-        | some defaultExpr => pure (some (← expr defaultExpr))
-      let entries ← paramEntries entries
+        | some defaultExpr => pure (some (← exprFuel fuel defaultExpr))
+      let entries ← paramEntriesFuel fuel entries
       pure ({ name := entry.name, default? } :: entries)
 
-partial def expr : Expr -> M Core.Expr
-  | .int value => pure (.int value)
-  | .float value => pure (.float value)
-  | .str parts => do
-      pure (.str (← stringParts parts))
-  | .bool value => pure (.bool value)
-  | .null => pure .null
-  | .ident name => pure (.ident name)
-  | .path path => pure (.path path)
-  | .list items => do
-      pure (.list (← exprs items))
-  | .attrset recursive surfaceBindings => do
-      pure (.attrset recursive (← bindings surfaceBindings))
-  | .letIn surfaceBindings body => do
-      pure (.letIn (← bindings surfaceBindings) (← expr body))
-  | .lambda param body => do
-      pure (.lambda (← lambdaParam param) (← expr body))
-  | .ifThenElse condition thenBranch elseBranch => do
-      pure (.ifThenElse (← expr condition) (← expr thenBranch) (← expr elseBranch))
-  | .assertExpr condition body => do
-      pure (.assertExpr (← expr condition) (← expr body))
-  | .withExpr scope body => do
-      pure (.withExpr (← expr scope) (← expr body))
-  | .select base path default? => do
-      let base ← expr base
-      let path ← attrPathParts path.parts
+def exprFuel : Nat -> Expr -> M Core.Expr
+  | 0, _ => throw "desugar error: fuel exhausted"
+  | _ + 1, .int value => pure (.int value)
+  | _ + 1, .float value => pure (.float value)
+  | fuel + 1, .str parts => do
+      pure (.str (← stringPartsFuel fuel parts))
+  | _ + 1, .bool value => pure (.bool value)
+  | _ + 1, .null => pure .null
+  | _ + 1, .ident name => pure (.ident name)
+  | _ + 1, .path path => pure (.path path)
+  | fuel + 1, .list items => do
+      pure (.list (← exprsFuel fuel items))
+  | fuel + 1, .attrset recursive surfaceBindings => do
+      pure (.attrset recursive (← bindingsFuel fuel surfaceBindings))
+  | fuel + 1, .letIn surfaceBindings body => do
+      pure (.letIn (← bindingsFuel fuel surfaceBindings) (← exprFuel fuel body))
+  | fuel + 1, .lambda param body => do
+      pure (.lambda (← lambdaParamFuel fuel param) (← exprFuel fuel body))
+  | fuel + 1, .ifThenElse condition thenBranch elseBranch => do
+      pure (.ifThenElse (← exprFuel fuel condition) (← exprFuel fuel thenBranch) (← exprFuel fuel elseBranch))
+  | fuel + 1, .assertExpr condition body => do
+      pure (.assertExpr (← exprFuel fuel condition) (← exprFuel fuel body))
+  | fuel + 1, .withExpr scope body => do
+      pure (.withExpr (← exprFuel fuel scope) (← exprFuel fuel body))
+  | fuel + 1, .select base path default? => do
+      let base ← exprFuel fuel base
+      let path ← attrPathPartsFuel fuel path.parts
       let default? ←
         match default? with
         | none => pure none
-        | some defaultExpr => pure (some (← expr defaultExpr))
+        | some defaultExpr => pure (some (← exprFuel fuel defaultExpr))
       match default? with
       | some defaultExpr =>
           if staticAttrPath? path then
@@ -238,38 +246,68 @@ partial def expr : Expr -> M Core.Expr
           else
             pure (.select base path (some defaultExpr))
       | none => pure (.select base path none)
-  | .hasAttr base path => do
-      pure (.hasAttr (← expr base) (← attrPathParts path.parts))
-  | .app function argument => do
-      pure (.app (← expr function) (← expr argument))
-  | .unary op inner => do
-      pure (.unary op (← expr inner))
-  | .binary op left right => do
-      pure (.binary op (← expr left) (← expr right))
+  | fuel + 1, .hasAttr base path => do
+      pure (.hasAttr (← exprFuel fuel base) (← attrPathPartsFuel fuel path.parts))
+  | fuel + 1, .app function argument => do
+      pure (.app (← exprFuel fuel function) (← exprFuel fuel argument))
+  | fuel + 1, .unary op inner => do
+      pure (.unary op (← exprFuel fuel inner))
+  | fuel + 1, .binary op left right => do
+      pure (.binary op (← exprFuel fuel left) (← exprFuel fuel right))
 
-partial def exprs : List Expr -> M (List Core.Expr)
-  | [] => pure []
-  | item :: items => do
-      let item ← expr item
-      let items ← exprs items
+def exprsFuel : Nat -> List Expr -> M (List Core.Expr)
+  | _, [] => pure []
+  | 0, _ :: _ => throw "desugar error: fuel exhausted"
+  | fuel + 1, item :: items => do
+      let item ← exprFuel fuel item
+      let items ← exprsFuel fuel items
       pure (item :: items)
 
-partial def binding : Binding -> M (List Core.Binding)
-  | .assign path value => do
-      let value ← expr value
-      pure [← bindingFromPath (← attrPathParts path.parts) value]
-  | .inherit names => pure (inheritBindings names)
-  | .inheritFrom scope names => do
-      let scope ← expr scope
+def bindingFuel : Nat -> Binding -> M (List Core.Binding)
+  | 0, _ => throw "desugar error: fuel exhausted"
+  | fuel + 1, .assign path value => do
+      let value ← exprFuel fuel value
+      pure [← bindingFromPath (← attrPathPartsFuel fuel path.parts) value]
+  | _ + 1, .inherit names => pure (inheritBindings names)
+  | fuel + 1, .inheritFrom scope names => do
+      let scope ← exprFuel fuel scope
       pure (inheritFromBindings scope names)
 
-partial def bindings : List Binding -> M (List Core.Binding)
-  | [] => pure []
-  | surfaceBinding :: rest => do
-      let binding ← binding surfaceBinding
-      let rest ← bindings rest
+def bindingsFuel : Nat -> List Binding -> M (List Core.Binding)
+  | _, [] => pure []
+  | 0, _ :: _ => throw "desugar error: fuel exhausted"
+  | fuel + 1, surfaceBinding :: rest => do
+      let binding ← bindingFuel fuel surfaceBinding
+      let rest ← bindingsFuel fuel rest
       pure (mergeBindings binding rest)
 end
+
+def stringParts (parts : List StringPart) : M (List Core.StringPart) :=
+  stringPartsFuel defaultDesugarFuel parts
+
+def attrPathPart (part : AttrPathPart) : M Core.AttrPathPart :=
+  attrPathPartFuel defaultDesugarFuel part
+
+def attrPathParts (parts : List AttrPathPart) : M (List Core.AttrPathPart) :=
+  attrPathPartsFuel defaultDesugarFuel parts
+
+def lambdaParam (param : LambdaParam) : M Core.LambdaParam :=
+  lambdaParamFuel defaultDesugarFuel param
+
+def paramEntries (entries : List ParamEntry) : M (List Core.ParamEntry) :=
+  paramEntriesFuel defaultDesugarFuel entries
+
+def expr (surface : Expr) : M Core.Expr :=
+  exprFuel defaultDesugarFuel surface
+
+def exprs (items : List Expr) : M (List Core.Expr) :=
+  exprsFuel defaultDesugarFuel items
+
+def binding (surfaceBinding : Binding) : M (List Core.Binding) :=
+  bindingFuel defaultDesugarFuel surfaceBinding
+
+def bindings (surfaceBindings : List Binding) : M (List Core.Binding) :=
+  bindingsFuel defaultDesugarFuel surfaceBindings
 
 def exprToCore (surface : Expr) : M Core.Expr :=
   expr surface

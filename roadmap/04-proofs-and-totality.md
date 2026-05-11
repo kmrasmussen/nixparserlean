@@ -51,7 +51,7 @@ Acceptance criteria:
 - The theorem name includes the restriction.
 - A doc note explains exactly what is excluded.
 
-## Milestone B: Remove Desugar Walk `partial`
+## Milestone B: Remove Desugar Walk `partial` (complete as fuel-bounded defs)
 
 Approach:
 
@@ -71,6 +71,14 @@ Acceptance criteria:
 - No `partial def` remains in the main desugar walk.
 - Existing desugar/eval manifests pass.
 - `docs/partial-and-fuel.md` records the shape.
+
+Landed shape:
+
+- the public `desugar` API is unchanged;
+- the internal walk uses `defaultDesugarFuel = 100000`;
+- `exprFuel`, `bindingFuel`, `stringPartsFuel`, attrpath helpers,
+  lambda-parameter helpers, and list walkers are total definitions;
+- fuel exhaustion reports `desugar error: fuel exhausted`.
 
 ## Milestone C: Parser Termination Strategy
 

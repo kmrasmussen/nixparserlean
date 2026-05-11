@@ -42,11 +42,22 @@ The simple attrpath helpers are now total definitions:
 - `mergeBindingInto`
 - `mergeBindings`
 
-The merge helpers are total through an explicit internal fuel bound. This makes
-small merge invariants proof-visible while avoiding the older opaque `partial`
-definitions. The remaining `partial` desugaring cluster is the real recursive
-surface-to-core walk; it should be handled separately because it follows the
-mutual AST recursion rather than list-shaped merge recursion.
+The merge helpers are total through an explicit internal fuel bound. The main
+surface-to-core walk is also total now: `exprFuel`, `bindingFuel`,
+`stringPartsFuel`, attrpath helpers, lambda-parameter helpers, and list walkers
+all receive a decreasing desugar fuel. The public `desugar` API still uses
+`defaultDesugarFuel = 100000`, so fuel is an internal termination device rather
+than a user-facing knob.
+
+Exhausting the budget fails with:
+
+```text
+desugar error: fuel exhausted
+```
+
+The remaining proof work is no longer blocked by an opaque `partial` desugar
+walk; the next step is proving enough fuel for restricted surface subsets, then
+replacing fuel with structural recursion where that becomes worth the effort.
 
 ## Evaluation
 
