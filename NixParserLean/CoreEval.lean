@@ -12,6 +12,7 @@ inductive Value where
   | str : String -> Value
   | bool : Bool -> Value
   | null : Value
+  | path : String -> Value
   | list : List Value -> Value
   | attrset : List (String × Value) -> Value
   | closure : List (String × EnvValue) -> LambdaParam -> Expr -> Value
@@ -31,6 +32,7 @@ def beqValue : Value -> Value -> Bool
   | .str left, .str right => left == right
   | .bool left, .bool right => left == right
   | .null, .null => true
+  | .path left, .path right => left == right
   | .list left, .list right => beqValues left right
   | .attrset left, .attrset right => beqAttrs left right
   | _, _ => false
@@ -164,6 +166,7 @@ def equalValue : Value -> Value -> M Bool
   | .str left, .str right => pure (left == right)
   | .bool left, .bool right => pure (left == right)
   | .null, .null => pure true
+  | .path left, .path right => pure (left == right)
   | .list left, .list right => equalValues left right
   | .attrset left, .attrset right => equalAttrs left right
   | .closure _ _ _, .closure _ _ _ => throw "eval error: function values cannot be compared"
@@ -252,7 +255,7 @@ partial def eval (fuel : Nat) (stack : List String) (env : Env) : Expr -> M Valu
   | .bool value => pure (.bool value)
   | .null => pure .null
   | .ident name => lookupName fuel stack name env
-  | .path _ => unsupported "path values"
+  | .path path => pure (.path path)
   | .list items => do
       pure (.list (← evalList fuel stack env items))
   | .attrset recursive bindings => do

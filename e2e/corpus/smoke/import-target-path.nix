@@ -1,0 +1,3 @@
+{
+  file = ./import-target.nix;
+}

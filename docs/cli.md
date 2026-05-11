@@ -40,5 +40,11 @@ The schema is intentionally small and mirrors the current AST constructors:
 `unary`, and `binary`. Core bindings use `staticAssign`, `inheritAssign`, and
 `dynamicAssign`.
 
+Evaluated path values are inert and use the same parsed spelling:
+
+```json
+{"kind":"path","path":"./file.nix"}
+```
+
 The default `repr` output remains for human debugging and backwards
 compatibility, but tools should prefer JSON.

@@ -288,6 +288,7 @@ partial def evalValueJson : NixParserLean.Core.Eval.Value -> String
   | .str value => jsonObject [("kind", jsonString "str"), ("value", jsonString value)]
   | .bool value => jsonObject [("kind", jsonString "bool"), ("value", if value then "true" else "false")]
   | .null => jsonObject [("kind", jsonString "null")]
+  | .path path => jsonObject [("kind", jsonString "path"), ("path", jsonString path)]
   | .list items => jsonObject [("kind", jsonString "list"), ("items", jsonArray (items.map evalValueJson))]
   | .attrset attrs =>
       let attrJson : String × NixParserLean.Core.Eval.Value -> String

@@ -31,20 +31,16 @@ claim that "imports work" needs this qualifier.
 
 ---
 
-## 2. Path values still are not evaluator values
+## 2. Path values are inert, not Nix store paths
 
-`CoreEval.lean:185` rejects every bare core path with:
+`CoreEval` now evaluates bare core paths to `Core.Eval.Value.path`, and the
+host import layer can reify imported path values back into core syntax.
 
-```text
-eval error: unsupported path values
-```
-
-`--eval-imports` handles relative paths only in import position. A program that
-tries to evaluate `./file.nix` as a value still fails, and that is covered by
-`e2e/corpus/smoke/eval-host-path-value.nix`.
-
-This is the right boundary for now, but user-facing docs should keep saying
-"path syntax parses" rather than "path values evaluate."
+This is deliberately weaker than full Nix path semantics. Evaluation preserves
+the parsed path text and performs no filesystem access, existence check,
+normalization, copying to the store, or angle-path lookup. `--eval-imports`
+still interprets relative paths only in import position; absolute, home, and
+angle imports remain expected `eval-fail` cases.
 
 ---
 

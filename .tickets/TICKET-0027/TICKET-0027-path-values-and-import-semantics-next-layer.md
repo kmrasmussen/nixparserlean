@@ -35,3 +35,38 @@ without blurring the pure evaluator / host IO boundary.
    `other-fail`.
 4. `flagged.md` is updated to remove or narrow the current path/import caveats.
 5. `docs/import-and-path-boundary.md` explains the new boundary precisely.
+
+## Plan
+1. Represent path values directly in `Core.Eval.Value`.
+2. Keep path evaluation inert: preserve parsed text and perform no filesystem
+   IO, normalization, store copying, or search-path lookup.
+3. Reify imported path values back to core expressions in the host import lane.
+4. Add e2e fixtures for pure path values, path equality, imported path values,
+   and unsupported absolute/home/angle import forms.
+5. Update the import/path boundary docs, `flagged.md`, and the project log.
+
+## Resolution
+Path literals now evaluate to `Core.Eval.Value.path` and preserve their parsed
+text. This applies to relative, absolute, home, angle, and store-like path
+syntax. Pure evaluation remains filesystem-free: path values do not check
+existence, normalize, copy to the store, or resolve angle paths.
+
+The host import lane remains explicit. `--eval-imports` still only resolves
+relative `./...` and `../...` import arguments, but imported representable
+values can now include inert paths because `HostEval.valueToExpr` reifies path
+values back into core expressions.
+
+Unsupported absolute, home-relative, and angle imports remain expected
+`eval-fail` cases.
+
+Verification:
+
+```text
+lake build: pass
+e2e/manifest.txt: 36 passed, 3 expected parse failures, 8 expected validation failures
+e2e/eval-manifest.txt: 41 passed, 20 expected eval failures
+e2e/import-manifest.txt: 3 passed, 3 expected eval failures
+e2e/json-manifest.txt: 1 passed
+lake exe nixparserlean --eval --format json --file e2e/corpus/smoke/eval-path-values.nix: pass
+nix flake check: pass on x86_64-linux
+```

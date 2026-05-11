@@ -66,6 +66,7 @@ partial def valueToExpr : Core.Eval.Value -> M Core.Expr
   | .str value => pure (.str [.text value])
   | .bool value => pure (.bool value)
   | .null => pure .null
+  | .path path => pure (.path path)
   | .list items => do
       pure (.list (← valuesToExprs items))
   | .attrset attrs => do

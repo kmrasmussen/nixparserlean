@@ -28,6 +28,8 @@ e2e/corpus/smoke/eval-attrset-update.nix	pass	shallow attrset update evaluates w
 e2e/corpus/smoke/eval-comparison.nix	pass	numeric comparisons evaluate for ints, floats, and mixed numeric values
 e2e/corpus/smoke/eval-float-arithmetic.nix	pass	float arithmetic evaluates using Lean Float formatting
 e2e/corpus/smoke/eval-mixed-numeric-arithmetic.nix	pass	mixed int/float arithmetic evaluates to a float value
+e2e/corpus/smoke/eval-path-values.nix	pass	relative, absolute, home, angle, and store-like paths evaluate as inert values
+e2e/corpus/smoke/eval-path-equality.nix	pass	path equality compares inert path text without filesystem access
 examples/current-core-showcase/showcase.nix	pass	showcase combines recursive attrsets, aliases, dynamic attrs, and with
 e2e/corpus/smoke/eval-string-interpolation.nix	pass	string interpolation evaluates string values
 e2e/corpus/smoke/eval-string-interpolation-int.nix	pass	string interpolation coerces integers
