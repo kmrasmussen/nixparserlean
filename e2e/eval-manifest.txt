@@ -33,6 +33,7 @@ e2e/corpus/smoke/eval-path-values.nix	pass	relative, absolute, home, angle, and 
 e2e/corpus/smoke/eval-path-equality.nix	pass	path equality compares inert path text without filesystem access
 examples/current-core-showcase/showcase.nix	pass	showcase combines recursive attrsets, aliases, dynamic attrs, and with
 e2e/corpus/smoke/eval-string-interpolation.nix	pass	string interpolation evaluates string values
+e2e/corpus/smoke/eval-indented-string-escaped-interpolation.nix	pass	indented string escaped interpolation remains literal
 e2e/corpus/smoke/eval-string-interpolation-int.nix	pass	string interpolation coerces integers
 e2e/corpus/smoke/eval-string-interpolation-bool.nix	pass	string interpolation coerces booleans
 e2e/corpus/smoke/eval-string-interpolation-null.nix	pass	string interpolation coerces null

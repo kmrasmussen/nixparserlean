@@ -17,18 +17,14 @@ forms, and the main operator table.
 
 The pinned external manifest is already useful:
 
-- 10 passing nixpkgs files.
-- 5 expected parse failures.
-- Blockers:
-  - `spaced-dynamic-selection`: 2.
-  - `quoted-inherit-name`: 1.
-  - `path-argument-dot-file`: 1.
-  - `indented-string-escape`: 1.
+- 15 passing pinned nixpkgs files.
+- 0 expected parse failures in the current pinned set.
 
-This is small enough that every blocker should become a focused ticket with a
-smoke fixture and a manifest update.
+The first blocker set has been ratcheted to green. The next parser/corpus
+step is infrastructure for growing the pinned set without making network-backed
+runs part of the ordinary flake check.
 
-## Milestone A: Spaced Dynamic Selection
+## Milestone A: Spaced Dynamic Selection (complete)
 
 Problem:
 
@@ -63,7 +59,7 @@ Acceptance criteria:
 - Existing import path fixtures still pass.
 - The parser docs explain the selection/path ambiguity.
 
-## Milestone B: Quoted Inherit Names
+## Milestone B: Quoted Inherit Names (complete)
 
 Problem:
 
@@ -92,7 +88,7 @@ Acceptance criteria:
 - External `quoted-inherit-name` row moves to pass or a narrower blocker.
 - Duplicate inherit validation still catches quoted/static duplicates.
 
-## Milestone C: Dot-File Path Argument
+## Milestone C: Dot-File Path Argument (complete)
 
 Problem:
 
@@ -120,7 +116,7 @@ Acceptance criteria:
 - Existing `parenthesized-import-application` and import fixtures still pass.
 - External row advances.
 
-## Milestone D: Indented String Escapes
+## Milestone D: Indented String Escapes (complete)
 
 Problem:
 

@@ -65,7 +65,8 @@ Each binary level uses a `loop` helper that re-parses the right-hand side and ac
 Dispatches on the current character after skipping whitespace:
 
 - `"` — quoted string (with `\n`, `\t`, `\"`, `\\` escapes and interpolation)
-- `''` — indented string with interpolation
+- `''` — indented string with interpolation and the `''${` literal `${`
+  escape
 - `(` — parenthesized expression
 - `[` — list
 - `{` — attribute set

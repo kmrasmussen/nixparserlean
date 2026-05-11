@@ -17,7 +17,7 @@ url	nixpkgs-lib-lists.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd8
 url	nixpkgs-shell.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/shell.nix	pass	parses nixpkgs development shell
 url	nixpkgs-top-level-default.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/pkgs/top-level/default.nix	pass	parses top-level package set entry
 url	nixpkgs-lib-attrsets.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/attrsets.nix	pass	parses attrset library surface
-url	nixpkgs-lib-strings.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/strings.nix	parse-fail	blocker: indented-string-escape; stops at literal "''${path}" inside an indented string
+url	nixpkgs-lib-strings.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/strings.nix	pass	parses string helpers with escaped indented-string interpolation
 url	nixpkgs-lib-trivial.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/trivial.nix	pass	parses trivial helpers with dot-file path arguments
 url	nixpkgs-lib-fixed-points.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/fixed-points.nix	pass	parses fixed-point helper surface
 url	nixpkgs-lib-customisation.nix	https://raw.githubusercontent.com/NixOS/nixpkgs/549bd84d6279f9852cae6225e372cc67fb91a4c1/lib/customisation.nix	pass	parses customisation helper surface

@@ -9,12 +9,14 @@ clearly separate.
 
 Goal: make real Nix surface coverage the next source of truth.
 
+Status: complete for the first pinned corpus set; all 15 rows currently pass.
+
 Why now:
 
-- All existing tickets are complete.
+- The initial backlog through `TICKET-0031` was completed.
 - The parser already handles a wide smoke subset.
-- The external manifest has only a few remaining expected parse blockers, so
-  progress is concrete and measurable.
+- The external manifest has already turned the first blocker set into concrete
+  smoke fixtures and passing pinned rows.
 
 Exit criteria:
 

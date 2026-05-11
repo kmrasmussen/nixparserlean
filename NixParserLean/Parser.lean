@@ -69,7 +69,10 @@ partial def indentedStringGo (text : List Char) (parts : List StringPart) (s : P
   | none => failAt s "unterminated indented string"
   | some '\'' =>
       if next? s == some '\'' then
-        pure ((flushStringText text parts).reverse, bump (bump s))
+        if charAt? 2 s == some '$' && charAt? 3 s == some '{' then
+          indentedStringGo ('{' :: '$' :: text) parts (bump (bump (bump (bump s))))
+        else
+          pure ((flushStringText text parts).reverse, bump (bump s))
       else
         indentedStringGo ('\'' :: text) parts (bump s)
   | some '$' =>
