@@ -42,3 +42,24 @@ failures point at the real next unsupported construct.
 4. `e2e/manifest.txt` contains focused parser fixtures for the new behavior.
 5. `e2e/external-manifest.txt` expected-failure notes are refreshed after
    the parser change.
+
+## Resolution
+Implemented parenthesized application arguments by allowing `(` as an
+application argument start. Application now propagates argument parse errors
+after it has committed to parsing an argument, instead of silently returning
+the function expression and leaving confusing trailing-input or missing
+semicolon errors behind.
+
+Lambda parsing now separates header detection from body parsing. The parser
+still backtracks when there is no lambda header, but once a header and colon
+are accepted, body parse failures are reported at the body location.
+
+Added focused smoke fixtures:
+
+- `e2e/corpus/smoke/parenthesized-application-argument.nix`
+- `e2e/corpus/smoke/parenthesized-import-application.nix`
+- `e2e/corpus/smoke/lambda-body-parse-error.nix`
+
+The pinned external manifest now has three passing nixpkgs files. The
+remaining expected parse failure is `nixpkgs-lib-default.nix`, whose next
+blocker is quoted string names inside an `inherit (...)` list.

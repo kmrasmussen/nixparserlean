@@ -10,7 +10,7 @@ private def isAppArgumentStart (s : ParserState) : Bool :=
   let s := skipSpace s
   isPathStart s ||
     match curr? s with
-    | some '"' | some '\'' | some '[' | some '{' | some '-' | some '!' => true
+    | some '"' | some '\'' | some '(' | some '[' | some '{' => true
     | some c => c.isDigit || isIdentStart c
     | none => false
 
@@ -115,9 +115,11 @@ partial def parseExpr (s : ParserState) : ParserM (Expr × ParserState) := do
   | .ok ("with", _) =>
     parseWith s
   | _ =>
-    match parseLambda s with
-    | .ok result => pure result
-    | .error _ => parseImplies s
+    match parseLambdaHeader? s with
+    | some (param, s) =>
+        let (body, s) ← parseExpr s
+        pure (.lambda param body, s)
+    | none => parseImplies s
 
 partial def parseImplies (s : ParserState) : ParserM (Expr × ParserState) := do
   let (left, s) ← parseOr s
@@ -270,9 +272,8 @@ partial def parseApp (s : ParserState) : ParserM (Expr × ParserState) := do
     if isAppStop st || !isAppArgumentStart st then
       pure (expr, st)
     else
-      match parseSelect st with
-      | .ok (argument, st') => loop (.app expr argument) st'
-      | .error _ => pure (expr, st)
+      let (argument, st') ← parseSelect st
+      loop (.app expr argument) st'
   loop function s
 
 partial def parseSelect (s : ParserState) : ParserM (Expr × ParserState) := do
@@ -343,33 +344,51 @@ partial def parseList (s : ParserState) : ParserM (Expr × ParserState) := do
         loop (item :: items) st'
   loop [] s
 
-partial def parseLambda (s : ParserState) : ParserM (Expr × ParserState) := do
+partial def parseLambdaHeader? (s : ParserState) : Option (LambdaParam × ParserState) :=
   let s := skipSpace s
-  let (param, s) ←
+  let parsed? : Option (LambdaParam × ParserState) :=
     match curr? s with
     | some '{' =>
-        let (paramSet, s) ← parseParamSet s
-        let s' := skipSpace s
-        if curr? s' == some '@' then
-          let (name, s) ← ident (bump s')
-          pure (LambdaParam.alias name (LambdaParam.attrset paramSet), s)
-        else
-          pure (LambdaParam.attrset paramSet, s)
+        match parseParamSet s with
+        | .ok (paramSet, s) =>
+            let s' := skipSpace s
+            if curr? s' == some '@' then
+              match ident (bump s') with
+              | .ok (name, s) => some (LambdaParam.alias name (LambdaParam.attrset paramSet), s)
+              | .error _ => none
+            else
+              some (LambdaParam.attrset paramSet, s)
+        | .error _ => none
     | _ =>
-        let (name, s) ← ident s
-        let s' := skipSpace s
-        if curr? s' == some '@' then
-          let s := bump s'
-          match curr? (skipSpace s) with
-          | some '{' =>
-              let (paramSet, s) ← parseParamSet s
-              pure (LambdaParam.alias name (LambdaParam.attrset paramSet), s)
-          | _ => failAt s "expected function parameter set after '@'"
-        else
-          pure (LambdaParam.ident name, s)
-  let s ← char ':' s
-  let (body, s) ← parseExpr s
-  pure (.lambda param body, s)
+        match ident s with
+        | .ok (name, s) =>
+            let s' := skipSpace s
+            if curr? s' == some '@' then
+              let s := bump s'
+              match curr? (skipSpace s) with
+              | some '{' =>
+                  match parseParamSet s with
+                  | .ok (paramSet, s) => some (LambdaParam.alias name (LambdaParam.attrset paramSet), s)
+                  | .error _ => none
+              | _ => none
+            else
+              some (LambdaParam.ident name, s)
+        | .error _ => none
+  match parsed? with
+  | some (param, s) =>
+      let s := skipSpace s
+      if curr? s == some ':' then
+        some (param, bump s)
+      else
+        none
+  | none => none
+
+partial def parseLambda (s : ParserState) : ParserM (Expr × ParserState) := do
+  match parseLambdaHeader? s with
+  | some (param, s) =>
+      let (body, s) ← parseExpr s
+      pure (.lambda param body, s)
+  | none => failAt s "expected lambda expression"
 
 partial def parseParamSet (s : ParserState) : ParserM (ParamSet × ParserState) := do
   let s ← char '{' s
