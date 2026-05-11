@@ -14,6 +14,27 @@ several differences from the surface AST. The two important ones today are:
 - selection and `?` paths are `List AttrPathPart` directly, with no `AttrPath`
   wrapper structure.
 
+## Minimal core target
+
+The intended minimal core is the subset that should remain once desugaring has
+stopped carrying surface conveniences forward.
+
+| Category | Current constructors/forms | Direction |
+|---|---|---|
+| Permanent values | ints, floats, strings, booleans, null, paths, lists, attrsets, closures | Keep as core values; path values stay inert and host-free. |
+| Permanent computation | lambda/application, conditionals, selection, `hasAttr`, static and dynamic attr bindings | Keep, but make invariants sharper through core validation and proofs. |
+| Temporary surface forms | `with`, selection defaults, broad unary/binary operator surface, `assert` | Keep while evaluator coverage grows; lower or split when the target semantics are clear. |
+| Mostly lowered already | dotted static bindings, scoped inherit | Keep the lowered shapes; continue proving that desugaring preserves validation. |
+| Semantic boundary forms | imports, path normalization, derivations, store/search-path behavior | Keep outside pure core evaluation; model through explicit host-effect layers. |
+
+The first concrete simplification target is `with`: it currently lives in core
+because the evaluator can implement it directly, but it is a surface lookup
+convenience rather than an obviously permanent core primitive. The next tickets
+should either lower `with` away or document why it deserves a stable core rule.
+Selection defaults are the second candidate: they may lower into an explicit
+missing-selection form or conditional-like core rule once missing attributes are
+modeled more precisely.
+
 ## Core bindings
 
 ```lean

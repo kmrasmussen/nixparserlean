@@ -26,9 +26,18 @@ Core should become:
 - friendly to evaluation and preservation theorems;
 - still close enough to Nix that debugging desugared output remains possible.
 
-## Milestone A: Name The Minimal Core
+## Milestone A: Name The Minimal Core (complete)
 
-Create a document or section in `docs/core.md` that distinguishes:
+`docs/core.md` now classifies current core forms as permanent values,
+permanent computation, temporary surface forms, mostly-lowered forms, and
+semantic-boundary forms.
+
+The follow-up simplification tickets are:
+
+- `TICKET-0039`: first core simplification slice;
+- `TICKET-0040`: next core validation contract invariants.
+
+The completed classification distinguishes:
 
 - **surface forms retained temporarily**;
 - **permanent core forms**;
