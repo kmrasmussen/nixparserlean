@@ -29,6 +29,13 @@ The current boundary keeps `CoreEval` pure and puts filesystem effects in
 `HostEval.lean`. Path values are just data in the pure evaluator; only the host
 import layer interprets relative path text as filesystem input.
 
+Relative import paths are joined with the importing file's directory and passed
+to the host filesystem. Simple aliases such as `./nested/../file.nix` can read
+successfully because the host filesystem resolves `..` during the file read,
+but recursion detection stores the joined text path rather than a canonical
+path. That means alias-based recursive imports are a documented limitation, not
+yet a normalized semantic guarantee. Pure path values remain unnormalized text.
+
 The smoke corpus has parser coverage for `import ./foo.nix`, pure eval-fail
 coverage for an import attempt, pure eval coverage for path values, and
 `e2e/import-manifest.txt` coverage for the explicit host IO path, including
