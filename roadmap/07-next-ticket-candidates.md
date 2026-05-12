@@ -6,6 +6,17 @@ next `.tickets` wave. Turn one candidate at a time into a real
 
 ## Recommended First Wave
 
+The first wave has been promoted to `.tickets`:
+
+- `TICKET-0052`: Host Value Slots For Imported Closures
+- `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops
+- `TICKET-0054`: Unary Primitive Fuel Monotonicity
+- `TICKET-0055`: Relative Import Path Normalization Policy
+- `TICKET-0056`: Second External Corpus Wave
+
+Keep the details below as roadmap context for future maintenance, but use the
+ticket files as the source of truth once implementation starts.
+
 ### Host Value Slots For Imported Closures
 
 Roadmap source: [05-host-effects.md](05-host-effects.md) and
