@@ -29,7 +29,7 @@ Recent work completed:
   selection-default lowering shape theorem;
 - checked evaluator-fuel monotonicity slices for primitive literals,
   primitive-literal binary expressions, and primitive-literal unary expressions;
-- host-effect evaluator shape, angle search-path design, parser termination
+- host-effect evaluator shape, angle search-path design and prototype, parser termination
   strategy, and roadmap maintenance loop.
 
 The root `flagged.md` contains the caveats that still matter: eager value-only
@@ -138,6 +138,7 @@ Pure `--eval` is filesystem-free and rejects `import` with an `eval error:`.
 `--eval-imports` is the explicit host IO lane:
 
 - supports relative `./...` and `../...` path imports;
+- supports configured angle imports through explicit `--search-path NAME=PATH`;
 - lexically normalizes `.` and `..` segments for host import reads and
   recursion detection;
 - reads imported files through `IO.FS.readFile`;
@@ -146,7 +147,7 @@ Pure `--eval` is filesystem-free and rejects `import` with an `eval error:`.
 - can apply immediately imported closures when the argument and result are
   representable;
 - rejects bare imported functions because closures cannot be reified yet;
-- rejects angle, home, absolute, store, network, and search-path imports.
+- rejects unconfigured angle, home, absolute, store, and network imports.
 
 Path values are inert text in pure evaluation. They do not check existence,
 normalize, copy to the store, or resolve angle paths.
@@ -163,6 +164,7 @@ The current committed e2e manifests cover:
 - `e2e/desugar-manifest.txt`: 8 pass, 1 validation-fail.
 - `e2e/eval-manifest.txt`: 48 pass, 20 eval-fail.
 - `e2e/import-manifest.txt`: 6 pass, 5 eval-fail.
+- `e2e/import-search-path-manifest.txt`: 1 pass.
 - `e2e/fuel-manifest.txt`: 1 eval-fail.
 - `e2e/fuel-low-manifest.txt`: 3 eval-fail.
 - `e2e/fuel-success-manifest.txt`: 3 pass.

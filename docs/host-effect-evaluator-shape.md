@@ -45,8 +45,8 @@ Pros:
 - keeps filesystem access outside `CoreEval`;
 - can thread imported closures as values rather than forcing them back into
   syntax;
-- keeps normalized relative imports and import recursion detection inside one
-  explicit capability boundary, with angle search paths as a later extension.
+- keeps normalized relative imports, configured angle search paths, and import
+  recursion detection inside one explicit capability boundary.
 
 Cons:
 
@@ -95,6 +95,7 @@ Next widening targets:
 ## Non-Goals
 
 - No implicit `NIX_PATH`.
-- No angle search-path implementation in this slice.
+- Configured angle search paths now have a separate first slice; this design
+  still excludes ambient `NIX_PATH` and system `<nixpkgs>` discovery.
 - No network fetchers or store realization.
 - No pure evaluator filesystem access.

@@ -19,15 +19,18 @@ The current boundary is:
   reads the target file, parses/validates/desugars it, evaluates it in
   isolation, and reifies representable values, including path values, before
   the final pure evaluation pass.
+- `--eval-imports --search-path NAME=PATH` also resolves angle imports whose
+  first component matches `NAME`, such as `<NAME/default.nix>`, through the
+  same host import pipeline.
 - Immediately applied imported functions, such as
   `import ./function.nix 41`, can run in the host import layer when the
   argument and result are representable values.
 - Bare imported functions are still rejected with
   `eval error: unsupported imported function values`, because closures cannot
   currently be reified back into core syntax for the final pure pass.
-- `--eval-imports` still rejects absolute, home-relative, and angle imports.
-  The future angle-import design is documented in
-  [angle-search-path-design.md](angle-search-path-design.md).
+- `--eval-imports` still rejects absolute, home-relative, store-like, network,
+  and unconfigured angle imports. The explicit angle-import behavior is
+  documented in [angle-search-path-design.md](angle-search-path-design.md).
 
 This is deliberate. Import needs host filesystem IO, path normalization, base
 directory policy, and a decision about how much Nix path behavior to model.
@@ -46,4 +49,5 @@ The smoke corpus has parser coverage for `import ./foo.nix`, pure eval-fail
 coverage for an import attempt, pure eval coverage for path values, and
 `e2e/import-manifest.txt` coverage for the explicit host IO path, including
 relative alias normalization, recursive alias detection, imported-function
-application, and bare-function rejection boundaries.
+application, and bare-function rejection boundaries. Configured angle search
+paths are covered separately by `e2e/import-search-path-manifest.txt`.

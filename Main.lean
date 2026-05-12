@@ -13,6 +13,7 @@ structure Options where
   evalImports : Bool := false
   coreValidationSmoke : Bool := false
   fuel : Nat := NixParserLean.Core.Eval.defaultFuel
+  searchPaths : NixParserLean.HostEval.SearchPathMap := []
   format : OutputFormat := .repr
   help : Bool := false
 
@@ -20,14 +21,15 @@ def defaultInput : String :=
   "{ answer = 42; values = [ true null \"nix\" ]; }"
 
 def helpText : String :=
-  "usage: nixparserlean [--help] [--file PATH] [--desugar] [--eval|--eval-imports] [--fuel N] [--format repr|json]\n" ++
+  "usage: nixparserlean [--help] [--file PATH] [--desugar] [--eval|--eval-imports] [--fuel N] [--search-path NAME=PATH] [--format repr|json]\n" ++
   "\n" ++
   "Options:\n" ++
   "  --file PATH                 Read Nix source from PATH\n" ++
   "  --desugar                   Print validated core AST\n" ++
   "  --eval                      Evaluate validated core AST\n" ++
-  "  --eval-imports              Evaluate with host IO for relative path imports\n" ++
+  "  --eval-imports              Evaluate with host IO for relative and configured angle imports\n" ++
   "  --fuel N                    Set evaluator step fuel for --eval\n" ++
+  "  --search-path NAME=PATH     Add explicit angle import root for --eval-imports\n" ++
   "  --format repr|json          Select output format (default: repr)\n" ++
   "  --core-validation-smoke     Internal e2e smoke mode for core validation\n" ++
   "  --help                      Show this help text"
@@ -43,6 +45,16 @@ def parseFormat (raw : String) : Except String OutputFormat :=
   | "repr" => .ok .repr
   | "json" => .ok .json
   | other => .error s!"unknown output format: {other}"
+
+def parseSearchPath (raw : String) : Except String (String × String) :=
+  match raw.splitOn "=" with
+  | name :: pathParts =>
+      let path := "=".intercalate pathParts
+      if name == "" || path == "" then
+        .error s!"invalid search path: {raw}"
+      else
+        .ok (name, path)
+  | _ => .error s!"invalid search path: {raw}"
 
 partial def parseArgs : List String -> Options -> List String -> IO (Except String Options)
   | [], options, inlineParts =>
@@ -71,6 +83,13 @@ partial def parseArgs : List String -> Options -> List String -> IO (Except Stri
       | some fuel => parseArgs rest { options with fuel } inlineParts
   | "--fuel" :: [], _, _ =>
       pure (.error "missing value for --fuel")
+  | "--search-path" :: rawSearchPath :: rest, options, inlineParts =>
+      match parseSearchPath rawSearchPath with
+      | .ok searchPath =>
+          parseArgs rest { options with searchPaths := searchPath :: options.searchPaths } inlineParts
+      | .error err => pure (.error err)
+  | "--search-path" :: [], _, _ =>
+      pure (.error "missing value for --search-path")
   | "--format" :: rawFormat :: rest, options, inlineParts =>
       match parseFormat rawFormat with
       | .ok format => parseArgs rest { options with format } inlineParts
@@ -304,7 +323,7 @@ def sourceBaseDir (options : Options) : String :=
 def prepareCoreForEval (options : Options) (coreExpr : NixParserLean.Core.Expr) :
     IO (Except String NixParserLean.Core.Expr) := do
   if options.eval && options.evalImports then
-    NixParserLean.HostEval.resolveImports options.fuel (sourceBaseDir options) coreExpr
+    NixParserLean.HostEval.resolveImports options.searchPaths options.fuel (sourceBaseDir options) coreExpr
   else
     pure (.ok coreExpr)
 

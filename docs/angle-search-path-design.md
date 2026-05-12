@@ -4,9 +4,9 @@ Angle paths such as `<nixpkgs>` currently parse as path literals and are
 rejected in import position. Supporting them should be host-backed and
 deterministic, not an implicit read from the user's machine.
 
-## Proposed Interface
+## Interface
 
-Add an explicit search-path input to the host import lane:
+The host import lane accepts explicit, repeatable search-path inputs:
 
 ```sh
 lake exe nixparserlean --eval-imports \
@@ -28,13 +28,16 @@ mapped directory joined with `lib/default.nix`.
 - Resolved files should go through the same parse, validate, desugar,
   core-validate, evaluate, and reify pipeline as relative imports.
 
-## First Implementation Slice
+## Implemented Slice
 
-1. Extend CLI parsing with repeatable `--search-path NAME=PATH`.
-2. Thread the mapping into `HostEval.resolveImportPath`.
-3. Add repo-local fixtures under `examples/search-roots/`.
-4. Keep the existing angle-import rejection fixture for the no-search-path case.
+The first implementation slice is intentionally narrow:
+
+1. CLI parsing accepts repeatable `--search-path NAME=PATH`.
+2. The mapping is threaded into `HostEval.resolveImportPath`.
+3. Repo-local fixtures live under `examples/search-roots/`.
+4. `e2e/import-search-path-manifest.txt` covers configured angle import
+   success.
+5. `e2e/import-manifest.txt` keeps the no-search-path angle-import rejection.
 
 This design intentionally does not cover network fetchers, store realization,
 or system `<nixpkgs>` discovery.
-

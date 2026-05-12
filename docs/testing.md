@@ -12,6 +12,7 @@ each driven by the same Rust runner with a different `--parser` command line:
 | `e2e/desugar-manifest.txt` | `lake exe nixparserlean --desugar --file` | parser + surface validator + desugar + core validator |
 | `e2e/eval-manifest.txt` | `lake exe nixparserlean --eval --file` | the full pipeline including the evaluator |
 | `e2e/import-manifest.txt` | `lake exe nixparserlean --eval-imports --file` | explicit host IO path for relative imports |
+| `e2e/import-search-path-manifest.txt` | `lake exe nixparserlean --eval-imports --search-path demo=examples/search-roots/demo --file` | configured angle imports through explicit host search paths |
 | `e2e/fuel-manifest.txt` | `lake exe nixparserlean --eval --fuel 0 --file` | fuel exhaustion at entry |
 | `e2e/fuel-low-manifest.txt` | `lake exe nixparserlean --eval --fuel 1 --file` | deterministic low-fuel failure |
 | `e2e/fuel-success-manifest.txt` | `lake exe nixparserlean --eval --fuel 2 --file` | sufficient-fuel success |
@@ -56,7 +57,8 @@ Smoke fixtures are grouped roughly into:
   attribute-set lambda parameters with defaults / overrides / ellipsis /
   aliases.
 - **Host import cases (`eval-host-*.nix`):** relative import success through
-  `--eval-imports`, plus unsupported import/path cases that must remain
+  `--eval-imports`, configured angle import success through explicit
+  `--search-path`, plus unsupported import/path cases that must remain
   classified as eval failures.
 - **Eval failure cases (`eval-*-fail` style):**
   `eval-paramset-missing.nix`, `eval-paramset-extra.nix`,
@@ -74,9 +76,9 @@ Smoke fixtures are grouped roughly into:
 
 Examples under `examples/` are also referenced from e2e manifests so they are
 both documentation and regression tests. The focused suite covers pure
-expressions, recursion, lambdas, dynamic attributes, host imports, and a
-proof-oriented static attrset fragment; `current-core-showcase/` remains as the
-combined integration example.
+expressions, recursion, lambdas, dynamic attributes, host imports, explicit
+search roots, and a proof-oriented static attrset fragment;
+`current-core-showcase/` remains as the combined integration example.
 
 ### Manifest format
 
@@ -220,7 +222,7 @@ smoke mode that constructs an invalid core expression directly.
 
 `flake.nix` defines a `checks.e2e-smoke` derivation that runs `lake build`,
 the parser/validator e2e runner, the core-validation contract manifest, the
-focused desugar manifest, the eval manifest, the host import manifest, the
-fuel manifests, JSON output checks, CLI help text checks, and the unknown-flag
-diagnostic check. This check runs on all supported systems via
+focused desugar manifest, the eval manifest, the host import manifests,
+the fuel manifests, JSON output checks, CLI help text checks, and the
+unknown-flag diagnostic check. This check runs on all supported systems via
 `nix flake check`.

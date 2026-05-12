@@ -10,6 +10,7 @@ The focused examples are easier to read than the combined showcase:
 - `lambdas/` covers attrset lambdas, aliases, defaults, and ellipsis.
 - `dynamic-attrs/` covers dynamic attribute binding and selection.
 - `host-boundary/` covers explicit `--eval-imports` relative import behavior.
+- `search-roots/` contains repo-local roots for explicit angle import tests.
 - `proof-static-attrsets/` covers static dotted attrsets used by desugaring and
   proof-oriented invariants.
 

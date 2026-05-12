@@ -28,7 +28,7 @@ of Nix expressions, with a separate Rust harness for end-to-end corpus testing.
 | [parser.md](parser.md) | Parser internals and operator precedence |
 | [core.md](core.md) | Core AST, desugaring, core validation, and evaluator |
 | [testing.md](testing.md) | Testing strategy, manifest formats, and e2e runner |
-| [angle-search-path-design.md](angle-search-path-design.md) | Deterministic design for future `<name>` host imports |
+| [angle-search-path-design.md](angle-search-path-design.md) | Deterministic design and implementation notes for explicit `<name>` host imports |
 | [host-effect-evaluator-shape.md](host-effect-evaluator-shape.md) | Chosen next shape for host-aware import evaluation |
 | [parser-expression-termination-strategy.md](parser-expression-termination-strategy.md) | Fuel-first plan for removing expression parser `partial` debt |
 | [scaling-plan.md](scaling-plan.md) | Roadmap for growing the parser and corpus |
@@ -53,6 +53,11 @@ lake exe nixparserlean --eval --file path/to/file.nix
 
 # Evaluate with the explicit host IO layer for relative imports
 lake exe nixparserlean --eval-imports --file path/to/file.nix
+
+# Evaluate with an explicit host search path for angle imports
+lake exe nixparserlean --eval-imports \
+    --search-path demo=examples/search-roots/demo \
+    --file e2e/corpus/smoke/eval-host-import-angle-search-path.nix
 
 # Parse an inline expression (any args that aren't recognised flags)
 lake exe nixparserlean '{ x = 1; }'
@@ -92,10 +97,12 @@ e2e/
   desugar-manifest.txt      — focused surface → Core fixtures
   eval-manifest.txt         — eval fragment fixtures + intentional eval-fail entries
   import-manifest.txt       — host import fixtures for --eval-imports
+  import-search-path-manifest.txt — explicit angle search-path import fixtures
   external-manifest.example.txt — illustrates the file/url manifest forms
   corpus/smoke/             — committed Nix fixture files
   runner/                   — Rust e2e harness (src/main.rs)
 examples/
+  search-roots/             — repo-local roots for explicit angle import tests
   current-core-showcase/    — combined-feature example used as a regression test
 blog/                       — development notes (one entry per significant change)
 .tickets/                   — durable backlog (semantic milestones, debt)

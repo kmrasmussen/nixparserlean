@@ -10,8 +10,11 @@ uses a small built-in example.
 - `--desugar` prints the validated core AST instead of the surface AST.
 - `--eval` evaluates the validated core AST.
 - `--eval-imports` evaluates with the explicit host IO layer for relative
-  path imports.
+  path imports and configured angle imports.
 - `--fuel N` sets evaluator step fuel for `--eval`.
+- `--search-path NAME=PATH` adds an explicit angle import root for
+  `--eval-imports`. The flag is repeatable. `<NAME/default.nix>` resolves
+  under `PATH`.
 - `--format repr|json` selects output format. The default is `repr`.
 - `--help` prints usage.
 

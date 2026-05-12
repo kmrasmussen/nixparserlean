@@ -16,13 +16,14 @@ Pure evaluation:
 Host evaluation through `--eval-imports`:
 
 - supports relative `./...` and `../...` imports;
+- supports configured angle imports through explicit `--search-path NAME=PATH`;
 - reads files with `IO.FS.readFile`;
 - parses, validates, desugars, core-validates, evaluates, and reifies
   representable imported values;
 - can apply immediately imported closures when the argument and result are
   representable;
 - rejects bare imported closures;
-- rejects angle, home, absolute, store, network, and search-path imports.
+- rejects unconfigured angle, home, absolute, store, and network imports.
 
 ## Principle
 
@@ -89,16 +90,17 @@ Acceptance criteria:
 
 ## Milestone C: Search Path And Angle Imports
 
-Angle paths like `<nixpkgs>` are currently parsed as path values and rejected
-as imports.
+Angle paths like `<nixpkgs>` parse as path values. In import position, they
+are supported only when the first angle component has an explicit
+`--search-path NAME=PATH` mapping.
 
-Search paths now have a deterministic design note. Do not implement them until:
+The first implementation slice is landed:
 
 - the host effect API has a configurable search path environment;
-- tests can run without relying on the user's machine;
+- tests use repo-local search roots;
 - docs explain that this is host-backed behavior, not pure evaluation.
 
-First acceptable implementation:
+Current supported shape:
 
 - CLI flag or environment argument that supplies a search path mapping;
 - e2e fixture using a temp or repo-local search root;
@@ -106,8 +108,8 @@ First acceptable implementation:
 
 The proposed shape is documented in
 `docs/angle-search-path-design.md`: use explicit `--search-path NAME=PATH`
-entries, keep `CoreEval` pure, and preserve the current angle-import rejection
-when no mapping is supplied.
+entries, keep `CoreEval` pure, and preserve angle-import rejection when no
+mapping is supplied.
 
 ## Milestone D: Store Paths And Realization
 

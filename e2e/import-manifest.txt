@@ -7,7 +7,7 @@ e2e/corpus/smoke/eval-host-import-function-application.nix	pass	imported closure
 examples/host-boundary/main.nix	pass	example suite host import boundary
 e2e/corpus/smoke/eval-host-import-function.nix	eval-fail	bare imported functions still cannot be reified into core syntax
 e2e/corpus/smoke/eval-host-import-recursive-alias.nix	eval-fail	relative import aliases share the normalized recursion key
-e2e/corpus/smoke/eval-host-import-angle-path.nix	eval-fail	angle-bracket imports are outside the first host boundary
+e2e/corpus/smoke/eval-host-import-angle-path.nix	eval-fail	angle-bracket imports require an explicit search-path mapping
 e2e/corpus/smoke/eval-host-import-absolute-path.nix	eval-fail	absolute imports remain outside the explicit host boundary
 e2e/corpus/smoke/eval-host-import-home-path.nix	eval-fail	home-relative imports remain outside the explicit host boundary
 e2e/corpus/smoke/eval-host-path-value.nix	pass	path values evaluate outside import position without filesystem IO
