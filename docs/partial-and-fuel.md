@@ -19,6 +19,10 @@ The first lexer helpers have moved off `partial`:
 Both wrappers preserve the existing public helper shape and source-position
 behavior. The remaining parser helper debt includes comment skipping,
 whitespace skipping, string scanning, and the expression parser.
+The expression parser strategy is documented in
+`parser-expression-termination-strategy.md`: use explicit parser fuel first,
+starting with local operator loops, then consider `decreasing_by` refinements
+after the fuel-bounded shape is stable.
 
 ## Validation
 

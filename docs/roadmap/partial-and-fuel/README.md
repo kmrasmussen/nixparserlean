@@ -113,6 +113,12 @@ Two viable shapes:
 - **`decreasing_by` on input length.** Requires every consuming call to
   prove `state'.input.length < state.input.length`. Cleaner but invasive.
 
+Chosen near-term strategy: explicit parser fuel first. Start with local
+operator loops such as additive and multiplicative expressions, keep public
+parser signatures stable, and preserve source positions. Revisit
+`decreasing_by` once the fuel-bounded parser shape has removed the large
+opaque expression island.
+
 A third option — switching to a parser-combinator library with built-in
 termination — is explicitly out of scope for this roadmap; AGENTS.md
 favors the existing handwritten style.

@@ -91,8 +91,14 @@ Recommended path:
    - comment skipping;
    - angle path scanning (complete as an input-length fuel wrapper);
    - string scanning.
-2. Then consider expression parser fuel.
-3. Preserve source positions exactly.
+2. Convert expression parser levels with explicit fuel, starting with local
+   additive and multiplicative operator loops.
+3. Revisit `decreasing_by` on input length after the fuel-bounded shape is
+   stable.
+4. Preserve source positions exactly.
+
+The full strategy is documented in
+`docs/parser-expression-termination-strategy.md`.
 
 Do not rewrite the parser into a combinator library unless the handwritten
 parser becomes unmaintainable.
