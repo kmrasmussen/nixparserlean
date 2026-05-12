@@ -65,16 +65,16 @@ large enough that repo fixtures do not encounter parser fuel exhaustion.
 
 ## First Implementation Ticket
 
-Draft follow-up ticket:
+Landed first implementation ticket:
 
 **Fuel-Bound ParseAdd And ParseMul Loops**
 
-- Add internal `parseAddLoopFuel` and `parseMulLoopFuel` helpers in
-  `NixParserLean/Parser.lean`.
-- Size each loop fuel from `st.remaining.length`.
-- Keep public `parseAdd` and `parseMul` signatures unchanged.
-- Preserve existing parse output and source positions.
-- Run the default parser manifest and external corpus manifest.
+- `parseAdd` and `parseMul` now delegate to top-level total helpers
+  `parseAddLoopFuel` and `parseMulLoopFuel`.
+- Each loop is sized from `st.remaining.length` after parsing the left operand.
+- Public `parseAdd` and `parseMul` signatures remain unchanged.
+- Existing parse output and source positions are preserved by the current
+  parser manifests.
 
 This scope is narrow because additive and multiplicative loops are
 left-associative, local, and do not need to change lambda, selection, list, or

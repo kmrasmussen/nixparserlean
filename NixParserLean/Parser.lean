@@ -34,6 +34,44 @@ private def spacedDynamicSelection? (s : ParserState) : Option ParserState :=
   | some '.', some '$', some '{' => some s
   | _, _, _ => none
 
+def parseMulLoopFuel (parseOperand : ParserState -> ParserM (Expr × ParserState)) :
+    Nat -> Expr -> ParserState -> ParserM (Expr × ParserState)
+  | 0, expr, st => pure (expr, st)
+  | fuel + 1, expr, st => do
+      match token "*" st with
+      | .ok st =>
+          let (right, st) ← parseOperand st
+          parseMulLoopFuel parseOperand fuel (.binary .multiply expr right) st
+      | .error _ =>
+          match operatorToken "/" st with
+          | .ok st =>
+              let (right, st) ← parseOperand st
+              parseMulLoopFuel parseOperand fuel (.binary .divide expr right) st
+          | .error _ => pure (expr, st)
+termination_by fuel _ _ => fuel
+decreasing_by
+  simp_wf
+  exact Nat.lt_succ_self fuel
+
+def parseAddLoopFuel (parseOperand : ParserState -> ParserM (Expr × ParserState)) :
+    Nat -> Expr -> ParserState -> ParserM (Expr × ParserState)
+  | 0, expr, st => pure (expr, st)
+  | fuel + 1, expr, st => do
+      match operatorToken "+" st with
+      | .ok st =>
+          let (right, st) ← parseOperand st
+          parseAddLoopFuel parseOperand fuel (.binary .add expr right) st
+      | .error _ =>
+          match operatorToken "-" st with
+          | .ok st =>
+              let (right, st) ← parseOperand st
+              parseAddLoopFuel parseOperand fuel (.binary .subtract expr right) st
+          | .error _ => pure (expr, st)
+termination_by fuel _ _ => fuel
+decreasing_by
+  simp_wf
+  exact Nat.lt_succ_self fuel
+
 mutual
 partial def quotedStringGo (text : List Char) (parts : List StringPart) (s : ParserState) :
     ParserM (List StringPart × ParserState) := do
@@ -228,36 +266,6 @@ partial def parseConcat (s : ParserState) : ParserM (Expr × ParserState) := do
     | .error _ => pure (expr, st)
   loop left s
 
-partial def parseMul (s : ParserState) : ParserM (Expr × ParserState) := do
-  let (left, s) ← parseUnary s
-  let rec loop (expr : Expr) (st : ParserState) := do
-    match token "*" st with
-    | .ok st =>
-        let (right, st) ← parseUnary st
-        loop (.binary .multiply expr right) st
-    | .error _ =>
-        match operatorToken "/" st with
-        | .ok st =>
-            let (right, st) ← parseUnary st
-            loop (.binary .divide expr right) st
-        | .error _ => pure (expr, st)
-  loop left s
-
-partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
-  let (left, s) ← parseMul s
-  let rec loop (expr : Expr) (st : ParserState) := do
-    match operatorToken "+" st with
-    | .ok st =>
-        let (right, st) ← parseMul st
-        loop (.binary .add expr right) st
-    | .error _ =>
-        match operatorToken "-" st with
-        | .ok st =>
-            let (right, st) ← parseMul st
-            loop (.binary .subtract expr right) st
-        | .error _ => pure (expr, st)
-  loop left s
-
 partial def parseUnary (s : ParserState) : ParserM (Expr × ParserState) := do
   let s := skipSpace s
   match curr? s, next? s with
@@ -274,6 +282,14 @@ partial def parseUnary (s : ParserState) : ParserM (Expr × ParserState) := do
         let (expr, s) ← parseUnary (bump s)
         pure (.unary .negate expr, s)
   | _, _ => parseApp s
+
+partial def parseMul (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseUnary s
+  parseMulLoopFuel parseUnary s.remaining.length left s
+
+partial def parseAdd (s : ParserState) : ParserM (Expr × ParserState) := do
+  let (left, s) ← parseMul s
+  parseAddLoopFuel parseMul s.remaining.length left s
 
 partial def parseApp (s : ParserState) : ParserM (Expr × ParserState) := do
   let (function, s) ← parseSelect s

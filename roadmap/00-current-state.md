@@ -15,7 +15,8 @@ Recent work completed:
 - first external corpus blocker ratchet, with 15 pinned nixpkgs rows passing;
 - inert path values and explicit import/path boundary docs;
 - total fuel-bounded surface validator, core validator, and desugar walk;
-- parser helper totality for `takeWhileGo` and angle path scanning;
+- parser helper totality for `takeWhileGo`, angle path scanning, and the
+  additive/multiplicative expression loops;
 - quoted inherit names, dot-file path arguments, spaced dynamic selection, and
   escaped indented interpolation;
 - static selection-default lowering and empty static binding-name validation;
@@ -54,8 +55,8 @@ external corpus:
   operators.
 
 The parser remains handwritten. Many expression/parser functions are still
-`partial`, but the termination strategy is now documented and the next slice is
-local operator-loop fuel.
+`partial`, but the termination strategy is now documented and the first local
+operator-loop fuel slice has landed.
 
 ## Validation Layers
 

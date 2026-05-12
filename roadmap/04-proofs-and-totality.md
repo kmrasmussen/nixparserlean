@@ -93,7 +93,7 @@ Recommended path:
    - angle path scanning (complete as an input-length fuel wrapper);
    - string scanning.
 2. Convert expression parser levels with explicit fuel, starting with local
-   additive and multiplicative operator loops.
+   additive and multiplicative operator loops. (complete)
 3. Revisit `decreasing_by` on input length after the fuel-bounded shape is
    stable.
 4. Preserve source positions exactly.

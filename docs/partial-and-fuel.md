@@ -15,6 +15,9 @@ The first lexer helpers have moved off `partial`:
 - `takeWhileGo` delegates to `takeWhileGoFuel`, sized from remaining input;
 - `anglePathGo` delegates to `anglePathGoFuel`, also sized from remaining
   input.
+- the additive and multiplicative expression loops delegate to
+  `parseAddLoopFuel` and `parseMulLoopFuel`, sized from the remaining input
+  after the left operand is parsed.
 
 Both wrappers preserve the existing public helper shape and source-position
 behavior. The remaining parser helper debt includes comment skipping,
