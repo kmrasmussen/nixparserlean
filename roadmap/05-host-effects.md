@@ -44,6 +44,11 @@ Recommendation:
 Start with option 1. Add fixtures that prove the diagnostic is stable. Then
 design option 3 if real module patterns require it.
 
+Current design note: `docs/host-effect-evaluator-shape.md` chooses a
+host-aware import substitution layer as the next direction. The compatibility
+path keeps reifying simple imported values, while the new host layer gets an
+internal value slot for imported closures. `CoreEval` remains filesystem-free.
+
 Acceptance criteria:
 
 - Fixture for importing a function-valued file.

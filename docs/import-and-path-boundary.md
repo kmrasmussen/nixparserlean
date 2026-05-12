@@ -21,6 +21,9 @@ The current boundary is:
 - Imported files that evaluate to functions are rejected with
   `eval error: unsupported imported function values`, because closures cannot
   currently be reified back into core syntax for the final pure pass.
+  [host-effect-evaluator-shape.md](host-effect-evaluator-shape.md) documents
+  the chosen next direction for lifting this restriction without adding
+  filesystem behavior to `CoreEval`.
 - `--eval-imports` still rejects absolute, home-relative, and angle imports.
   The future angle-import design is documented in
   [angle-search-path-design.md](angle-search-path-design.md).
