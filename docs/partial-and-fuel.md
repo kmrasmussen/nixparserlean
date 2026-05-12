@@ -110,11 +110,13 @@ The checked fuel theorems are deliberately restricted. In
 that the total proof harness for primitive literals and binary expressions over
 primitive literal operands preserves a successful result when extra fuel is
 added. `evalLiteralUnaryBinarySubsetWithFuel_monotone` widens that harness with
-unary expressions over primitive literals. This still excludes closures,
-thunks, host imports, lists, attrsets, selection, and conditionals; lists of
-primitive literals or non-recursive static attrsets are the next reasonable
-widening targets because they introduce recursive walkers without environment
-cycles.
+unary expressions over primitive literals.
+`evalLiteralUnaryBinaryListItemsWithFuel_monotone` adds the first recursive
+walker theorem for lists whose items are in the same literal/unary/binary
+subset. This still excludes closures, thunks, host imports, attrsets,
+selection, and conditionals; non-recursive static attrsets are the next
+reasonable widening target because they add binding structure without
+environment cycles.
 
 The low-risk evaluator equality and parameter helpers are now total:
 

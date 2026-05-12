@@ -390,6 +390,70 @@ theorem evalLiteralUnaryBinarySubsetWithFuel_monotone {fuel extra : Nat} {expr :
   | binary hLeft hRight hEval =>
       exact evalPrimitiveBinaryWithFuel_monotone_unaryBinary (fuel := fuel) (extra := extra) h
 
+def evalLiteralUnaryBinaryListItemsWithFuel (fuel : Nat) :
+    List Expr -> M (List Value)
+  | [] => pure []
+  | item :: items => do
+      let value ← evalLiteralUnaryBinarySubsetWithFuel fuel item
+      let values ← evalLiteralUnaryBinaryListItemsWithFuel fuel items
+      pure (value :: values)
+
+inductive LiteralUnaryBinaryListItemsSubset : List Expr -> List Value -> Prop where
+  | nil : LiteralUnaryBinaryListItemsSubset [] []
+  | cons {expr : Expr} {value : Value} {cost : Nat} {exprs : List Expr}
+      {values : List Value}
+      (hItem : LiteralUnaryBinarySubset expr value cost)
+      (hItems : LiteralUnaryBinaryListItemsSubset exprs values) :
+      LiteralUnaryBinaryListItemsSubset (expr :: exprs) (value :: values)
+
+theorem evalLiteralUnaryBinarySubsetWithFuel_of_subset {extra : Nat} {expr : Expr}
+    {value : Value} {cost : Nat}
+    (hSubset : LiteralUnaryBinarySubset expr value cost) :
+    evalLiteralUnaryBinarySubsetWithFuel (extra + cost) expr = .ok value := by
+  cases hSubset with
+  | literal hLiteral =>
+      exact evalPrimitiveLiteralWithExtra_unaryBinary
+        (fuel := extra) (extra := 0) hLiteral
+  | unary hInner hEval =>
+      cases extra <;> cases hInner <;>
+        simp [evalLiteralUnaryBinarySubsetWithFuel, primitiveLiteralValue?, hEval]
+  | binary hLeft hRight hEval =>
+      cases extra <;> cases hLeft <;> cases hRight <;>
+        simp [evalLiteralUnaryBinarySubsetWithFuel, primitiveLiteralValue?, hEval]
+
+theorem evalLiteralUnaryBinaryListItemsWithFuel_of_subset {fuel : Nat}
+    {items : List Expr} {values : List Value}
+    (hSubset : LiteralUnaryBinaryListItemsSubset items values) :
+    evalLiteralUnaryBinaryListItemsWithFuel (fuel + 2) items = .ok values := by
+  induction hSubset generalizing fuel with
+  | nil =>
+      rfl
+  | cons hItem hItems ih =>
+      cases hItem with
+      | literal hLiteral =>
+          have hHead := evalLiteralUnaryBinarySubsetWithFuel_of_subset
+            (extra := fuel + 1) (LiteralUnaryBinarySubset.literal hLiteral)
+          simp [evalLiteralUnaryBinaryListItemsWithFuel, hHead, ih]
+          rfl
+      | unary hInner hEval =>
+          have hHead := evalLiteralUnaryBinarySubsetWithFuel_of_subset
+            (extra := fuel) (LiteralUnaryBinarySubset.unary hInner hEval)
+          simp [evalLiteralUnaryBinaryListItemsWithFuel, hHead, ih]
+          rfl
+      | binary hLeft hRight hEval =>
+          have hHead := evalLiteralUnaryBinarySubsetWithFuel_of_subset
+            (extra := fuel) (LiteralUnaryBinarySubset.binary hLeft hRight hEval)
+          simp [evalLiteralUnaryBinaryListItemsWithFuel, hHead, ih]
+          rfl
+
+theorem evalLiteralUnaryBinaryListItemsWithFuel_monotone {fuel extra : Nat}
+    {items : List Expr} {values : List Value}
+    (hSubset : LiteralUnaryBinaryListItemsSubset items values)
+    (_h : evalLiteralUnaryBinaryListItemsWithFuel (fuel + 2) items = .ok values) :
+    evalLiteralUnaryBinaryListItemsWithFuel (fuel + extra + 2) items = .ok values := by
+  exact evalLiteralUnaryBinaryListItemsWithFuel_of_subset
+    (fuel := fuel + extra) hSubset
+
 def paramEntryNames : List ParamEntry -> List String
   | [] => []
   | entry :: entries => entry.name :: paramEntryNames entries

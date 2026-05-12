@@ -120,8 +120,10 @@ then eval (fuel + extra) expr = ok value.
 Landed first slice: `evalLiteralBinarySubsetWithFuel_monotone` proves this for
 the total literal/binary proof harness in `CoreEval.lean`. The subset includes
 primitive literals and binary expressions whose operands are primitive literals.
-The next slice, `evalLiteralUnaryBinarySubsetWithFuel_monotone`, widens the
+The next slice, `evalLiteralUnaryBinarySubsetWithFuel_monotone`, widened the
 same kind of total harness with unary expressions over primitive literals.
+`evalLiteralUnaryBinaryListItemsWithFuel_monotone` now adds list-item
+monotonicity for lists whose elements are in that restricted subset.
 
 Start with:
 
@@ -131,16 +133,16 @@ Start with:
 
 Then widen to:
 
-- lists;
+- lists; (landed for literal/unary/binary subset elements)
 - non-recursive attrsets;
 - selection;
 - conditionals.
 
 Do not include recursive thunks until the environment model is proof-friendly.
 
-Recommended next proof ticket: primitive-list monotonicity. It is the smallest
-extension that adds a recursive evaluator walker while still avoiding
-environments, thunks, and attrsets.
+Recommended next proof ticket: non-recursive static attrset monotonicity. It is
+the smallest extension that adds binding structure while still avoiding
+recursive thunks and host imports.
 
 ## Milestone E: Determinism
 
