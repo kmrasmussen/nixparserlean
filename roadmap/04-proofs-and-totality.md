@@ -91,7 +91,7 @@ Recommended path:
    - `takeWhileGo` (complete as an input-length fuel wrapper);
    - comment and whitespace skipping (complete as input-length fuel wrappers);
    - angle path scanning (complete as an input-length fuel wrapper);
-   - string scanning.
+   - string scanning (complete as input-length fuel wrappers).
 2. Convert expression parser levels with explicit fuel, starting with local
    additive and multiplicative operator loops. (complete)
 3. Revisit `decreasing_by` on input length after the fuel-bounded shape is

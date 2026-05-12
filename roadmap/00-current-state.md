@@ -1,14 +1,14 @@
 # Current State
 
 This is a factual snapshot after the parser scanner totality work through
-`TICKET-0057`.
+`TICKET-0058`.
 
 ## Repository State
 
 - Branch: `master`.
-- All `.tickets/TICKET-0001` through `.tickets/TICKET-0057` are marked
+- All `.tickets/TICKET-0001` through `.tickets/TICKET-0058` are marked
   `completed`.
-- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0058`.
+- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0059`.
 - `nix flake check` remains the ordinary network-free local gate; the external
   corpus stays outside it.
 
@@ -17,8 +17,9 @@ Recent work completed:
 - first and second external corpus waves, with 23 pinned nixpkgs rows passing;
 - inert path values and explicit import/path boundary docs;
 - total fuel-bounded surface validator, core validator, and desugar walk;
-- parser helper totality for `takeWhileGo`, comment/whitespace scanning, angle
-  path scanning, and the additive/multiplicative expression loops;
+- parser helper totality for `takeWhileGo`, comment/whitespace scanning,
+  quoted/indented string scanning, angle path scanning, and the
+  additive/multiplicative expression loops;
 - quoted inherit names, dot-file path arguments, spaced dynamic selection, and
   escaped indented interpolation;
 - static selection-default lowering and empty static binding-name validation;
@@ -58,8 +59,8 @@ external corpus:
 
 The parser remains handwritten. Many expression/parser functions are still
 `partial`, but the termination strategy is now documented. Low-level scanning
-for take-while, comments, whitespace, and angle paths has input-length fuel
-wrappers, and the first local operator-loop fuel slice has landed.
+for take-while, comments, whitespace, strings, and angle paths has input-length
+fuel wrappers, and the first local operator-loop fuel slice has landed.
 
 ## Validation Layers
 

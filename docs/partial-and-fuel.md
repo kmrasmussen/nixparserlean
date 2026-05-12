@@ -18,13 +18,16 @@ The first lexer helpers have moved off `partial`:
 - line-comment, block-comment, and whitespace scanning delegate to
   `skipLineCommentFuel`, `skipBlockCommentFuel`, and `skipSpaceFuel`, each
   sized from the remaining input at the public wrapper.
+- quoted and indented string scanning delegate to `quotedStringGoFuel` and
+  `indentedStringGoFuel`, with the expression parser passed explicitly for
+  interpolation.
 - the additive and multiplicative expression loops delegate to
   `parseAddLoopFuel` and `parseMulLoopFuel`, sized from the remaining input
   after the left operand is parsed.
 
 Both wrappers preserve the existing public helper shape and source-position
-behavior. The remaining parser helper debt includes string scanning and the
-larger expression parser cluster.
+behavior. The remaining parser helper debt is now concentrated in the larger
+expression parser cluster and list/binding-style parser loops.
 The expression parser strategy is documented in
 `parser-expression-termination-strategy.md`: use explicit parser fuel first,
 starting with local operator loops, then consider `decreasing_by` refinements

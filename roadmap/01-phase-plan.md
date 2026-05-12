@@ -56,7 +56,8 @@ Why now:
 Exit criteria:
 
 - `parseAdd` and `parseMul` loops use total fuel-bounded helpers.
-- Comment skipping and string scanning have follow-up tickets or are converted.
+- Comment skipping and string scanning are converted to total fuel-bounded
+  helpers.
 - Default and external parser manifests remain stable.
 - Parse error offsets for existing failure fixtures do not move.
 

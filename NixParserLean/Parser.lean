@@ -72,73 +72,88 @@ decreasing_by
   simp_wf
   exact Nat.lt_succ_self fuel
 
-mutual
-partial def quotedStringGo (text : List Char) (parts : List StringPart) (s : ParserState) :
-    ParserM (List StringPart × ParserState) := do
-  match curr? s with
-  | none => failAt s "unterminated string"
-  | some '"' => pure ((flushStringText text parts).reverse, bump s)
-  | some '$' =>
-      if next? s == some '{' then
-        let parts := flushStringText text parts
-        let (expr, s) ← parseExpr (bump (bump s))
-        let s ← char '}' s
-        quotedStringGo [] (.interpolation expr :: parts) s
-      else
-        quotedStringGo ('$' :: text) parts (bump s)
-  | some '\\' =>
-      let s := bump s
+def quotedStringGoFuel (parseExpr : ParserState -> ParserM (Expr × ParserState)) :
+    Nat -> List Char -> List StringPart -> ParserState -> ParserM (List StringPart × ParserState)
+  | 0, _, _, s => failAt s "unterminated string"
+  | fuel + 1, text, parts, s => do
       match curr? s with
-      | some 'n' => quotedStringGo ('\n' :: text) parts (bump s)
-      | some 't' => quotedStringGo ('\t' :: text) parts (bump s)
-      | some '"' => quotedStringGo ('"' :: text) parts (bump s)
-      | some '\\' => quotedStringGo ('\\' :: text) parts (bump s)
-      | some c => quotedStringGo (c :: text) parts (bump s)
-      | none => failAt s "unterminated escape"
-  | some c => quotedStringGo (c :: text) parts (bump s)
+      | none => failAt s "unterminated string"
+      | some '"' => pure ((flushStringText text parts).reverse, bump s)
+      | some '$' =>
+          if next? s == some '{' then
+            let parts := flushStringText text parts
+            let (expr, s) ← parseExpr (bump (bump s))
+            let s ← char '}' s
+            quotedStringGoFuel parseExpr fuel [] (.interpolation expr :: parts) s
+          else
+            quotedStringGoFuel parseExpr fuel ('$' :: text) parts (bump s)
+      | some '\\' =>
+          let s := bump s
+          match curr? s with
+          | some 'n' => quotedStringGoFuel parseExpr fuel ('\n' :: text) parts (bump s)
+          | some 't' => quotedStringGoFuel parseExpr fuel ('\t' :: text) parts (bump s)
+          | some '"' => quotedStringGoFuel parseExpr fuel ('"' :: text) parts (bump s)
+          | some '\\' => quotedStringGoFuel parseExpr fuel ('\\' :: text) parts (bump s)
+          | some c => quotedStringGoFuel parseExpr fuel (c :: text) parts (bump s)
+          | none => failAt s "unterminated escape"
+      | some c => quotedStringGoFuel parseExpr fuel (c :: text) parts (bump s)
+termination_by fuel _ _ _ => fuel
+decreasing_by
+  simp_wf
+  all_goals exact Nat.lt_succ_self fuel
 
-partial def quotedString (s : ParserState) : ParserM (List StringPart × ParserState) := do
+def quotedString (parseExpr : ParserState -> ParserM (Expr × ParserState))
+    (s : ParserState) : ParserM (List StringPart × ParserState) := do
   let s ← char '"' s
-  quotedStringGo [] [] s
+  quotedStringGoFuel parseExpr s.remaining.length [] [] s
 
-partial def indentedStringGo (text : List Char) (parts : List StringPart) (s : ParserState) :
-    ParserM (List StringPart × ParserState) := do
-  match curr? s with
-  | none => failAt s "unterminated indented string"
-  | some '\'' =>
-      if next? s == some '\'' then
-        if charAt? 2 s == some '$' && charAt? 3 s == some '{' then
-          indentedStringGo ('{' :: '$' :: text) parts (bump (bump (bump (bump s))))
-        else
-          pure ((flushStringText text parts).reverse, bump (bump s))
-      else
-        indentedStringGo ('\'' :: text) parts (bump s)
-  | some '$' =>
-      if next? s == some '{' then
-        let parts := flushStringText text parts
-        let (expr, s) ← parseExpr (bump (bump s))
-        let s ← char '}' s
-        indentedStringGo [] (.interpolation expr :: parts) s
-      else
-        indentedStringGo ('$' :: text) parts (bump s)
-  | some c => indentedStringGo (c :: text) parts (bump s)
+def indentedStringGoFuel (parseExpr : ParserState -> ParserM (Expr × ParserState)) :
+    Nat -> List Char -> List StringPart -> ParserState -> ParserM (List StringPart × ParserState)
+  | 0, _, _, s => failAt s "unterminated indented string"
+  | fuel + 1, text, parts, s => do
+      match curr? s with
+      | none => failAt s "unterminated indented string"
+      | some '\'' =>
+          if next? s == some '\'' then
+            if charAt? 2 s == some '$' && charAt? 3 s == some '{' then
+              indentedStringGoFuel parseExpr fuel ('{' :: '$' :: text) parts
+                (bump (bump (bump (bump s))))
+            else
+              pure ((flushStringText text parts).reverse, bump (bump s))
+          else
+            indentedStringGoFuel parseExpr fuel ('\'' :: text) parts (bump s)
+      | some '$' =>
+          if next? s == some '{' then
+            let parts := flushStringText text parts
+            let (expr, s) ← parseExpr (bump (bump s))
+            let s ← char '}' s
+            indentedStringGoFuel parseExpr fuel [] (.interpolation expr :: parts) s
+          else
+            indentedStringGoFuel parseExpr fuel ('$' :: text) parts (bump s)
+      | some c => indentedStringGoFuel parseExpr fuel (c :: text) parts (bump s)
+termination_by fuel _ _ _ => fuel
+decreasing_by
+  simp_wf
+  all_goals exact Nat.lt_succ_self fuel
 
-partial def indentedString (s : ParserState) : ParserM (List StringPart × ParserState) := do
+def indentedString (parseExpr : ParserState -> ParserM (Expr × ParserState))
+    (s : ParserState) : ParserM (List StringPart × ParserState) := do
   let s ← token "''" s
-  indentedStringGo [] [] s
+  indentedStringGoFuel parseExpr s.remaining.length [] [] s
 
-partial def staticStringParts? : List StringPart -> Option String
+def staticStringParts? : List StringPart -> Option String
   | [] => some ""
   | .text text :: parts => do
       let rest ← staticStringParts? parts
       some (text ++ rest)
   | .interpolation _ :: _ => none
 
+mutual
 partial def attrName (s : ParserState) : ParserM (AttrPathPart × ParserState) := do
   let s := skipSpace s
   match curr? s, next? s with
   | some '"', _ =>
-      let (parts, s') ← quotedString s
+      let (parts, s') ← quotedString parseExpr s
       match staticStringParts? parts with
       | some name => pure (.static name, s')
       | none => pure (.dynamicString parts, s')
@@ -332,11 +347,11 @@ partial def parseAtom (s : ParserState) : ParserM (Expr × ParserState) := do
   else
   match curr? s with
   | some '"' =>
-      let (v, s') ← quotedString s
+      let (v, s') ← quotedString parseExpr s
       pure (.str v, s')
   | some '\'' =>
       if next? s == some '\'' then
-        let (v, s') ← indentedString s
+        let (v, s') ← indentedString parseExpr s
         pure (.str v, s')
       else
         failAt s "expected expression"
@@ -504,7 +519,7 @@ partial def parseInheritNameList (acc : List String) (s : ParserState) :
   | some ';' => pure (acc.reverse, bump s)
   | none => failAt s "unterminated inherit binding"
   | some '"' =>
-      let (parts, s') ← quotedString s
+      let (parts, s') ← quotedString parseExpr s
       match staticStringParts? parts with
       | some name => parseInheritNameList (name :: acc) s'
       | none => failAt s "dynamic inherit names are unsupported"

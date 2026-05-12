@@ -114,11 +114,12 @@ Two viable shapes:
   prove `state'.input.length < state.input.length`. Cleaner but invasive.
 
 Chosen near-term strategy: explicit parser fuel first. The lexer-level
-`takeWhile`, angle-path, comment, and whitespace scanners now use
-input-length fuel wrappers, and the additive/multiplicative expression loops
-use local fuel helpers. Keep public parser signatures stable and preserve
-source positions. Revisit `decreasing_by` once the fuel-bounded parser shape
-has removed the large opaque expression island.
+`takeWhile`, angle-path, comment, whitespace, quoted-string, and
+indented-string scanners now use input-length fuel wrappers, and the
+additive/multiplicative expression loops use local fuel helpers. Keep public
+parser signatures stable and preserve source positions. Revisit
+`decreasing_by` once the fuel-bounded parser shape has removed the large
+opaque expression island.
 
 A third option — switching to a parser-combinator library with built-in
 termination — is explicitly out of scope for this roadmap; AGENTS.md
