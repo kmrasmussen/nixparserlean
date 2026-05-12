@@ -121,7 +121,8 @@ Keep unsupported cases classified as `eval-fail`, not `other-fail`.
 Entry-step fuel is now deterministic. The next step is proof structure:
 
 - define a subset of expressions without thunks or host imports;
-- prove monotonicity for literals and binary expressions;
+- prove monotonicity for literals and binary expressions; (landed for the
+  total primitive literal/binary proof harness)
 - widen to lists and non-recursive attrsets;
 - later connect the evaluator to a small-step relation.
 

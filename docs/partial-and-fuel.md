@@ -92,6 +92,14 @@ remaining step.
 Recursive binding cycles still report cycle diagnostics when the budget is
 sufficient to reach the recursive force.
 
+The first checked fuel theorem is deliberately restricted. In
+`NixParserLean.Core.Eval`, `evalLiteralBinarySubsetWithFuel_monotone` proves
+that the total proof harness for primitive literals and binary expressions over
+primitive literal operands preserves a successful result when extra fuel is
+added. This excludes closures, thunks, host imports, lists, attrsets,
+selection, and conditionals; those forms need environment and recursive-walker
+invariants before they are good theorem targets.
+
 The low-risk evaluator equality and parameter helpers are now total:
 
 - `beqValue`, `beqValues`, `beqAttrs`

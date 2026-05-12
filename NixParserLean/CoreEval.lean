@@ -237,6 +237,87 @@ partial def evalBinary : BinaryOp -> Value -> Value -> M Value
   | .implies, .bool left, .bool right => pure (.bool ((!left) || right))
   | op, _, _ => throw s!"eval error: unsupported operands for binary operator {repr op}"
 
+private def evalFuelExhausted : M α :=
+  throw "eval error: evaluation fuel exhausted"
+
+private def theoremUnsupported (feature : String) : M α :=
+  throw s!"eval error: unsupported {feature}"
+
+def primitiveLiteralValue? : Expr -> Option Value
+  | .int value => some (.int value)
+  | .float value => some (.float value)
+  | .str [.text value] => some (.str value)
+  | .bool value => some (.bool value)
+  | .null => some .null
+  | .path value => some (.path value)
+  | _ => none
+
+inductive PrimitiveLiteral : Expr -> Value -> Prop where
+  | int (value : Int) : PrimitiveLiteral (.int value) (.int value)
+  | float (value : String) : PrimitiveLiteral (.float value) (.float value)
+  | str (value : String) : PrimitiveLiteral (.str [.text value]) (.str value)
+  | bool (value : Bool) : PrimitiveLiteral (.bool value) (.bool value)
+  | null : PrimitiveLiteral .null .null
+  | path (value : String) : PrimitiveLiteral (.path value) (.path value)
+
+theorem primitiveLiteralValue?_of_primitiveLiteral {expr : Expr} {value : Value}
+    (h : PrimitiveLiteral expr value) :
+    primitiveLiteralValue? expr = some value := by
+  cases h <;> rfl
+
+-- Total proof harness for the first evaluator-fuel theorem. It mirrors the
+-- production entry-step policy for literals and binary expressions whose
+-- operands are already primitive literals, avoiding the partial evaluator
+-- environment until that larger recursion is proof-ready.
+def evalLiteralBinarySubsetWithFuel : Nat -> Expr -> M Value
+  | 0, _ => evalFuelExhausted
+  | _ + 1, .int value => pure (.int value)
+  | _ + 1, .float value => pure (.float value)
+  | _ + 1, .str [.text value] => pure (.str value)
+  | _ + 1, .bool value => pure (.bool value)
+  | _ + 1, .null => pure .null
+  | _ + 1, .path value => pure (.path value)
+  | 1, .binary _ _ _ => evalFuelExhausted
+  | _ + 2, .binary op left right =>
+      match primitiveLiteralValue? left, primitiveLiteralValue? right with
+      | some leftValue, some rightValue => evalBinary op leftValue rightValue
+      | _, _ => theoremUnsupported "non-primitive fuel monotonicity theorem operand"
+  | _ + 1, _ => theoremUnsupported "fuel monotonicity theorem expression"
+
+theorem evalPrimitiveLiteralWithExtra {fuel extra : Nat} {expr : Expr} {value : Value}
+    (hLiteral : PrimitiveLiteral expr value) :
+    evalLiteralBinarySubsetWithFuel (fuel + extra + 1) expr = .ok value := by
+  cases hLiteral <;> cases fuel <;> cases extra <;>
+    simp [evalLiteralBinarySubsetWithFuel] <;> rfl
+
+theorem evalPrimitiveBinaryWithFuel_monotone {fuel extra : Nat} {op : BinaryOp}
+    {left right : Expr} {value : Value}
+    (h : evalLiteralBinarySubsetWithFuel (fuel + 2) (.binary op left right) = .ok value) :
+    evalLiteralBinarySubsetWithFuel (fuel + extra + 2) (.binary op left right) = .ok value := by
+  cases fuel <;> cases extra <;> cases left <;> cases right <;>
+    simp [evalLiteralBinarySubsetWithFuel, primitiveLiteralValue?] at h ⊢ <;>
+    try exact h
+
+inductive LiteralBinarySubset : Expr -> Value -> Nat -> Prop where
+  | literal {expr : Expr} {value : Value} (hLiteral : PrimitiveLiteral expr value) :
+      LiteralBinarySubset expr value 1
+  | binary {op : BinaryOp} {left right : Expr} {leftValue rightValue value : Value}
+      (hLeft : PrimitiveLiteral left leftValue)
+      (hRight : PrimitiveLiteral right rightValue)
+      (hEval : evalBinary op leftValue rightValue = .ok value) :
+      LiteralBinarySubset (.binary op left right) value 2
+
+theorem evalLiteralBinarySubsetWithFuel_monotone {fuel extra : Nat} {expr : Expr}
+    {value : Value} {cost : Nat}
+    (hSubset : LiteralBinarySubset expr value cost)
+    (h : evalLiteralBinarySubsetWithFuel (fuel + cost) expr = .ok value) :
+    evalLiteralBinarySubsetWithFuel (fuel + extra + cost) expr = .ok value := by
+  cases hSubset with
+  | literal hLiteral =>
+      exact evalPrimitiveLiteralWithExtra (fuel := fuel) (extra := extra) hLiteral
+  | binary hLeft hRight hEval =>
+      exact evalPrimitiveBinaryWithFuel_monotone (fuel := fuel) (extra := extra) h
+
 def paramEntryNames : List ParamEntry -> List String
   | [] => []
   | entry :: entries => entry.name :: paramEntryNames entries

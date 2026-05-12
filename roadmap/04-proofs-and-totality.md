@@ -106,11 +106,15 @@ If eval fuel expr = ok value for literal/binary subset,
 then eval (fuel + extra) expr = ok value.
 ```
 
+Landed first slice: `evalLiteralBinarySubsetWithFuel_monotone` proves this for
+the total literal/binary proof harness in `CoreEval.lean`. The subset includes
+primitive literals and binary expressions whose operands are primitive literals.
+
 Start with:
 
-- literals;
-- unary operators;
-- binary operators over primitive values.
+- literals; (landed)
+- binary operators over primitive values; (landed for primitive literal operands)
+- unary operators.
 
 Then widen to:
 

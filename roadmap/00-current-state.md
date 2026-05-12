@@ -145,5 +145,7 @@ parse-fail cases. Current blocker categories:
 3. Host import semantics are eager and value-only.
 4. Path values are useful but deliberately weaker than Nix store path
    semantics.
-5. Fuel is now a step policy, but monotonicity and determinism are not proven.
+5. Fuel is now a step policy. Monotonicity is proven for the total primitive
+   literal/binary proof harness, but not yet for the full partial evaluator;
+   determinism is still not proven.
 6. Some docs still need routine freshness checks after rapid feature work.

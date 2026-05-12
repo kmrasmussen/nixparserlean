@@ -1,0 +1,4 @@
+# format: path<TAB>expectation<TAB>note
+# parser command: lake exe nixparserlean --eval --fuel 5 --file
+e2e/corpus/smoke/eval-fuel-arithmetic.nix	pass	extra fuel preserves the primitive binary result
+e2e/corpus/smoke/eval-fuel-arithmetic.nix	pass	repeated high-fuel run remains deterministic
