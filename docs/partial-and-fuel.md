@@ -15,13 +15,16 @@ The first lexer helpers have moved off `partial`:
 - `takeWhileGo` delegates to `takeWhileGoFuel`, sized from remaining input;
 - `anglePathGo` delegates to `anglePathGoFuel`, also sized from remaining
   input.
+- line-comment, block-comment, and whitespace scanning delegate to
+  `skipLineCommentFuel`, `skipBlockCommentFuel`, and `skipSpaceFuel`, each
+  sized from the remaining input at the public wrapper.
 - the additive and multiplicative expression loops delegate to
   `parseAddLoopFuel` and `parseMulLoopFuel`, sized from the remaining input
   after the left operand is parsed.
 
 Both wrappers preserve the existing public helper shape and source-position
-behavior. The remaining parser helper debt includes comment skipping,
-whitespace skipping, string scanning, and the expression parser.
+behavior. The remaining parser helper debt includes string scanning and the
+larger expression parser cluster.
 The expression parser strategy is documented in
 `parser-expression-termination-strategy.md`: use explicit parser fuel first,
 starting with local operator loops, then consider `decreasing_by` refinements

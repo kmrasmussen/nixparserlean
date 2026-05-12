@@ -75,32 +75,57 @@ def takeWhileGo (p : Char -> Bool) (acc : List Char) (s : ParserState) :
 def takeWhile (p : Char -> Bool) (s : ParserState) : String × ParserState :=
   takeWhileGo p [] s
 
-partial def skipLineComment (s : ParserState) : ParserState :=
-  match curr? s with
-  | none => s
-  | some '\n' => bump s
-  | some _ => skipLineComment (bump s)
+def skipLineCommentFuel : Nat -> ParserState -> ParserState
+  | 0, s => s
+  | fuel + 1, s =>
+      match curr? s with
+      | none => s
+      | some '\n' => bump s
+      | some _ => skipLineCommentFuel fuel (bump s)
+termination_by fuel _ => fuel
+decreasing_by simp_wf
 
-partial def skipBlockComment (s : ParserState) : ParserState :=
-  match curr? s with
-  | none => s
-  | some '*' =>
-      let s := bump s
-      if curr? s == some '/' then bump s else skipBlockComment s
-  | some _ => skipBlockComment (bump s)
+def skipLineComment (s : ParserState) : ParserState :=
+  skipLineCommentFuel s.remaining.length s
 
-partial def skipSpace (s : ParserState) : ParserState :=
-  match curr? s with
-  | some c =>
-      if c.isWhitespace then
-        skipSpace (bump s)
-      else if c == '#' then
-        skipSpace (skipLineComment (bump s))
-      else if c == '/' && next? s == some '*' then
-        skipSpace (skipBlockComment (bump (bump s)))
-      else
-        s
-  | none => s
+def skipBlockCommentFuel : Nat -> ParserState -> ParserState
+  | 0, s => s
+  | fuel + 1, s =>
+      match curr? s with
+      | none => s
+      | some '*' =>
+          let s := bump s
+          if curr? s == some '/' then bump s else skipBlockCommentFuel fuel s
+      | some _ => skipBlockCommentFuel fuel (bump s)
+termination_by fuel _ => fuel
+decreasing_by
+  simp_wf
+  all_goals exact Nat.lt_succ_self fuel
+
+def skipBlockComment (s : ParserState) : ParserState :=
+  skipBlockCommentFuel s.remaining.length s
+
+def skipSpaceFuel : Nat -> ParserState -> ParserState
+  | 0, s => s
+  | fuel + 1, s =>
+      match curr? s with
+      | some c =>
+          if c.isWhitespace then
+            skipSpaceFuel fuel (bump s)
+          else if c == '#' then
+            skipSpaceFuel fuel (skipLineComment (bump s))
+          else if c == '/' && next? s == some '*' then
+            skipSpaceFuel fuel (skipBlockComment (bump (bump s)))
+          else
+            s
+      | none => s
+termination_by fuel _ => fuel
+decreasing_by
+  simp_wf
+  all_goals exact Nat.lt_succ_self fuel
+
+def skipSpace (s : ParserState) : ParserState :=
+  skipSpaceFuel s.remaining.length s
 
 def char (expected : Char) (s : ParserState) : ParserM ParserState := do
   let s := skipSpace s

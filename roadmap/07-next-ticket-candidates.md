@@ -103,7 +103,7 @@ Gate: external manifest. Do not add this to ordinary flake checks.
 The second wave has also been promoted to `.tickets` and expanded into a
 parallel-friendly backlog:
 
-- `TICKET-0057`: Comment And Whitespace Scanner Totality
+- `TICKET-0057`: Comment And Whitespace Scanner Totality (complete)
 - `TICKET-0058`: String Scanner Totality
 - `TICKET-0059`: Static Selection Default Preservation Theorem
 - `TICKET-0060`: Core `with` Decision

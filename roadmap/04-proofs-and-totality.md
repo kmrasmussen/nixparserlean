@@ -89,7 +89,7 @@ Recommended path:
 
 1. Convert lexer-level helpers first:
    - `takeWhileGo` (complete as an input-length fuel wrapper);
-   - comment skipping;
+   - comment and whitespace skipping (complete as input-length fuel wrappers);
    - angle path scanning (complete as an input-length fuel wrapper);
    - string scanning.
 2. Convert expression parser levels with explicit fuel, starting with local
