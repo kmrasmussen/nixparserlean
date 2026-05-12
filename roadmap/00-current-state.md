@@ -184,9 +184,10 @@ manifest before and after adding rows.
    bare imported closures cannot yet be reified.
 3. Relative host import paths are normalized only lexically; symlink and
    canonical filesystem identity are not modeled.
-4. The core still contains surface-like forms (`with`, `assert`, selection
-   defaults for dynamic paths) that should be lowered or justified before large
-   preservation proofs.
+4. The core still contains surface-like forms (selection defaults for dynamic
+   paths and broad operators) that should be lowered or justified before large
+   preservation proofs. `with` and `assert` are now classified as permanent
+   core environment/control forms.
 5. Fuel monotonicity is still restricted to primitive literal, primitive unary,
    and primitive binary proof harnesses; full evaluator monotonicity,
    determinism, and small-step semantics are unproven.

@@ -90,7 +90,8 @@ Why after host/artifact work:
   and theorem statements.
 - These decisions should be made with fixtures and docs, not only comments.
 
-Good next slice: decide `assert` before widening evaluator preservation claims.
+Good next slice: use the `assert` decision to shape evaluator preservation
+claims around evaluator errors rather than values.
 
 ### 5. Proof Growth
 

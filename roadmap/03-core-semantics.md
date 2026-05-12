@@ -56,6 +56,7 @@ Candidate permanent core forms:
 - lambda/application;
 - selection;
 - conditionals;
+- `assert` as core control syntax;
 - a small operator set.
 
 Candidate lowering targets:
@@ -88,6 +89,12 @@ fallback environment for the body, so existing lexical bindings, lambda
 parameters, and recursive binding entries keep precedence. The follow-up proof
 ticket is `TICKET-0080`, which should state and check this invariant for a
 restricted pure subset.
+
+`assert` decision: keep it as permanent core control syntax. The core has no
+explicit bottom, throw, or error-value form, so lowering failed assertions would
+hide evaluator-error behavior or require a new primitive. Future
+preservation/progress-style proof work should distinguish successful value
+evaluation from assertion failure and other evaluator errors.
 
 ## Milestone C: Core Validation As A Contract
 

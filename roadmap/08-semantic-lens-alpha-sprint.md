@@ -122,7 +122,7 @@ Tickets:
 
 Sprint-level DoD:
 
-- `assert` has a permanent/temporary/pending classification.
+- `assert` is classified as permanent core control syntax.
 - Dynamic selection defaults have a documented policy.
 - Builtins have a first environment-shape design separating pure from
   host-backed behavior.

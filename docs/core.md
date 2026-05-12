@@ -22,8 +22,8 @@ stopped carrying surface conveniences forward.
 | Category | Current constructors/forms | Direction |
 |---|---|---|
 | Permanent values | ints, floats, strings, booleans, null, paths, lists, attrsets, closures | Keep as core values; path values stay inert and host-free. |
-| Permanent computation | lambda/application, conditionals, selection, `hasAttr`, `with`, static and dynamic attr bindings | Keep, but make invariants sharper through core validation and proofs. |
-| Temporary surface forms | selection defaults, broad unary/binary operator surface, `assert` | Keep while evaluator coverage grows; lower or split when the target semantics are clear. |
+| Permanent computation | lambda/application, conditionals, `assert`, selection, `hasAttr`, `with`, static and dynamic attr bindings | Keep, but make invariants sharper through core validation and proofs. |
+| Temporary surface forms | selection defaults, broad unary/binary operator surface | Keep while evaluator coverage grows; lower or split when the target semantics are clear. |
 | Mostly lowered already | dotted static bindings, scoped inherit | Keep the lowered shapes; continue proving that desugaring preserves validation. |
 | Semantic boundary forms | imports, path normalization, derivations, store/search-path behavior | Keep outside pure core evaluation; model through explicit host-effect layers. |
 
@@ -44,6 +44,26 @@ lookup semantics in desugaring. The core invariant is:
   keep precedence over names supplied by the `with` scope;
 - `with` does not add host effects and does not mutate the surrounding
   environment.
+
+Decision for `assert`: keep it as permanent core control syntax. It is not just
+a surface convenience in the current core because the core has no explicit
+bottom, throw, or error-value form that could represent the failed assertion
+branch. Lowering `assert condition; body` to existing core syntax would either
+erase the assertion failure or require inventing a new error primitive.
+
+The core invariant is:
+
+- `assertExpr condition body` evaluates `condition` before `body`;
+- `condition` must evaluate to a boolean;
+- `true` continues with `body`;
+- `false` fails evaluation with an assertion error;
+- assertion failure is an evaluator error, not a value;
+- `assert` adds no host effects and does not mutate the environment.
+
+If the project later introduces an explicit error or small-step relation,
+`assert` can be revisited as a derived form over that relation. Until then it
+should remain a named core form so validation, evaluation, and proofs can state
+its control behavior directly.
 
 ## Core bindings
 

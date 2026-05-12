@@ -109,7 +109,7 @@ Concrete work:
 
 Exit criteria:
 
-- `assert` is lowered, retained with a reason, or given a proof plan.
+- `assert` is retained as core control syntax with a proof plan.
 - Dynamic selection defaults have a no-duplication or permanent-core policy.
 - Builtins enter through an explicit environment shape.
 - `with` has a named restricted invariant theorem target.
