@@ -129,15 +129,17 @@ Pure `--eval` is filesystem-free and rejects `import` with an `eval error:`.
 - reads imported files through `IO.FS.readFile`;
 - parses, validates, desugars, core-validates, evaluates, then reifies
   representable imported values;
-- rejects imported functions because closures cannot be reified yet;
+- can apply immediately imported closures when the argument and result are
+  representable;
+- rejects bare imported functions because closures cannot be reified yet;
 - rejects angle, home, absolute, store, network, and search-path imports.
 
 Path values are inert text in pure evaluation. They do not check existence,
 normalize, copy to the store, or resolve angle paths.
 
-The chosen host-effect direction is a host-aware import substitution layer that
-keeps reifying simple values while adding an internal host value slot for
-closures. `CoreEval` should remain filesystem-free.
+The chosen host-effect direction is a host-aware import layer that keeps
+reifying simple values while adding narrow host-only paths for closures.
+`CoreEval` should remain filesystem-free.
 
 ## Test Snapshot
 

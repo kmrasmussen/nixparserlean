@@ -19,9 +19,10 @@ pure evaluation pass.
 That is a useful first IO boundary, but it is not full Nix import semantics:
 
 - imports are resolved before final evaluation, so they are not lazy.
-- imported files are evaluated in isolation and then reified back into core
-  syntax.
-- imported functions are rejected by `valueToExpr`
+- imported files are evaluated in isolation and representable values are
+  reified back into core syntax.
+- immediately applied imported closures have a narrow host-layer path, but
+  bare imported functions are rejected by `valueToExpr`
   (`HostEval.lean:63-73`) because closures cannot currently be reified.
 - only relative `./...` and `../...` paths pass `resolveImportPath`
   (`HostEval.lean:37-44`).

@@ -1,21 +1,21 @@
 # Host Effect Evaluator Shape
 
-`--eval-imports` currently handles imports by resolving imported files in
+`--eval-imports` handles imports by resolving imported files in
 `HostEval.lean`, evaluating each imported file to a `Core.Eval.Value`, and then
 reifying representable values back into `Core.Expr` before the final pure
-evaluation pass. That keeps `CoreEval` filesystem-free, but it cannot represent
-imported closures.
+evaluation pass. That keeps `CoreEval` filesystem-free. Bare imported closures
+still cannot be reified, but immediately applied imported closures can now run
+inside the host import layer when their argument and result are representable.
 
 ## Chosen Direction
 
 Keep pure `CoreEval` unchanged and add a host-aware import substitution layer as
 the next implementation target.
 
-The host layer should still parse, validate, desugar, core-validate, and
-evaluate imported files explicitly. The difference is that import replacement
-should eventually be able to carry a host value slot for imported values that
-cannot be reified as core syntax, especially closures. Pure evaluation remains
-available for expressions with no host slots; host evaluation owns the extra
+The host layer still parses, validates, desugars, core-validates, and evaluates
+imported files explicitly. Import replacement now has a first host-aware closure
+application path for immediate applications. Pure evaluation remains available
+for expressions with no host-only values; host evaluation owns the extra
 capability.
 
 ## Options Compared
@@ -54,7 +54,9 @@ Cons:
 - must define exactly where host values are allowed;
 - requires focused e2e coverage for imported functions before widening.
 
-This is the recommended next direction.
+This is the current direction. The first implementation slice supports
+immediate imported-closure application while preserving bare imported-closure
+rejection.
 
 ### Effect-Typed Core
 
@@ -71,21 +73,24 @@ Cons:
 
 Defer this until the host-aware layer has clarified the real invariants.
 
-## Smallest Implementation Slice
+## Landed First Slice
 
-Draft follow-up ticket:
+- `HostEval.lean` has a host-aware path for
+  `(import ./function.nix) argument`.
+- The imported file is still evaluated through the explicit host layer.
+- The imported closure is applied in the host layer with a representable
+  argument, and the result is reified back into core syntax.
+- Bare imported closures still fail with
+  `eval error: unsupported imported function values`.
+- Filesystem behavior remains outside `CoreEval`.
 
-**Host Value Slots For Imported Closures**
+Next widening targets:
 
-- Add an internal host expression or environment slot in `HostEval.lean` for
-  imported values that cannot be reified.
-- Use it only inside `--eval-imports`; do not add filesystem behavior to
-  `CoreEval`.
-- Keep current reification for representable values.
-- Add one repo-local fixture where an imported function is applied by the
-  importing file.
-- Preserve the existing imported-function rejection fixture until the new path
-  is implemented, then move it to the success manifest row with a clear note.
+- host-aware application where the argument depends on the importing
+  expression's local environment;
+- imported functions that return functions;
+- a more explicit host value-slot representation if immediate application
+  becomes too narrow.
 
 ## Non-Goals
 

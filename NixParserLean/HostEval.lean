@@ -171,6 +171,29 @@ partial def resolveExprImports (fuel : Nat) (baseDir : String) (stack : List Str
           match ← resolveAttrPath fuel baseDir stack path with
           | .ok path => pure (.ok (.hasAttr base path))
           | .error err => pure (.error err)
+  | .app (.app (.ident "import") (.path path)) argument => do
+      match ← loadImportAsValue fuel baseDir stack path with
+      | .error err => pure (.error err)
+      | .ok (.closure closureEnv param body) =>
+          match ← resolveExprImports fuel baseDir stack argument with
+          | .error err => pure (.error err)
+          | .ok argument =>
+              match Core.evalWithFuel fuel argument with
+              | .error err => pure (.error err)
+              | .ok argumentValue =>
+                  match Core.Eval.bindParam fuel [] param argumentValue closureEnv with
+                  | .error err => pure (.error err)
+                  | .ok env =>
+                      match Core.Eval.eval fuel [] env body with
+                      | .error err => pure (.error err)
+                      | .ok value => pure (valueToExpr value)
+      | .ok imported =>
+          match valueToExpr imported with
+          | .error err => pure (.error err)
+          | .ok function =>
+              match ← resolveExprImports fuel baseDir stack argument with
+              | .ok argument => pure (.ok (.app function argument))
+              | .error err => pure (.error err)
   | .app (.ident "import") (.path path) =>
       loadImportAsExpr fuel baseDir stack path
   | .app (.ident "import") _ =>
@@ -293,8 +316,8 @@ partial def resolveAttrPath (fuel : Nat) (baseDir : String) (stack : List String
               | .ok parts => pure (.ok (.dynamicString stringParts :: parts))
               | .error err => pure (.error err)
 
-partial def loadImportAsExpr (fuel : Nat) (baseDir : String) (stack : List String)
-    (rawPath : String) : IO (M Core.Expr) := do
+partial def loadImportAsValue (fuel : Nat) (baseDir : String) (stack : List String)
+    (rawPath : String) : IO (M Core.Eval.Value) := do
   match fuel with
   | 0 => pure (.error "eval error: import depth exhausted")
   | fuel + 1 =>
@@ -314,9 +337,13 @@ partial def loadImportAsExpr (fuel : Nat) (baseDir : String) (stack : List Strin
                     match ← resolveExprImports fuel importedBaseDir (path :: stack) core with
                     | .error err => pure (.error err)
                     | .ok core =>
-                        match Core.evalWithFuel fuel core with
-                        | .error err => pure (.error err)
-                        | .ok value => pure (valueToExpr value)
+                        pure (Core.evalWithFuel fuel core)
+
+partial def loadImportAsExpr (fuel : Nat) (baseDir : String) (stack : List String)
+    (rawPath : String) : IO (M Core.Expr) := do
+  match ← loadImportAsValue fuel baseDir stack rawPath with
+  | .error err => pure (.error err)
+  | .ok value => pure (valueToExpr value)
 end
 
 def resolveImports (fuel : Nat) (baseDir : String) (expr : Core.Expr) :

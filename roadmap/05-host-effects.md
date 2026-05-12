@@ -17,7 +17,9 @@ Host evaluation through `--eval-imports`:
 - reads files with `IO.FS.readFile`;
 - parses, validates, desugars, core-validates, evaluates, and reifies
   representable imported values;
-- rejects imported closures;
+- can apply immediately imported closures when the argument and result are
+  representable;
+- rejects bare imported closures;
 - rejects angle, home, absolute, store, network, and search-path imports.
 
 ## Principle
@@ -42,22 +44,21 @@ Options:
 Recommendation:
 
 Option 1 is complete: the imported-function diagnostic is stable and tested.
-The next implementation direction is option 3, without moving filesystem IO
-into `CoreEval`.
+The first option-3 slice is also landed for immediate imported-closure
+application, without moving filesystem IO into `CoreEval`.
 
 Current design note: `docs/host-effect-evaluator-shape.md` chooses a
 host-aware import substitution layer as the next direction. The compatibility
 path keeps reifying simple imported values, while the new host layer gets an
 internal value slot for imported closures. `CoreEval` remains filesystem-free.
 
-Next acceptance criteria:
+Next widening criteria:
 
-- A repo-local fixture imports a function-valued file and applies it through
-  `--eval-imports`.
+- Imported function applications can use arguments from the importing
+  expression's local environment.
+- Imported functions that return functions have a policy.
 - Representable imported values still use the existing reification path.
 - `CoreEval.lean` remains filesystem-free.
-- The existing imported-function rejection fixture is retired or narrowed to a
-  still-unsupported case.
 
 ## Milestone B: Relative Path Normalization
 

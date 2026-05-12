@@ -18,12 +18,12 @@ The current boundary is:
   importing file's directory, reads the target file, parses/validates/desugars
   it, evaluates it in isolation, and reifies representable values, including
   path values, before the final pure evaluation pass.
-- Imported files that evaluate to functions are rejected with
+- Immediately applied imported functions, such as
+  `import ./function.nix 41`, can run in the host import layer when the
+  argument and result are representable values.
+- Bare imported functions are still rejected with
   `eval error: unsupported imported function values`, because closures cannot
   currently be reified back into core syntax for the final pure pass.
-  [host-effect-evaluator-shape.md](host-effect-evaluator-shape.md) documents
-  the chosen next direction for lifting this restriction without adding
-  filesystem behavior to `CoreEval`.
 - `--eval-imports` still rejects absolute, home-relative, and angle imports.
   The future angle-import design is documented in
   [angle-search-path-design.md](angle-search-path-design.md).
@@ -44,4 +44,4 @@ yet a normalized semantic guarantee. Pure path values remain unnormalized text.
 The smoke corpus has parser coverage for `import ./foo.nix`, pure eval-fail
 coverage for an import attempt, pure eval coverage for path values, and
 `e2e/import-manifest.txt` coverage for the explicit host IO path, including
-the imported-function rejection boundary.
+the imported-function application and bare-function rejection boundaries.
