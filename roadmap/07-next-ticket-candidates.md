@@ -123,6 +123,9 @@ parallel-friendly backlog:
 - `TICKET-0074`: External Corpus Hash Enforcement
 - `TICKET-0075`: Builtins Environment Shape
 - `TICKET-0076`: Roadmap Ticket Batch Maintenance
+- `TICKET-0077`: GitHub Actions Flake Check CI
+- `TICKET-0078`: Local Pre-Push Gate
+- `TICKET-0079`: CI Status And Required Checks Doc
 
 Use the ticket files as the source of truth for implementation. This section
 now serves as a historical map from roadmap candidates to promoted tickets.
