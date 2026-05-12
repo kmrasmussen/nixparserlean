@@ -22,18 +22,28 @@ stopped carrying surface conveniences forward.
 | Category | Current constructors/forms | Direction |
 |---|---|---|
 | Permanent values | ints, floats, strings, booleans, null, paths, lists, attrsets, closures | Keep as core values; path values stay inert and host-free. |
-| Permanent computation | lambda/application, conditionals, selection, `hasAttr`, static and dynamic attr bindings | Keep, but make invariants sharper through core validation and proofs. |
-| Temporary surface forms | `with`, selection defaults, broad unary/binary operator surface, `assert` | Keep while evaluator coverage grows; lower or split when the target semantics are clear. |
+| Permanent computation | lambda/application, conditionals, selection, `hasAttr`, `with`, static and dynamic attr bindings | Keep, but make invariants sharper through core validation and proofs. |
+| Temporary surface forms | selection defaults, broad unary/binary operator surface, `assert` | Keep while evaluator coverage grows; lower or split when the target semantics are clear. |
 | Mostly lowered already | dotted static bindings, scoped inherit | Keep the lowered shapes; continue proving that desugaring preserves validation. |
 | Semantic boundary forms | imports, path normalization, derivations, store/search-path behavior | Keep outside pure core evaluation; model through explicit host-effect layers. |
 
 Static selection defaults are the first simplification slice: `a.b or fallback`
 lowers to a core `ifThenElse` over `hasAttr a b`, selecting `a.b` only when the
 path exists. Dynamic-path defaults still use the core select-default branch so
-dynamic path expressions are not duplicated. The next candidate is `with`: it
-currently lives in core because the evaluator can implement it directly, but it
-is a surface lookup convenience rather than an obviously permanent core
-primitive.
+dynamic path expressions are not duplicated.
+
+Decision for `with`: keep it as permanent core syntax for now. It is an
+environment operation, not just syntactic sugar, because lowering it away would
+require introducing an explicit environment-passing core form or duplicating
+lookup semantics in desugaring. The core invariant is:
+
+- `withExpr scope body` evaluates `scope` once before `body`;
+- `scope` must evaluate to an attrset;
+- the attrset's names are appended as a lookup fallback for `body`;
+- existing lexical bindings, lambda parameters, and recursive binding entries
+  keep precedence over names supplied by the `with` scope;
+- `with` does not add host effects and does not mutate the surrounding
+  environment.
 
 ## Core bindings
 

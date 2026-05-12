@@ -1,14 +1,14 @@
 # Current State
 
-This is a factual snapshot after the static selection-default proof work
-through `TICKET-0059`.
+This is a factual snapshot after the core `with` decision through
+`TICKET-0060`.
 
 ## Repository State
 
 - Branch: `master`.
-- All `.tickets/TICKET-0001` through `.tickets/TICKET-0059` are marked
+- All `.tickets/TICKET-0001` through `.tickets/TICKET-0060` are marked
   `completed`.
-- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0060`.
+- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0061`.
 - `nix flake check` remains the ordinary network-free local gate; the external
   corpus stays outside it.
 
@@ -23,6 +23,7 @@ Recent work completed:
 - quoted inherit names, dot-file path arguments, spaced dynamic selection, and
   escaped indented interpolation;
 - static selection-default lowering and empty static binding-name validation;
+- `with` documented as a permanent core environment fallback form;
 - focused example suite wired into e2e manifests;
 - first checked desugar/core-validation bridge theorem and static
   selection-default lowering shape theorem;
@@ -98,6 +99,7 @@ Current important behavior:
 - bare inherit lowers to `inheritAssign`;
 - scoped inherit lowers to static selections;
 - static selection defaults lower to `hasAttr` plus `select` in `ifThenElse`;
+- `with` remains core syntax with lexical-first fallback environment semantics;
 - empty lowered static paths are rejected with
   `desugar error: empty attribute path`.
 

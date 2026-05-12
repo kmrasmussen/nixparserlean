@@ -61,7 +61,7 @@ Candidate lowering targets:
 - scoped inherit is already lowered to selection.
 - selection defaults might lower into a smaller missing-value/conditional
   representation later.
-- `with` may become an explicit environment operation rather than core syntax.
+- `with` remains core syntax as the explicit environment fallback operation.
 
 ## Milestone B: First Core Simplification (started)
 
@@ -75,14 +75,16 @@ only proves the core expression shape selected by the lowering helper.
 
 Follow-up simplifications remain:
 
-- decide whether `with` lowers away or becomes a stable core environment rule;
 - decide whether dynamic selection defaults need a no-duplication core helper;
 - connect the static selection-default shape theorem to evaluator behavior for
   a restricted pure subset.
 
-Recommended next core ticket: make a `with` decision. Either keep it as a
-permanent core environment form with a documented invariant, or lower it into a
-smaller explicit environment operation before broader preservation proofs.
+`with` decision: keep it as a permanent core environment form for now. Its
+invariant is lexical-first lookup: the evaluated attrset scope is appended as a
+fallback environment for the body, so existing lexical bindings, lambda
+parameters, and recursive binding entries keep precedence. The follow-up proof
+ticket is `TICKET-0080`, which should state and check this invariant for a
+restricted pure subset.
 
 ## Milestone C: Core Validation As A Contract
 

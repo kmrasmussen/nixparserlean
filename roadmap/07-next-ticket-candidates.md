@@ -106,7 +106,7 @@ parallel-friendly backlog:
 - `TICKET-0057`: Comment And Whitespace Scanner Totality (complete)
 - `TICKET-0058`: String Scanner Totality (complete)
 - `TICKET-0059`: Static Selection Default Preservation Theorem (complete as a shape theorem)
-- `TICKET-0060`: Core `with` Decision
+- `TICKET-0060`: Core `with` Decision (complete)
 - `TICKET-0061`: Angle Search Path Prototype
 - `TICKET-0062`: List Fuel Monotonicity
 - `TICKET-0063`: Nonrecursive Static Attrset Fuel Monotonicity
@@ -126,6 +126,7 @@ parallel-friendly backlog:
 - `TICKET-0077`: GitHub Actions Flake Check CI
 - `TICKET-0078`: Local Pre-Push Gate
 - `TICKET-0079`: CI Status And Required Checks Doc
+- `TICKET-0080`: Core `with` Environment Invariant Theorem
 
 Use the ticket files as the source of truth for implementation. This section
 now serves as a historical map from roadmap candidates to promoted tickets.
@@ -158,6 +159,9 @@ Gate: `lake build`, desugar manifest.
 
 Goal: decide whether `with` remains a permanent core form or lowers into an
 explicit environment operation.
+
+Status: complete. `with` remains a permanent core environment fallback form for
+now, with `TICKET-0080` tracking the proof follow-up.
 
 Gate: desugar manifest, eval manifest, docs/core.md update.
 

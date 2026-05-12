@@ -95,6 +95,8 @@ Exit criteria:
 - One additional surface-like form lowers away or is documented as permanent.
 - The behavior change has eval/desugar fixtures.
 - Any behavior-preserving lowering gets a theorem statement or checked lemma.
+- `with` is documented as a permanent core environment form with a follow-up
+  invariant theorem ticket.
 
 ## Phase 6: External Corpus Expansion
 
