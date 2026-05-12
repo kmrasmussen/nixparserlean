@@ -2,10 +2,11 @@
 # parser command: lake exe nixparserlean --eval-imports --file
 e2e/corpus/smoke/eval-host-import-path.nix	pass	relative import evaluates through the host IO layer
 e2e/corpus/smoke/eval-host-imported-path-value.nix	pass	imported representable values may include inert path values
-e2e/corpus/smoke/eval-host-import-relative-alias.nix	pass	relative import aliases are left to the host filesystem path resolver
+e2e/corpus/smoke/eval-host-import-relative-alias.nix	pass	relative import aliases are lexically normalized before host reads
 e2e/corpus/smoke/eval-host-import-function-application.nix	pass	imported closures can be applied immediately in the host import layer
 examples/host-boundary/main.nix	pass	example suite host import boundary
 e2e/corpus/smoke/eval-host-import-function.nix	eval-fail	bare imported functions still cannot be reified into core syntax
+e2e/corpus/smoke/eval-host-import-recursive-alias.nix	eval-fail	relative import aliases share the normalized recursion key
 e2e/corpus/smoke/eval-host-import-angle-path.nix	eval-fail	angle-bracket imports are outside the first host boundary
 e2e/corpus/smoke/eval-host-import-absolute-path.nix	eval-fail	absolute imports remain outside the explicit host boundary
 e2e/corpus/smoke/eval-host-import-home-path.nix	eval-fail	home-relative imports remain outside the explicit host boundary

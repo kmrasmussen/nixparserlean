@@ -15,9 +15,10 @@ The current boundary is:
 - Pure `--eval` rejects `import <path>` with `eval error: unsupported import
   evaluation`.
 - `--eval-imports` resolves relative `./...` and `../...` imports from the
-  importing file's directory, reads the target file, parses/validates/desugars
-  it, evaluates it in isolation, and reifies representable values, including
-  path values, before the final pure evaluation pass.
+  importing file's directory, lexically normalizes `.` and `..` path segments,
+  reads the target file, parses/validates/desugars it, evaluates it in
+  isolation, and reifies representable values, including path values, before
+  the final pure evaluation pass.
 - Immediately applied imported functions, such as
   `import ./function.nix 41`, can run in the host import layer when the
   argument and result are representable values.
@@ -34,14 +35,15 @@ The current boundary keeps `CoreEval` pure and puts filesystem effects in
 `HostEval.lean`. Path values are just data in the pure evaluator; only the host
 import layer interprets relative path text as filesystem input.
 
-Relative import paths are joined with the importing file's directory and passed
-to the host filesystem. Simple aliases such as `./nested/../file.nix` can read
-successfully because the host filesystem resolves `..` during the file read,
-but recursion detection stores the joined text path rather than a canonical
-path. That means alias-based recursive imports are a documented limitation, not
-yet a normalized semantic guarantee. Pure path values remain unnormalized text.
+Relative import paths are joined with the importing file's directory and
+normalized lexically before file reads and before insertion into the import
+recursion stack. This handles simple aliases such as `./nested/../file.nix`
+without depending on filesystem canonicalization. Symlinks are not resolved,
+and the policy does not call `realpath`; it is a text normalization for the
+explicit host import lane only. Pure path values remain unnormalized text.
 
 The smoke corpus has parser coverage for `import ./foo.nix`, pure eval-fail
 coverage for an import attempt, pure eval coverage for path values, and
 `e2e/import-manifest.txt` coverage for the explicit host IO path, including
-the imported-function application and bare-function rejection boundaries.
+relative alias normalization, recursive alias detection, imported-function
+application, and bare-function rejection boundaries.

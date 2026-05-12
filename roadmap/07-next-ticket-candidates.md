@@ -11,7 +11,7 @@ The first wave has been promoted to `.tickets`:
 - `TICKET-0052`: Host Value Slots For Imported Closures (complete)
 - `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops (complete)
 - `TICKET-0054`: Unary Primitive Fuel Monotonicity (complete)
-- `TICKET-0055`: Relative Import Path Normalization Policy
+- `TICKET-0055`: Relative Import Path Normalization Policy (complete)
 - `TICKET-0056`: Second External Corpus Wave
 
 Keep the details below as roadmap context for future maintenance, but use the

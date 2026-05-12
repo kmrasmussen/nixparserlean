@@ -170,11 +170,13 @@ does **not** currently implement:
 - string interpolation of floats, paths, lists, attrsets, and closures
 
 `NixParserLean/HostEval.lean` provides `--eval-imports`, an IO-aware wrapper
-for relative `./...` and `../...` imports. It reads the imported file, runs the
-same parse/validate/desugar/core-validation pipeline, evaluates that file in
-isolation, and reifies representable values back into core syntax before the
-final pure evaluation pass. Imported functions, angle paths, home paths,
-absolute path policy, store paths, and network fetchers remain unsupported.
+for relative `./...` and `../...` imports. It lexically normalizes `.` and
+`..` segments for host import reads and recursion detection, reads the imported
+file, runs the same parse/validate/desugar/core-validation pipeline, evaluates
+that file in isolation, and reifies representable values back into core syntax
+before the final pure evaluation pass. Imported functions, angle paths, home
+paths, absolute path policy, store paths, and network fetchers remain
+unsupported.
 
 ## Core validation
 

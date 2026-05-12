@@ -34,12 +34,45 @@ def joinPath (base path : String) : String :=
   else
     base ++ "/" ++ path
 
+def normalizePathParts (absolute : Bool) : List String -> List String -> List String
+  | acc, [] => acc.reverse
+  | acc, part :: parts =>
+      if part == "" || part == "." then
+        normalizePathParts absolute acc parts
+      else if part == ".." then
+        match acc with
+        | [] =>
+            if absolute then
+              normalizePathParts absolute [] parts
+            else
+              normalizePathParts absolute (".." :: acc) parts
+        | ".." :: _ =>
+            if absolute then
+              normalizePathParts absolute acc parts
+            else
+              normalizePathParts absolute (".." :: acc) parts
+        | _ :: rest => normalizePathParts absolute rest parts
+      else
+        normalizePathParts absolute (part :: acc) parts
+
+def normalizeHostImportPath (path : String) : String :=
+  let absolute := path.startsWith "/"
+  let parts := normalizePathParts absolute [] (path.splitOn "/")
+  if absolute then
+    match parts with
+    | [] => "/"
+    | _ => "/" ++ "/".intercalate parts
+  else
+    match parts with
+    | [] => "."
+    | _ => "/".intercalate parts
+
 def isSupportedImportPath (path : String) : Bool :=
   path.startsWith "./" || path.startsWith "../"
 
 def resolveImportPath (baseDir path : String) : M String :=
   if isSupportedImportPath path then
-    pure (joinPath baseDir path)
+    pure (normalizeHostImportPath (joinPath baseDir path))
   else
     throw s!"eval error: unsupported import path '{path}'"
 

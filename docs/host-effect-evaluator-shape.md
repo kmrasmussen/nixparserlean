@@ -45,8 +45,8 @@ Pros:
 - keeps filesystem access outside `CoreEval`;
 - can thread imported closures as values rather than forcing them back into
   syntax;
-- gives angle search paths, normalized imports, and import recursion detection
-  one explicit capability boundary.
+- keeps normalized relative imports and import recursion detection inside one
+  explicit capability boundary, with angle search paths as a later extension.
 
 Cons:
 

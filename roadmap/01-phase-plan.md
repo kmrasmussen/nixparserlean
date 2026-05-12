@@ -119,6 +119,7 @@ Goal: make host path behavior deterministic before adding more import forms.
 Exit criteria:
 
 - Relative import recursion detection has a normalization policy and tests.
+  (complete for lexical `.`/`..` normalization)
 - Angle search paths have a repo-local `--search-path NAME=PATH` prototype or
   a ticket ready for it.
 - Pure path values remain inert text.

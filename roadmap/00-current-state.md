@@ -130,6 +130,8 @@ Pure `--eval` is filesystem-free and rejects `import` with an `eval error:`.
 `--eval-imports` is the explicit host IO lane:
 
 - supports relative `./...` and `../...` path imports;
+- lexically normalizes `.` and `..` segments for host import reads and
+  recursion detection;
 - reads imported files through `IO.FS.readFile`;
 - parses, validates, desugars, core-validates, evaluates, then reifies
   representable imported values;
@@ -152,7 +154,7 @@ The current committed e2e manifests cover:
 - `e2e/manifest.txt`: 40 pass, 3 parse-fail, 9 validation-fail.
 - `e2e/desugar-manifest.txt`: 8 pass, 1 validation-fail.
 - `e2e/eval-manifest.txt`: 48 pass, 20 eval-fail.
-- `e2e/import-manifest.txt`: 6 pass, 4 eval-fail.
+- `e2e/import-manifest.txt`: 6 pass, 5 eval-fail.
 - `e2e/fuel-manifest.txt`: 1 eval-fail.
 - `e2e/fuel-low-manifest.txt`: 3 eval-fail.
 - `e2e/fuel-success-manifest.txt`: 3 pass.
@@ -168,7 +170,8 @@ manifest before and after adding rows.
 
 1. The parser is broad but still has a large expression-level `partial` island.
 2. Host imports are eager and value-only; imported closures still fail.
-3. Relative host import paths are not canonicalized for recursion detection.
+3. Relative host import paths are normalized only lexically; symlink and
+   canonical filesystem identity are not modeled.
 4. The core still contains surface-like forms (`with`, `assert`, selection
    defaults for dynamic paths) that should be lowered or justified before large
    preservation proofs.

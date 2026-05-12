@@ -62,21 +62,22 @@ Next widening criteria:
 
 ## Milestone B: Relative Path Normalization
 
-Current behavior joins base directory and relative import path text. It does
-not normalize `..`, symlinks, or canonical paths.
+Current behavior joins base directory and relative import path text, then
+normalizes `.` and `..` path segments lexically before file reads and recursion
+detection. It does not resolve symlinks or canonical filesystem identity.
 
-Next step:
+Landed policy:
 
-- Decide whether host imports normalize only for recursion detection, only for
-  file reads, or not at all.
+- Host imports use the same lexical normalized path for file reads and
+  recursion detection.
 - Keep pure path values unnormalized.
-- Add fixtures around `./nested/../file.nix` alias recursion before changing
-  behavior.
+- `./nested/../file.nix` style aliases are covered in the import manifest.
+- Alias-based recursive imports are expected eval failures with the normalized
+  recursion key.
 
 Acceptance criteria:
 
-- Recursive import detection is robust for simple `./a/../x.nix` aliases, or
-  the limitation is documented and tested.
+- Recursive import detection is robust for simple `./a/../x.nix` aliases.
 - No pure `Value.path` behavior changes.
 
 ## Milestone C: Search Path And Angle Imports
