@@ -61,7 +61,7 @@ The parser should never produce an empty surface attribute path, and
 dynamic bindings. The remaining proof gap is connecting parser-produced surface
 paths to non-emptiness so the desugar error becomes unreachable by theorem
 rather than convention. The next proof contract slice is tracked in
-`roadmap/04-proofs-and-totality.md` and `TICKET-0042`.
+`roadmap/04-proofs-and-totality.md`.
 
 ---
 
@@ -75,11 +75,11 @@ surface-to-core walk, host import walk, and evaluator still have broad
 The remaining clusters are real proof work:
 
 - parser mutual recursion over shrinking `ParserState`
-- desugaring recursion over mutually-recursive surface/core forms
 - evaluation fuel and cycle detection
+- host import resolution and reification
 
-The active plan is in `roadmap/04-proofs-and-totality.md`; concrete follow-up
-tickets include `TICKET-0043`, `TICKET-0044`, and `TICKET-0050`.
+The active plan is in `roadmap/04-proofs-and-totality.md` and
+`roadmap/07-next-ticket-candidates.md`.
 
 ---
 
@@ -92,9 +92,10 @@ still an interpreter budget rather than a separately proved small-step
 semantics.
 
 For proof-oriented semantics, the next step is a monotonicity theorem for a
-small expression subset, then determinism modulo fuel, then a connection to a
-separate step relation. This is tracked in
-`roadmap/04-proofs-and-totality.md` and `TICKET-0045`.
+slightly wider expression subset, then determinism modulo fuel, then a
+connection to a separate step relation. This is tracked in
+`roadmap/04-proofs-and-totality.md` and
+`roadmap/07-next-ticket-candidates.md`.
 
 ---
 

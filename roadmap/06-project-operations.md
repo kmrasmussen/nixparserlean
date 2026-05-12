@@ -129,7 +129,8 @@ out-of-scope list, and acceptance criteria with the expected e2e or build gate.
 
 ## Suggested Next Tickets
 
-Refresh this list from `roadmap/01-phase-plan.md` and the milestone files after
-each maintenance pass. As of the current pass, recently completed suggestions
-have been retired from this section; new tickets should come from active
-milestones rather than this stale backlog.
+The active staging list is
+[`07-next-ticket-candidates.md`](07-next-ticket-candidates.md). Refresh that
+file from `roadmap/01-phase-plan.md` and the milestone files after each
+maintenance pass, then turn one candidate at a time into a concrete `.tickets`
+entry.

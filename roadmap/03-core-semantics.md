@@ -76,6 +76,10 @@ Follow-up simplifications remain:
 - prove the static selection-default preservation claim named in
   `NixParserLean/Desugar.lean`.
 
+Recommended next core ticket: make a `with` decision. Either keep it as a
+permanent core environment form with a documented invariant, or lower it into a
+smaller explicit environment operation before broader preservation proofs.
+
 ## Milestone C: Core Validation As A Contract
 
 Core validation should stay even as proofs grow. Its role should become:
@@ -131,16 +135,10 @@ small subset is clean.
 
 ## Milestone F: Examples As Regression Specs
 
-`examples/current-core-showcase/showcase.nix` should evolve into a small suite
-of examples rather than one large file.
+The example suite has been split into focused examples for pure expressions,
+recursion, lambdas, dynamic attributes, host boundary behavior, and a
+proof-oriented static attrset fragment. Each example is referenced from the
+relevant e2e manifest.
 
-Suggested examples:
-
-- pure expression core;
-- recursive attrs and let;
-- lambdas and attrset parameters;
-- dynamic attrs and interpolation;
-- host import boundary;
-- proof-oriented static attrset fragment.
-
-Each example should be referenced from the relevant e2e manifest.
+Future example work should follow the same pattern: add a small documented
+example only when it clarifies a semantic boundary or regression behavior.

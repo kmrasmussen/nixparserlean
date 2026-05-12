@@ -20,9 +20,10 @@ The pinned external manifest is already useful:
 - 15 passing pinned nixpkgs files.
 - 0 expected parse failures in the current pinned set.
 
-The first blocker set has been ratcheted to green. The next parser/corpus
-step is infrastructure for growing the pinned set without making network-backed
-runs part of the ordinary flake check.
+The first blocker set has been ratcheted to green. The next parser/corpus step
+is a second pinned corpus wave: add more immutable nixpkgs files, classify any
+new blockers, and create follow-up tickets from those blocker categories.
+Network-backed corpus runs should remain outside the ordinary flake check.
 
 ## Milestone A: Spaced Dynamic Selection (complete)
 
@@ -143,13 +144,38 @@ Acceptance criteria:
 - The string parser docs state which quoted and indented escapes are modeled.
 - String interpolation fixtures still validate/evaluate as before.
 
-## Milestone E: External Corpus Infrastructure
+## Milestone E: External Corpus Infrastructure (partly complete)
 
 After the four current blockers, grow corpus infrastructure deliberately:
 
-- Add content hashes to URL rows.
-- Add a summary command or script for blocker counts.
+- Add content hashes to URL rows. (policy documented; optional comments
+  supported in the manifest format)
+- Add a summary command or script for blocker counts. (complete:
+  `./e2e/external-summary.sh`)
 - Add a non-blocking "refresh external corpus" workflow.
 - Consider splitting external manifests into parser, desugar, and eval lanes.
 
 Do not make network-backed corpus runs required for ordinary flake checks.
+
+## Milestone F: Second Pinned Corpus Wave
+
+The next real coverage step is to add another batch of pinned nixpkgs files.
+This should be a ticket of its own, not incidental churn in a parser feature
+commit.
+
+Plan:
+
+1. Choose a small set of immutable nixpkgs URLs from areas not already covered
+   by the first 15 rows.
+2. Add rows as `pass` only when they actually pass; otherwise classify them as
+   `parse-fail`, `validation-fail`, `core-fail`, or `eval-fail`.
+3. Use `./e2e/external-summary.sh` to summarize blocker categories.
+4. Create follow-up tickets from blocker categories, not from vague parser
+   guesses.
+
+Acceptance criteria:
+
+- The external manifest remains deterministic and pinned to immutable upstream
+  revisions.
+- Any non-pass rows have notes specific enough to become tickets.
+- Ordinary `nix flake check` remains network-free.

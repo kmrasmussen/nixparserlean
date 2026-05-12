@@ -1,46 +1,51 @@
 # NixParserLean Roadmap
 
-This folder is the active project roadmap as of the post-`TICKET-0031`
-state. It sits at the repository root so it is easy to find during working
-sessions; older long-horizon notes remain under `docs/roadmap/`.
+This folder is the active roadmap after the ticket backlog through
+`TICKET-0051` was closed. It should describe what is true now, what is
+strategically next, and which future slices are ready to become `.tickets`.
 
-The project has moved past the initial "can Lean parse useful Nix?" stage.
-The parser covers a broad surface subset, validation and core validation have
-separate error layers, desugaring has its first checked invariants, evaluation
-handles a meaningful core fragment, host imports have an explicit IO boundary,
-and all tickets through `TICKET-0031` are complete.
+The project has moved past the first parser-expansion wave. The parser handles
+the first pinned external nixpkgs corpus, validation and core validation have
+separate total fuel-bounded layers, desugaring has a total fuel-bounded walk,
+evaluation covers a useful pure core fragment, and host imports have an explicit
+IO boundary.
 
-The next roadmap should therefore optimize for leverage:
+The next roadmap should optimize for leverage:
 
-1. **Ratchet real Nix coverage.** Turn the pinned external blockers into
-   parser/evaluator work, one construct at a time.
-2. **Stabilize the core.** Make the surface-to-core boundary smaller,
-   better specified, and easier to prove against.
-3. **Earn Lean's proof value.** Replace broad `partial` islands with total or
-   fuel-bounded definitions, then harvest focused theorems.
-4. **Keep host effects explicit.** Grow import/path semantics without letting
-   filesystem behavior leak into pure evaluation.
-5. **Keep the work reviewable.** Each roadmap item should land with fixtures,
-   docs or a blog note, and a small commit.
+1. **Grow real-Nix coverage deliberately.** Expand the external corpus and
+   classify blockers rather than guessing at syntax features.
+2. **Make host imports useful without polluting pure evaluation.** Imported
+   closures and path policy are the next host-effect frontier.
+3. **Remove `partial` debt in small slices.** Start with parser loops and
+   scanner helpers, preserving source positions.
+4. **Widen checked proof value.** Turn the first fuel/desugar theorems into a
+   broader semantic proof program.
+5. **Keep the core small enough to reason about.** Lower or justify remaining
+   surface-like core forms before proving too much about them.
+6. **Generate tickets from roadmap slices.** The roadmap is now the source of
+   future `.tickets`, not a parallel stale list.
 
 ## Files
 
 | File | Purpose |
 |---|---|
 | [00-current-state.md](00-current-state.md) | Snapshot of what works, what is tested, and what remains load-bearing debt |
-| [01-phase-plan.md](01-phase-plan.md) | Recommended order of execution across the next project phases |
-| [02-parser-and-corpus.md](02-parser-and-corpus.md) | Parser coverage and external corpus ratchet |
+| [01-phase-plan.md](01-phase-plan.md) | Recommended order for the next project wave |
+| [02-parser-and-corpus.md](02-parser-and-corpus.md) | Parser coverage, external corpus growth, and parser-totality direction |
 | [03-core-semantics.md](03-core-semantics.md) | Core language, evaluator, imports, paths, and semantic boundary work |
 | [04-proofs-and-totality.md](04-proofs-and-totality.md) | Termination, desugaring proofs, evaluator fuel theorems |
 | [05-host-effects.md](05-host-effects.md) | Import/path IO boundary and future host-backed semantics |
 | [06-project-operations.md](06-project-operations.md) | Tickets, testing, docs, and commit cadence |
+| [07-next-ticket-candidates.md](07-next-ticket-candidates.md) | Concrete slices ready to turn into future `.tickets` |
 
 ## How To Use This Roadmap
 
-- Start each new work session with `00-current-state.md` and
-  `01-phase-plan.md`.
-- Convert one roadmap milestone into one `.tickets/TICKET-XXXX` entry before
-  implementation, unless the work is a tiny documentation cleanup.
+- Start each work session with [00-current-state.md](00-current-state.md),
+  then [01-phase-plan.md](01-phase-plan.md).
+- Pick one candidate from
+  [07-next-ticket-candidates.md](07-next-ticket-candidates.md) and turn it into
+  one `.tickets/TICKET-XXXX` entry before implementation.
+- Keep ticket scope narrow enough for one reviewable commit.
 - Add or update e2e fixtures before calling a language feature complete.
 - Run `nix develop --command lake build` after Lean changes.
 - Run the relevant e2e manifests, or `nix flake check` when manifests,

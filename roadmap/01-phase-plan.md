@@ -1,185 +1,135 @@
 # Phase Plan
 
-The roadmap should move in phases that each improve one project dimension
-without destabilizing the rest. The order below is recommended; adjacent
-phases can overlap only when their write sets and proof obligations are
-clearly separate.
+The next wave should turn the completed backlog into a fresh, coherent program
+instead of extending the old ticket list mechanically. Adjacent phases can
+overlap when their write sets are separate, but each `.tickets` entry should
+still land as one reviewable chunk.
 
-## Phase 1: External Corpus Ratchet
+## Phase 1: Generate The Next Ticket Wave
 
-Goal: make real Nix surface coverage the next source of truth.
-
-Status: complete for the first pinned corpus set; all 15 rows currently pass.
+Goal: convert this roadmap into a small set of future `.tickets`.
 
 Why now:
 
-- The initial backlog through `TICKET-0031` was completed.
-- The parser already handles a wide smoke subset.
-- The external manifest has already turned the first blocker set into concrete
-  smoke fixtures and passing pinned rows.
+- The visible backlog through `TICKET-0051` is closed.
+- The first pinned external corpus set is green.
+- Several design notes now name concrete next implementation slices.
 
 Exit criteria:
 
-- `spaced-dynamic-selection` blockers move to `pass` or a later, narrower
-  blocker.
-- `quoted-inherit-name` has smoke and external coverage.
-- `path-argument-dot-file` has a parser decision and fixture.
-- `indented-string-escape` has a documented string escape policy.
-- External manifest notes remain stable and blocker categories are meaningful.
+- 5-8 new tickets exist, each with a clear acceptance gate.
+- Each ticket maps back to one roadmap milestone or design document.
+- No ticket tries to solve parser totality, host imports, or evaluator proofs
+  all at once.
 
-Recommended first ticket:
+Seed from [07-next-ticket-candidates.md](07-next-ticket-candidates.md).
 
-```text
-TICKET: External corpus blocker ratchet - spaced dynamic selection
-```
+## Phase 2: Host Imports That Can Carry Functions
 
-## Phase 2: Documentation Freshness And Contract Cleanup
+Goal: make `--eval-imports` useful for imported function-valued files without
+putting filesystem behavior into `CoreEval`.
 
-Goal: make docs match current behavior before more semantics are added.
+Why next:
+
+- The current imported-function diagnostic is documented and tested.
+- `docs/host-effect-evaluator-shape.md` chooses the next architecture.
+- Real Nix module patterns need imports that can produce functions.
+
+Exit criteria:
+
+- A repo-local fixture imports a function and applies it successfully.
+- Existing representable imported values still reify as before.
+- `CoreEval.lean` remains filesystem-free.
+- The old imported-function rejection row is either retired or narrowed to a
+  still-unsupported case.
+
+## Phase 3: Parser Totality Slices
+
+Goal: reduce parser `partial` debt without destabilizing source positions.
 
 Why now:
 
-- Some old docs still describe path values as unsupported even though the
-  evaluator now has `Value.path`.
-- The AGENTS checklist under-runs current flake coverage.
-- Roadmap consumers need reliable layer boundaries.
+- Feature coverage has stabilized enough for mechanical parser work.
+- The parser termination strategy chooses explicit fuel first.
+- Additive/multiplicative loops are narrow and good first targets.
 
 Exit criteria:
 
-- `docs/core.md`, `docs/testing.md`, `docs/import-and-path-boundary.md`, and
-  `flagged.md` agree with current code and e2e manifests.
-- `AGENTS.md` mentions the broader flake/e2e gate, or clearly delegates to
-  `docs/testing.md`.
-- Every caveat in `flagged.md` points to a roadmap file or future ticket.
+- `parseAdd` and `parseMul` loops use total fuel-bounded helpers.
+- Comment skipping and string scanning have follow-up tickets or are converted.
+- Default and external parser manifests remain stable.
+- Parse error offsets for existing failure fixtures do not move.
 
-Recommended first ticket:
+## Phase 4: Widen Semantic Fuel Proofs
 
-```text
-TICKET: Refresh docs after path, fuel, and validator totality work
-```
+Goal: turn the first monotonicity theorem into a growing semantic proof surface.
 
-## Phase 3: Core Simplification
+Why after the first theorem:
 
-Goal: shrink the core language so proofs target fewer constructs.
+- The primitive literal/binary proof harness is checked.
+- Fuel behavior has runtime e2e coverage at low, sufficient, and high fuel.
+- The next widening steps can stay small.
+
+Exit criteria:
+
+- Unary primitive monotonicity lands.
+- List monotonicity lands for primitive literal elements.
+- Non-recursive static attrset monotonicity is stated or proven.
+- Determinism modulo fuel is stated for the same restricted subset.
+
+## Phase 5: Core Simplification Before Big Preservation Proofs
+
+Goal: shrink or justify surface-like core forms before proving too much about
+them.
 
 Why now:
 
-- Core is still close to surface syntax.
-- Several evaluator behaviors duplicate source-level forms that could lower
-  into fewer core primitives.
-- Core validation should become a smaller set of invariants, not a second
-  surface validator.
-
-Candidate reductions:
-
-- Lower `assert` into a core primitive with explicit evaluation rule or keep
-  it as one of a small set of control forms.
-- Decide whether `with` remains core syntax or lowers into explicit lookup
-  environment behavior.
-- Decide whether selection defaults should stay core or lower into a smaller
-  conditional/missing-selection representation.
-- Split path values from import path arguments more explicitly if needed.
+- Static selection defaults already lower away.
+- `with`, `assert`, dynamic selection defaults, and environment behavior remain
+  semantic decisions.
+- Preservation proofs get cheaper when the core is smaller.
 
 Exit criteria:
 
-- `docs/core.md` names the intended minimal core.
-- At least one surface form lowers into a smaller core representation.
-- Existing eval fixtures still pass.
-- Any behavior-preserving desugar change gets a focused theorem or TODO
-  theorem statement.
+- One additional surface-like form lowers away or is documented as permanent.
+- The behavior change has eval/desugar fixtures.
+- Any behavior-preserving lowering gets a theorem statement or checked lemma.
 
-## Phase 4: Desugaring Proof Program
+## Phase 6: External Corpus Expansion
 
-Goal: turn runtime core-validation backstops into checked desugaring facts.
+Goal: make the next corpus wave the driver for real Nix coverage.
 
-Why now:
+Why after the first green set:
 
-- The first static-path and merge lemmas exist.
-- Empty static paths are rejected explicitly.
-- Validators are total enough to serve as proof targets.
+- The first 15 pinned nixpkgs rows all pass.
+- The runner and `external-summary.sh` can report blocker categories.
+- New rows can now expose the next real blockers.
 
 Exit criteria:
 
-- Prove non-empty parser/surface attrpaths cannot hit the desugar empty-path
-  branch.
-- Prove a restricted `surface validate -> desugar -> core validate` theorem
-  for static attrsets without dynamic paths.
-- Prove static merge uniqueness for a useful subset.
-- Record assumptions about dynamic paths in theorem names or docs.
+- Add a second pinned corpus set.
+- Keep all rows immutable and documented.
+- Classify failures into parser, validation, core, or eval blockers.
+- Do not require network-backed external runs in ordinary flake checks.
 
-Recommended first ticket:
+## Phase 7: Host Path Policy
 
-```text
-TICKET: Restricted static attrset desugar-core-validation theorem
-```
-
-## Phase 5: Evaluator Semantics And Fuel Theorems
-
-Goal: turn entry-step fuel into a proof-friendly semantics.
-
-Why now:
-
-- Fuel now has a deterministic policy.
-- Low-fuel success/failure behavior is tested.
-- Evaluation already covers enough features to make monotonicity useful.
+Goal: make host path behavior deterministic before adding more import forms.
 
 Exit criteria:
 
-- State and prove monotonicity for literals and binary expressions.
-- Extend monotonicity to lists and non-recursive attrsets.
-- State determinism modulo fuel for successful runs on a small subset.
-- Decide whether to introduce a separate small-step relation before widening
-  to closures and thunks.
+- Relative import recursion detection has a normalization policy and tests.
+- Angle search paths have a repo-local `--search-path NAME=PATH` prototype or
+  a ticket ready for it.
+- Pure path values remain inert text.
 
-Recommended first ticket:
+## Phase 8: Operations And Roadmap Hygiene
 
-```text
-TICKET: Fuel monotonicity for literals and binary expressions
-```
-
-## Phase 6: Host Import Semantics
-
-Goal: grow imports without muddying pure evaluation.
-
-Why now:
-
-- Relative imports work but are eager and value-only.
-- Imported closures are rejected at reification.
-- Real Nix modules increasingly need imports as values or functions.
+Goal: keep future sessions easy to resume.
 
 Exit criteria:
 
-- Decide whether imported functions remain unsupported, become directly
-  evaluable, or require a host-aware value form.
-- Add fixtures for imported attrset functions if supported or sharper
-  diagnostics if rejected.
-- Normalize relative paths only in host IO, not in pure path values.
-- Keep angle path and store semantics explicitly out of scope until designed.
-
-## Phase 7: Parser Termination
-
-Goal: remove or isolate parser `partial` debt.
-
-Why late:
-
-- Parser termination is invasive.
-- Feature coverage and external corpus behavior should stabilize first.
-
-Exit criteria:
-
-- Pick explicit parser fuel or `decreasing_by` on input length.
-- Convert one parser subcluster first, probably string/path lexing helpers.
-- Preserve structured parse positions.
-- Keep all parser and external corpus expectations stable.
-
-## Phase 8: Operating System For The Project
-
-Goal: make future sessions easy to resume.
-
-Exit criteria:
-
-- New tickets are generated from this roadmap, not ad hoc memory.
-- Each completed ticket has plan, resolution, verification, blog note, and
-  commit.
-- `nix flake check` stays the default high-confidence gate.
-- External corpus drift can be summarized with one command.
+- `./scripts/open-tickets.sh` remains the first backlog check.
+- Roadmap files are refreshed after every 3-5 completed tickets.
+- `07-next-ticket-candidates.md` is updated before creating a new ticket wave.
+- Significant roadmap shifts get a blog note and a small commit.

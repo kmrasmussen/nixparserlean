@@ -13,12 +13,12 @@ Already present:
 - merge helper theorems for static binding names;
 - total low-risk evaluator helpers;
 - total fuel-bounded surface and core validators;
+- total fuel-bounded desugar walk;
 - deterministic entry-step evaluator fuel policy.
 
 Remaining broad `partial` islands:
 
-- parser and lexer helpers;
-- surface-to-core desugaring walk;
+- parser expression and scanner helpers;
 - host import resolution/reification walk;
 - evaluator and related environment/thunk functions.
 
@@ -82,7 +82,8 @@ Landed shape:
 
 ## Milestone C: Parser Termination Strategy
 
-Parser termination should come after external corpus blockers are reduced.
+Parser termination can now proceed in narrow mechanical slices; the first
+external corpus blocker set is green and the strategy is documented.
 
 Recommended path:
 
@@ -130,6 +131,10 @@ Then widen to:
 - conditionals.
 
 Do not include recursive thunks until the environment model is proof-friendly.
+
+Recommended next proof ticket: unary primitive monotonicity. It is the smallest
+extension of the existing proof harness and does not require environments,
+thunks, lists, or attrsets.
 
 ## Milestone E: Determinism
 

@@ -41,19 +41,23 @@ Options:
 
 Recommendation:
 
-Start with option 1. Add fixtures that prove the diagnostic is stable. Then
-design option 3 if real module patterns require it.
+Option 1 is complete: the imported-function diagnostic is stable and tested.
+The next implementation direction is option 3, without moving filesystem IO
+into `CoreEval`.
 
 Current design note: `docs/host-effect-evaluator-shape.md` chooses a
 host-aware import substitution layer as the next direction. The compatibility
 path keeps reifying simple imported values, while the new host layer gets an
 internal value slot for imported closures. `CoreEval` remains filesystem-free.
 
-Acceptance criteria:
+Next acceptance criteria:
 
-- Fixture for importing a function-valued file.
-- Error is classified as `eval-fail`.
-- Docs state why closure reification is not available yet.
+- A repo-local fixture imports a function-valued file and applies it through
+  `--eval-imports`.
+- Representable imported values still use the existing reification path.
+- `CoreEval.lean` remains filesystem-free.
+- The existing imported-function rejection fixture is retired or narrowed to a
+  still-unsupported case.
 
 ## Milestone B: Relative Path Normalization
 
@@ -65,6 +69,8 @@ Next step:
 - Decide whether host imports normalize only for recursion detection, only for
   file reads, or not at all.
 - Keep pure path values unnormalized.
+- Add fixtures around `./nested/../file.nix` alias recursion before changing
+  behavior.
 
 Acceptance criteria:
 
@@ -77,7 +83,7 @@ Acceptance criteria:
 Angle paths like `<nixpkgs>` are currently parsed as path values and rejected
 as imports.
 
-Do not implement search paths until:
+Search paths now have a deterministic design note. Do not implement them until:
 
 - the host effect API has a configurable search path environment;
 - tests can run without relying on the user's machine;
