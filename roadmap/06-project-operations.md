@@ -96,6 +96,7 @@ corpus blocker profile changes.
 
 Good roadmap updates should:
 
+- preserve the link from [VISION.md](VISION.md) to the phase plan;
 - keep the strategy visible before the ticket list;
 - demote completed waves into historical context;
 - add or reorder the next concrete ticket candidates by workstream;

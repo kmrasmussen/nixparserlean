@@ -1,154 +1,160 @@
 # Phase Plan
 
-The next phase of NixParserLean should optimize for a coherent semantic lens,
-not for a longer list of isolated Nix features. Work can proceed in parallel
-when files are separate, but the intended dependency order is:
+The phase plan derives from [VISION.md](VISION.md). Each phase names a
+capability the project should gain, not just a category of contributor work.
+
+The intended progression is:
 
 ```text
-real input -> better artifacts -> clearer core -> checked properties
+read real Nix
+  -> explain structure
+  -> explain semantics
+  -> stabilize core
+  -> check the model
+  -> make the workflow durable
 ```
 
-## Phase 1: Make The Roadmap And Ticket Funnel Strategic
+Phases can overlap when their files and risks are separate. A ticket should
+still land as one reviewable chunk with fixtures, docs, and a clear gate.
 
-Goal: keep future work organized around the analysis-engine vision.
+## Phase 1: Read Real Nix
 
-Why:
+Vision link: real Nix input must become source-positioned surface syntax.
 
-- The backlog has grown from parser expansion into host effects, proofs,
-  corpus management, CI, and core semantics.
-- The older roadmap mixed completed history with future strategy.
-- Ticket choice should now be driven by leverage: legibility, core clarity,
-  host boundary clarity, or proof value.
+User-visible capability:
 
-Exit criteria:
+- Parse pinned real Nix files and representative smoke fixtures.
+- Preserve enough position information to make failures actionable.
+- Classify corpus failures by parser, validation, desugar, core validation,
+  evaluation, or host-effect lane.
 
-- The roadmap states the project vision and non-goals.
-- Active tickets are grouped by strategic workstream.
-- Completed ticket waves remain historical context, not the main roadmap.
+Concrete work:
 
-## Phase 2: Build User-Visible Semantic Artifacts
-
-Goal: make the tool useful as an analysis engine before full Nix evaluation is
-possible.
-
-Useful artifacts include:
-
-- structured parse and validation errors with source positions;
-- import graph or import-boundary summaries;
-- attrpath and binding-shape summaries;
-- desugar explanations for selected surface forms;
-- JSON output that downstream tools can consume reliably.
-
-Why this comes early:
-
-- It gives the project a practical surface beyond "can parse/evaluate this
-  fixture".
-- It makes future proof and core work easier to inspect.
-- It turns corpus blockers into actionable categories.
+- `TICKET-0067`: External Corpus Lane Split Design
+- `TICKET-0074`: External Corpus Hash Enforcement
+- future pinned corpus waves from new nixpkgs areas
 
 Exit criteria:
 
-- At least one machine-readable artifact is stable enough to document.
-- JSON/error contracts are covered by e2e fixtures.
-- Source positions are preserved across the relevant parser path.
+- External corpus reporting shows which layer blocks each non-pass row.
+- New corpus rows are pinned or hash-checked enough to be repeatable.
+- Parser work is selected from corpus blockers or explicit diagnostic gaps.
 
-Primary ticket lane: `TICKET-0068`, `TICKET-0072`, then targeted follow-ups.
+## Phase 2: Explain Nix Structure
 
-## Phase 3: Keep Real Nix Coverage Honest
+Vision link: users should see bindings, attrpaths, imports, and validation
+boundaries before full evaluation exists.
 
-Goal: use pinned corpus growth to select parser and validation work.
+User-visible capability:
 
-Why:
+- Emit structured parse and validation diagnostics with source positions.
+- Emit JSON stable enough for downstream tools.
+- Begin exposing binding, attrpath, and import-boundary summaries.
 
-- Real Nix coverage is the credibility layer.
-- Green small fixtures are not enough once the parser is broad.
-- Corpus lanes can show whether a blocker is parser, validation, desugar,
-  core, host, or evaluator work.
+Concrete work:
 
-Exit criteria:
-
-- External corpus rows are split or reported by lane.
-- Hash or pinning policy is enforceable enough for repeatability.
-- New blockers become small tickets with a clear gate.
-
-Primary ticket lane: `TICKET-0067`, `TICKET-0074`, then the next pinned corpus
-wave.
-
-## Phase 4: Clarify Host Effects Without Polluting Pure Semantics
-
-Goal: support more realistic import and path behavior while keeping `CoreEval`
-pure.
-
-Why:
-
-- Real Nix code relies on imports and search paths.
-- Host-backed behavior is useful for analysis, but it must stay explicit.
-- The pure evaluator should remain a proof-friendly semantics for a bounded
-  fragment.
+- `TICKET-0068`: Structured Parse Error Position Contract
+- `TICKET-0072`: JSON Error Output Contract
+- follow-up ticket for first binding or attrpath summary artifact
 
 Exit criteria:
 
-- Angle search paths work only through explicit repo-local configuration.
-- Import cycle detection has deterministic normalized keys.
-- Store-like paths remain inert until a store model exists.
-- Host-aware behavior is documented as separate from pure evaluation.
+- Error output has a documented shape and e2e fixtures.
+- A downstream consumer can rely on stable JSON fields for failures.
+- At least one structural artifact exists beyond raw parse/desugar output.
 
-Primary ticket lane: `TICKET-0061`, `TICKET-0070`, `TICKET-0071`.
+## Phase 3: Explain Nix Semantics
 
-## Phase 5: Shrink Or Justify The Core
+Vision link: surface syntax should lower into an explicit core, and unsupported
+semantics should be named precisely.
 
-Goal: make the core language a stable proof target.
+User-visible capability:
 
-Why:
+- Show desugared core for selected expressions/files.
+- Distinguish pure evaluation failures from host-effect requirements.
+- Explain import/search-path behavior in deterministic repo-local cases.
 
-- The core still contains surface-like forms that were useful for fast
-  evaluator growth.
-- Proofs become cheaper when lowering decisions are explicit.
-- Some forms, such as `with`, may be permanent but need named invariants.
+Concrete work:
+
+- `TICKET-0061`: Angle Search Path Prototype
+- `TICKET-0070`: Host Import Cycle Normalization Implementation
+- `TICKET-0071`: Store Path Inertness Fixtures
+- follow-up ticket for a desugar explanation artifact
 
 Exit criteria:
 
-- `assert` is either lowered, retained with a clear reason, or given a proof
-  plan.
+- Angle imports work only with explicit `--search-path NAME=PATH` style input.
+- Import cycle detection uses documented normalized keys.
+- Store-like paths are documented and tested as inert values.
+- CLI output names whether a failure is pure semantic, host-effect, or
+  intentionally unsupported.
+
+## Phase 4: Stabilize The Core
+
+Vision link: the core is the proof target and the main explanation artifact.
+
+User-visible capability:
+
+- Users can inspect a smaller, clearer core rather than a mirror of every
+  surface construct.
+- Core validation documents the invariants evaluation and proofs can rely on.
+- Permanent core forms have explicit semantic reasons.
+
+Concrete work:
+
+- `TICKET-0065`: Core `assert` Decision
+- `TICKET-0066`: Dynamic Selection Default Policy
+- `TICKET-0075`: Builtins Environment Shape
+- `TICKET-0080`: Core `with` Environment Invariant Theorem
+
+Exit criteria:
+
+- `assert` is lowered, retained with a reason, or given a proof plan.
 - Dynamic selection defaults have a no-duplication or permanent-core policy.
-- Builtins have an explicit environment shape before ad hoc evaluator growth.
-- `with` has a restricted invariant theorem target.
+- Builtins enter through an explicit environment shape.
+- `with` has a named restricted invariant theorem target.
 
-Primary ticket lane: `TICKET-0065`, `TICKET-0066`, `TICKET-0075`,
-`TICKET-0080`.
+## Phase 5: Check The Model
 
-## Phase 6: Widen Proofs Along Executable Boundaries
+Vision link: selected artifacts and semantic fragments should become checked
+Lean facts, not just tested behavior.
 
-Goal: grow checked theorem value from stable executable subsets.
+User-visible capability:
 
-Why:
+- Documentation can say which invariants are proved for which fragment.
+- Fuel behavior becomes predictable for growing pure subsets.
+- Desugar/core-validation claims are backed by checked lemmas where possible.
 
-- Validators, desugaring, and evaluator fuel already provide proof-friendly
-  seams.
-- Fuel monotonicity is useful only if it expands beyond primitive operators.
-- The proof program should stay connected to tested behavior.
+Concrete work:
+
+- `TICKET-0062`: List Fuel Monotonicity
+- `TICKET-0063`: Nonrecursive Static Attrset Fuel Monotonicity
+- `TICKET-0064`: Determinism Modulo Fuel Statement
+- `TICKET-0073`: Surface Attrpath Nonempty Proof
 
 Exit criteria:
 
-- List and nonrecursive static attrset fuel monotonicity are stated or proven.
-- Determinism modulo fuel is stated for the same restricted subset.
-- Surface attrpath nonempty facts support desugar/core validation reasoning.
 - Theorems clearly name their restrictions.
+- Lists and nonrecursive static attrsets are covered or explicitly staged.
+- Determinism is stated for the same subset before the subset grows further.
+- Surface attrpath facts support desugar/core-validation reasoning.
 
-Primary ticket lane: `TICKET-0062`, `TICKET-0063`, `TICKET-0064`,
-`TICKET-0073`.
+## Phase 6: Retire Termination Debt Where It Affects The Lens
 
-## Phase 7: Reduce Parser `partial` Debt Where It Protects Artifacts
+Vision link: source-positioned artifacts and checked layers should not rest on
+unbounded parser helpers forever.
 
-Goal: remove termination debt from parser paths that matter for diagnostics and
-analysis output.
+User-visible capability:
 
-Why:
+- Parser behavior stays stable while selected loops become total.
+- Parse failure offsets remain predictable.
+- The position contract is protected by tests.
 
-- Parser totality is not just hygiene; it supports source-positioned artifacts.
-- Mechanical fuel slices are safer after the parser behavior is covered by
-  manifests.
-- Totality work should not destabilize parse offsets.
+Concrete work:
+
+- `TICKET-0069`: Parser Select Loop Totality
+- future tickets for remaining parser helper families once diagnostics are
+  stable
 
 Exit criteria:
 
@@ -157,25 +163,26 @@ Exit criteria:
 - Existing parse-failure offsets stay stable.
 - Parser docs describe the position contract.
 
-Primary ticket lane: `TICKET-0069` after the structured error contract is
-clear enough.
+## Phase 7: Make The Workflow Durable
 
-## Phase 8: Make Project Operations Match The Ambition
+Vision link: reviewable ambition needs reliable gates, CI, and roadmap hygiene.
 
-Goal: keep the project easy to resume and hard to accidentally regress.
+User-visible capability:
 
-Why:
+- Contributors know which gate protects each kind of change.
+- CI and local pre-push flows catch ordinary regressions.
+- Roadmap and ticket state remain useful after several completed slices.
 
-- Roadmap, tickets, blog notes, examples, and manifests are now part of the
-  engineering system.
-- CI and local gates make ambitious work less brittle.
+Concrete work:
+
+- `TICKET-0076`: Roadmap Ticket Batch Maintenance
+- `TICKET-0077`: GitHub Actions Flake Check CI
+- `TICKET-0078`: Local Pre-Push Gate
+- `TICKET-0079`: CI Status And Required Checks Doc
 
 Exit criteria:
 
-- Roadmap maintenance happens as a recurring ticket, not as memory.
-- CI status and local pre-push expectations are documented.
+- Roadmap refreshes are recurring maintenance, not memory.
+- CI status and local gates are documented.
 - `nix flake check` has a GitHub Actions path if the repository is published
   with CI enabled.
-
-Primary ticket lane: `TICKET-0076`, `TICKET-0077`, `TICKET-0078`,
-`TICKET-0079`.
