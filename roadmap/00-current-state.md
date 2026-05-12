@@ -1,19 +1,20 @@
 # Current State
 
-This is a factual snapshot after the proof and roadmap work through
-`TICKET-0054`.
+This is a factual snapshot after the host path and corpus work through
+`TICKET-0056`.
 
 ## Repository State
 
 - Branch: `master`.
-- All `.tickets/TICKET-0001` through `.tickets/TICKET-0051` are marked
+- All `.tickets/TICKET-0001` through `.tickets/TICKET-0056` are marked
   `completed`.
-- `./scripts/open-tickets.sh` reports `all tickets completed`.
-- `nix flake check` passed for the current system after the last ticket wave.
+- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0057`.
+- `nix flake check` remains the ordinary network-free local gate; the external
+  corpus stays outside it.
 
 Recent work completed:
 
-- first external corpus blocker ratchet, with 15 pinned nixpkgs rows passing;
+- first and second external corpus waves, with 23 pinned nixpkgs rows passing;
 - inert path values and explicit import/path boundary docs;
 - total fuel-bounded surface validator, core validator, and desugar walk;
 - parser helper totality for `takeWhileGo`, angle path scanning, and the
@@ -162,7 +163,7 @@ The current committed e2e manifests cover:
 - `e2e/core-validation-manifest.txt`: 1 core-fail.
 - `e2e/json-manifest.txt`: 1 pass.
 
-The pinned external corpus currently has 15 pass cases and no expected
+The pinned external corpus currently has 23 pass cases and no expected
 non-pass blockers. Use `./e2e/external-summary.sh` to summarize the external
 manifest before and after adding rows.
 

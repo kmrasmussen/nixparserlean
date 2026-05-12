@@ -12,7 +12,7 @@ Goal: convert this roadmap into a small set of future `.tickets`.
 Why now:
 
 - The visible backlog through `TICKET-0051` is closed.
-- The first pinned external corpus set is green.
+- The first and second pinned external corpus sets are green.
 - Several design notes now name concrete next implementation slices.
 
 Exit criteria:
@@ -111,6 +111,9 @@ Exit criteria:
 - Keep all rows immutable and documented.
 - Classify failures into parser, validation, core, or eval blockers.
 - Do not require network-backed external runs in ordinary flake checks.
+
+Status: complete for the second pinned wave; it added eight rows and produced
+no new blocker categories.
 
 ## Phase 7: Host Path Policy
 

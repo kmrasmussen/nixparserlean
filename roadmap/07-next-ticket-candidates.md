@@ -12,7 +12,7 @@ The first wave has been promoted to `.tickets`:
 - `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops (complete)
 - `TICKET-0054`: Unary Primitive Fuel Monotonicity (complete)
 - `TICKET-0055`: Relative Import Path Normalization Policy (complete)
-- `TICKET-0056`: Second External Corpus Wave
+- `TICKET-0056`: Second External Corpus Wave (complete)
 
 Keep the details below as roadmap context for future maintenance, but use the
 ticket files as the source of truth once implementation starts.

@@ -17,13 +17,14 @@ forms, and the main operator table.
 
 The pinned external manifest is already useful:
 
-- 15 passing pinned nixpkgs files.
+- 23 passing pinned nixpkgs files.
 - 0 expected parse failures in the current pinned set.
 
-The first blocker set has been ratcheted to green. The next parser/corpus step
-is a second pinned corpus wave: add more immutable nixpkgs files, classify any
-new blockers, and create follow-up tickets from those blocker categories.
-Network-backed corpus runs should remain outside the ordinary flake check.
+The first blocker set has been ratcheted to green, and the second pinned corpus
+wave also passed without new blocker categories. The next parser/corpus step is
+either a third pinned wave from a different nixpkgs area or infrastructure for
+non-blocking external refresh reporting. Network-backed corpus runs should
+remain outside the ordinary flake check.
 
 ## Milestone A: Spaced Dynamic Selection (complete)
 
@@ -157,21 +158,20 @@ After the four current blockers, grow corpus infrastructure deliberately:
 
 Do not make network-backed corpus runs required for ordinary flake checks.
 
-## Milestone F: Second Pinned Corpus Wave
+## Milestone F: Second Pinned Corpus Wave (complete)
 
-The next real coverage step is to add another batch of pinned nixpkgs files.
-This should be a ticket of its own, not incidental churn in a parser feature
-commit.
+The second real coverage step added another batch of pinned nixpkgs files as
+its own ticket, not as incidental parser feature churn.
 
-Plan:
+Completed shape:
 
-1. Choose a small set of immutable nixpkgs URLs from areas not already covered
-   by the first 15 rows.
-2. Add rows as `pass` only when they actually pass; otherwise classify them as
-   `parse-fail`, `validation-fail`, `core-fail`, or `eval-fail`.
-3. Use `./e2e/external-summary.sh` to summarize blocker categories.
-4. Create follow-up tickets from blocker categories, not from vague parser
-   guesses.
+1. Added eight immutable nixpkgs URLs from areas not covered by the first 15
+   rows.
+2. Kept every new row as `pass` only after running the external manifest.
+3. Used `./e2e/external-summary.sh`; it reports 23 cases, 23 passes, and no
+   expected non-pass blockers.
+4. Created no follow-up blocker tickets because this wave introduced no
+   blocker categories.
 
 Acceptance criteria:
 

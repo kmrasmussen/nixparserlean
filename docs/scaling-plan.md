@@ -100,6 +100,8 @@ These were the original near-term milestones. They are all complete:
 5. ✅ Parser surface coverage for lambdas, operator table, attribute paths
    (including dynamic ones), strings (quoted + indented + interpolation),
    `with`, `assert`, `inherit`/`inherit (scope)`, and path literals.
+6. ✅ A second pinned external corpus wave, bringing the external manifest to
+   23 passing nixpkgs rows with no expected non-pass blockers.
 
 ## Current Tracks
 
