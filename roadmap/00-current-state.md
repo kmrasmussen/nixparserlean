@@ -177,7 +177,9 @@ manifest before and after adding rows.
 ## Main Risks
 
 1. The parser is broad but still has a large expression-level `partial` island.
-2. Host imports are eager and value-only; imported closures still fail.
+2. Host imports are still eager and narrow; immediately applied imported
+   closures work only when the argument and result are representable, while
+   bare imported closures cannot yet be reified.
 3. Relative host import paths are normalized only lexically; symlink and
    canonical filesystem identity are not modeled.
 4. The core still contains surface-like forms (`with`, `assert`, selection

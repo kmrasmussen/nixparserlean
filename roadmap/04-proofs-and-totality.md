@@ -1,7 +1,8 @@
 # Proofs And Totality Roadmap
 
-The proof program should proceed from cheap structural facts to semantic
-theorems. Avoid trying to prove "Nix correctness" all at once.
+The proof program should proceed from executable structure to semantic
+theorems. The goal is not to prove "Nix correctness" all at once; the goal is
+to make each stable layer of the semantic lens carry checked value.
 
 ## Current Proof Assets
 
@@ -45,6 +46,8 @@ Why this target:
 - It connects the existing validator/desugar/core-validator layers.
 - It uses real behavior already covered by fixtures.
 - It creates a path from runtime backstop to checked invariant.
+- It lets analysis artifacts rely on a checked bridge rather than only an e2e
+  manifest.
 
 Acceptance criteria:
 

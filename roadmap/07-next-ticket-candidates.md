@@ -1,173 +1,167 @@
 # Next Ticket Candidates
 
-This file is intentionally not a ticket tracker. It is the staging area for the
-next `.tickets` wave. Turn one candidate at a time into a real
-`.tickets/TICKET-XXXX` entry when work begins.
+This file is the active ticket funnel. It is not a second tracker; the
+`.tickets/` directory remains the source of truth once a ticket exists. This
+page answers a different question: which ready tickets best advance the
+strategy, and why?
 
-## Recommended First Wave
+The current strategic bias is:
 
-The first wave has been promoted to `.tickets`:
+```text
+make Nix legible -> expose stable artifacts -> clarify semantics -> prove it
+```
 
-- `TICKET-0052`: Host Value Slots For Imported Closures (complete)
-- `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops (complete)
-- `TICKET-0054`: Unary Primitive Fuel Monotonicity (complete)
-- `TICKET-0055`: Relative Import Path Normalization Policy (complete)
-- `TICKET-0056`: Second External Corpus Wave (complete)
+## Recommended Order
 
-Keep the details below as roadmap context for future maintenance, but use the
-ticket files as the source of truth once implementation starts.
+### 1. Analysis Artifacts And Diagnostics
 
-### Host Value Slots For Imported Closures
+These tickets make the project useful as a semantic lens before full Nix
+evaluation exists.
 
-Roadmap source: [05-host-effects.md](05-host-effects.md) and
-`docs/host-effect-evaluator-shape.md`.
+- `TICKET-0068`: Structured Parse Error Position Contract
+- `TICKET-0072`: JSON Error Output Contract
 
-Goal: let `--eval-imports` carry an imported closure far enough for the
-importing file to apply it, without adding filesystem behavior to `CoreEval`.
+Why first:
 
-Likely scope:
+- Source-positioned diagnostics are the foundation for serious analysis output.
+- JSON/error stability gives future tools something to consume.
+- These tickets make corpus blockers easier to classify.
 
-- add an internal host value slot or host environment representation in
-  `HostEval.lean`;
-- keep current reification for representable imported values;
-- add a repo-local fixture where an imported function is applied;
-- preserve or narrow the existing imported-function rejection fixture.
+Good next slice: start with `TICKET-0068`, then make `TICKET-0072` consume the
+same error shape instead of inventing a parallel contract.
 
-Gate: `lake build`, import manifest, eval manifest.
+### 2. Real Corpus Discipline
 
-### Fuel-Bound `parseAdd` And `parseMul` Loops
+These tickets keep the parser and validator honest against real Nix while
+avoiding network-dependent local gates.
 
-Roadmap source: [04-proofs-and-totality.md](04-proofs-and-totality.md) and
-`docs/parser-expression-termination-strategy.md`.
+- `TICKET-0067`: External Corpus Lane Split Design
+- `TICKET-0074`: External Corpus Hash Enforcement
 
-Goal: convert the first expression parser operator loops to total
-fuel-bounded helpers while keeping public parser signatures stable.
+Why next:
 
-Likely scope:
+- A broad parser needs corpus infrastructure more than isolated feature
+  guessing.
+- Lane splitting makes it clear whether a row is blocked by parse, validation,
+  desugar, core validation, evaluation, or host effects.
+- Hash enforcement keeps pinned rows reviewable and repeatable.
 
-- add `parseAddLoopFuel` and `parseMulLoopFuel`;
-- size loop fuel from `ParserState.remaining.length`;
-- preserve existing parse output and error positions.
+Good next slice: design the lane split before adding another corpus wave, then
+enforce hashes or immutable pins.
 
-Gate: `lake build`, default parser manifest, external manifest.
+### 3. Explicit Host Semantics
 
-### Unary Primitive Fuel Monotonicity
+These tickets make imports and paths more realistic without weakening the pure
+core evaluator.
 
-Roadmap source: [04-proofs-and-totality.md](04-proofs-and-totality.md).
-
-Goal: widen the checked fuel monotonicity proof from literals/binary expressions
-to unary expressions over primitive literals.
-
-Likely scope:
-
-- extend the total proof harness in `CoreEval.lean`;
-- prove success is preserved with extra fuel;
-- document exclusions.
-
-Gate: `lake build`, fuel manifests, eval manifest.
-
-### Relative Import Path Normalization Policy
-
-Roadmap source: [05-host-effects.md](05-host-effects.md).
-
-Goal: decide and test how `--eval-imports` handles aliases such as
-`./nested/../file.nix`, especially for recursion detection.
-
-Likely scope:
-
-- document whether normalization is for recursion detection, file reads, both,
-  or neither;
-- add repo-local recursive import alias fixtures;
-- keep pure `Value.path` text unnormalized.
-
-Gate: import manifest.
-
-### Second External Corpus Wave
-
-Roadmap source: [02-parser-and-corpus.md](02-parser-and-corpus.md).
-
-Goal: add another pinned set of real nixpkgs files and classify the next
-blockers.
-
-Likely scope:
-
-- add immutable URL rows to `e2e/external-manifest.txt`;
-- use optional `sha256` comments for refresh intent;
-- update `./e2e/external-summary.sh` output in docs/blog;
-- create follow-up tickets from any non-pass blocker categories.
-
-Gate: external manifest. Do not add this to ordinary flake checks.
-
-## Second Wave
-
-The second wave has also been promoted to `.tickets` and expanded into a
-parallel-friendly backlog:
-
-- `TICKET-0057`: Comment And Whitespace Scanner Totality (complete)
-- `TICKET-0058`: String Scanner Totality (complete)
-- `TICKET-0059`: Static Selection Default Preservation Theorem (complete as a shape theorem)
-- `TICKET-0060`: Core `with` Decision (complete)
 - `TICKET-0061`: Angle Search Path Prototype
+- `TICKET-0070`: Host Import Cycle Normalization Implementation
+- `TICKET-0071`: Store Path Inertness Fixtures
+
+Why now:
+
+- Search paths are common in real Nix, but must be explicit and repo-local.
+- Cycle normalization protects host import behavior from path aliases.
+- Store path inertness documents what the project deliberately does not model
+  yet.
+
+Good next slice: `TICKET-0061` is already partly represented by current
+uncommitted worktree files, so finish or review that work before starting a
+separate host ticket.
+
+### 4. Core Policy Decisions
+
+These tickets decide what belongs in the proof target before proofs grow too
+wide.
+
+- `TICKET-0065`: Core `assert` Decision
+- `TICKET-0066`: Dynamic Selection Default Policy
+- `TICKET-0075`: Builtins Environment Shape
+- `TICKET-0080`: Core `with` Environment Invariant Theorem
+
+Why after host/artifact work:
+
+- The core should support useful explanations and checked invariants.
+- `assert`, dynamic defaults, builtins, and `with` affect evaluator behavior
+  and theorem statements.
+- These decisions should be made with fixtures and docs, not only comments.
+
+Good next slice: decide `assert` before widening evaluator preservation claims.
+
+### 5. Proof Growth
+
+These tickets widen checked guarantees while staying inside restricted,
+executable subsets.
+
 - `TICKET-0062`: List Fuel Monotonicity
 - `TICKET-0063`: Nonrecursive Static Attrset Fuel Monotonicity
 - `TICKET-0064`: Determinism Modulo Fuel Statement
-- `TICKET-0065`: Core `assert` Decision
-- `TICKET-0066`: Dynamic Selection Default Policy
-- `TICKET-0067`: External Corpus Lane Split Design
-- `TICKET-0068`: Structured Parse Error Position Contract
-- `TICKET-0069`: Parser Select Loop Totality
-- `TICKET-0070`: Host Import Cycle Normalization Implementation
-- `TICKET-0071`: Store Path Inertness Fixtures
-- `TICKET-0072`: JSON Error Output Contract
 - `TICKET-0073`: Surface Attrpath Nonempty Proof
-- `TICKET-0074`: External Corpus Hash Enforcement
-- `TICKET-0075`: Builtins Environment Shape
+
+Why this order:
+
+- Lists are the smallest recursive evaluator walker that avoids environments.
+- Nonrecursive static attrsets add binding structure without thunks.
+- Determinism should be stated for the same subset before growing further.
+- Attrpath facts feed desugar/core validation reasoning.
+
+Good next slice: prove or state list monotonicity with explicit exclusions.
+
+### 6. Parser Totality And Position Preservation
+
+These tickets reduce parser termination debt where it matters for analysis
+artifacts.
+
+- `TICKET-0069`: Parser Select Loop Totality
+
+Why later:
+
+- The structured parse error contract should define what cannot move.
+- Fuel-bounding parser loops is valuable only if it preserves source offsets
+  and parse behavior.
+
+Good next slice: run this after `TICKET-0068` or explicitly include offset
+stability in the acceptance gate.
+
+### 7. Project Operations
+
+These tickets keep the engineering loop durable.
+
 - `TICKET-0076`: Roadmap Ticket Batch Maintenance
 - `TICKET-0077`: GitHub Actions Flake Check CI
 - `TICKET-0078`: Local Pre-Push Gate
 - `TICKET-0079`: CI Status And Required Checks Doc
-- `TICKET-0080`: Core `with` Environment Invariant Theorem
 
-Use the ticket files as the source of truth for implementation. This section
-now serves as a historical map from roadmap candidates to promoted tickets.
+Why not ignore them:
 
-### Comment And Whitespace Scanner Totality
+- The project now relies on many e2e lanes and docs.
+- CI and local gates make the ambitious semantic work easier to review.
+- Roadmap refreshes should happen before the ticket funnel becomes stale.
 
-Goal: move `skipLineComment`, `skipBlockComment`, and `skipSpace` off
-`partial` with input-length fuel.
+Good next slice: use `TICKET-0076` after the next few completed tickets to keep
+this file short and current.
 
-Gate: `lake build`, default parser manifest.
+## Historical Ticket Waves
 
-### String Scanner Totality
+The first two waves have already been promoted to `.tickets` and partly
+completed. Keep them as context only; do not treat this list as the active
+plan.
 
-Goal: convert quoted and indented string scanning to fuel-bounded helpers while
-preserving interpolation and escape behavior.
+Completed first wave:
 
-Gate: `lake build`, default parser manifest, external manifest.
+- `TICKET-0052`: Host Value Slots For Imported Closures
+- `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops
+- `TICKET-0054`: Unary Primitive Fuel Monotonicity
+- `TICKET-0055`: Relative Import Path Normalization Policy
+- `TICKET-0056`: Second External Corpus Wave
 
-### Static Selection Default Preservation Theorem
+Completed second-wave items:
 
-Goal: prove the TODO around static selection-default lowering in
-`Desugar.lean`.
+- `TICKET-0057`: Comment And Whitespace Scanner Totality
+- `TICKET-0058`: String Scanner Totality
+- `TICKET-0059`: Static Selection Default Preservation Theorem, completed as
+  a shape theorem
+- `TICKET-0060`: Core `with` Decision
 
-Status: complete as `lowerSelectDefault_static_nonempty_selection_default_shape`,
-which proves the restricted lowering shape but not full evaluator preservation.
-
-Gate: `lake build`, desugar manifest.
-
-### Core `with` Decision
-
-Goal: decide whether `with` remains a permanent core form or lowers into an
-explicit environment operation.
-
-Status: complete. `with` remains a permanent core environment fallback form for
-now, with `TICKET-0080` tracking the proof follow-up.
-
-Gate: desugar manifest, eval manifest, docs/core.md update.
-
-### Angle Search Path Prototype
-
-Goal: implement the documented `--search-path NAME=PATH` host import shape with
-repo-local fixtures.
-
-Gate: import manifest; current no-search-path angle rejection remains tested.
+Ready items from the second wave are ranked above by strategy rather than by
+ticket number.

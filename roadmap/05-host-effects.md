@@ -1,7 +1,9 @@
 # Host Effects Roadmap
 
 Host effects are the boundary where Nix stops being just a pure expression
-language. This project should keep that boundary explicit.
+language. This project should keep that boundary explicit so pure semantics,
+analysis artifacts, and proof targets do not depend on the user's filesystem by
+accident.
 
 ## Current Boundary
 
@@ -26,6 +28,11 @@ Host evaluation through `--eval-imports`:
 
 Never make `CoreEval` perform host IO. Host-backed behavior belongs in
 `HostEval.lean` or a future explicitly named effect layer.
+
+Host-effect work should also produce inspectable artifacts where practical:
+which import was read, which search-path entry resolved it, which normalized
+key was used for cycle detection, and which behavior remains deliberately
+unsupported.
 
 ## Milestone A: Better Imported Function Policy
 

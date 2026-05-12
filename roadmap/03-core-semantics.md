@@ -1,7 +1,8 @@
 # Core Semantics Roadmap
 
-The core language is the project's main proof target. It is currently useful,
-but still too close to the surface language for the long-term goal.
+The core language is the project's main proof target and the main explanation
+artifact. It should be small enough for Lean proofs, but still concrete enough
+that a user can inspect desugared output and understand what changed.
 
 ## Current Core
 
@@ -24,7 +25,9 @@ Core should become:
 - small enough that core validation invariants are easy to state;
 - explicit about effects and host boundaries;
 - friendly to evaluation and preservation theorems;
-- still close enough to Nix that debugging desugared output remains possible.
+- still close enough to Nix that debugging desugared output remains possible;
+- structured enough to support analysis artifacts such as binding summaries,
+  attrpath shapes, import-boundary summaries, and desugar explanations.
 
 ## Milestone A: Name The Minimal Core (complete)
 
@@ -111,18 +114,19 @@ Acceptance criteria:
 - Proofs can refer to the invariant predicate or helper, not reimplement it
   from scratch.
 
-## Milestone D: Evaluator Coverage
+## Milestone D: Evaluator And Analysis Coverage
 
 The evaluator now covers a real fragment. The next semantic gains should be
-chosen by whether they unlock real Nix patterns or proofs.
+chosen by whether they unlock real Nix patterns, clearer analysis output, or
+proof targets.
 
 High-value additions:
 
-1. Builtins as an explicit environment.
-2. Imported functions or a host-aware value shape.
-3. More exact string/path coercion policy.
-4. Recursive update semantics if needed by corpus.
-5. Better function value diagnostics and JSON representation.
+1. Better diagnostics and JSON representation for unsupported semantic cases.
+2. Builtins as an explicit environment.
+3. Imported functions or a host-aware value shape beyond immediate application.
+4. More exact string/path coercion policy.
+5. Recursive update semantics if needed by corpus.
 
 Keep unsupported cases classified as `eval-fail`, not `other-fail`.
 

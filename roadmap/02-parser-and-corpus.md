@@ -1,7 +1,12 @@
 # Parser And Corpus Roadmap
 
-The parser is broad enough that future parser work should be driven by the
-pinned external corpus rather than by isolated feature guesses.
+Parser work is the credibility layer for the whole project. NixParserLean can
+only be a useful semantic lens if it stays attached to real Nix files, preserves
+source positions, and turns corpus failures into clear semantic categories.
+
+Future parser work should therefore be driven by pinned corpus rows,
+representative fixtures, and diagnostic contracts rather than by isolated
+feature guesses.
 
 ## Current Parser Shape
 
@@ -145,16 +150,16 @@ Acceptance criteria:
 - The string parser docs state which quoted and indented escapes are modeled.
 - String interpolation fixtures still validate/evaluate as before.
 
-## Milestone E: External Corpus Infrastructure (partly complete)
+## Milestone E: External Corpus Infrastructure
 
-After the four current blockers, grow corpus infrastructure deliberately:
+The next corpus work should make blocker classification more useful:
 
-- Add content hashes to URL rows. (policy documented; optional comments
-  supported in the manifest format)
-- Add a summary command or script for blocker counts. (complete:
-  `./e2e/external-summary.sh`)
-- Add a non-blocking "refresh external corpus" workflow.
-- Consider splitting external manifests into parser, desugar, and eval lanes.
+- split or report external rows by parser, validation, desugar, core
+  validation, evaluation, and host-effect lane;
+- enforce immutable pinning or hashes for URL rows;
+- keep `./e2e/external-summary.sh` as the quick blocker summary;
+- add a non-blocking "refresh external corpus" workflow only if it does not
+  enter ordinary local gates.
 
 Do not make network-backed corpus runs required for ordinary flake checks.
 
