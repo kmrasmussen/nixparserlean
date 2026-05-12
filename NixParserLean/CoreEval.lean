@@ -454,6 +454,79 @@ theorem evalLiteralUnaryBinaryListItemsWithFuel_monotone {fuel extra : Nat}
   exact evalLiteralUnaryBinaryListItemsWithFuel_of_subset
     (fuel := fuel + extra) hSubset
 
+def evalNonrecursiveStaticAttrBindingsWithFuel (fuel : Nat) :
+    List Binding -> M (List (String × Value))
+  | [] => pure []
+  | .staticAssign name expr :: bindings => do
+      let value ← evalLiteralUnaryBinarySubsetWithFuel fuel expr
+      let attrs ← evalNonrecursiveStaticAttrBindingsWithFuel fuel bindings
+      pure ((name, value) :: attrs)
+  | .inheritAssign _ :: _ =>
+      theoremUnsupported "inherited static attrset fuel monotonicity theorem binding"
+  | .dynamicAssign _ _ :: _ =>
+      theoremUnsupported "dynamic static attrset fuel monotonicity theorem binding"
+
+def evalNonrecursiveStaticAttrsetWithFuel (fuel : Nat)
+    (bindings : List Binding) : M Value := do
+  pure (.attrset (← evalNonrecursiveStaticAttrBindingsWithFuel fuel bindings))
+
+inductive NonrecursiveStaticAttrBindingsSubset :
+    List Binding -> List (String × Value) -> Prop where
+  | nil : NonrecursiveStaticAttrBindingsSubset [] []
+  | static {name : String} {expr : Expr} {value : Value} {cost : Nat}
+      {bindings : List Binding} {attrs : List (String × Value)}
+      (hValue : LiteralUnaryBinarySubset expr value cost)
+      (hBindings : NonrecursiveStaticAttrBindingsSubset bindings attrs) :
+      NonrecursiveStaticAttrBindingsSubset
+        (.staticAssign name expr :: bindings) ((name, value) :: attrs)
+
+theorem evalNonrecursiveStaticAttrBindingsWithFuel_of_subset {fuel : Nat}
+    {bindings : List Binding} {attrs : List (String × Value)}
+    (hSubset : NonrecursiveStaticAttrBindingsSubset bindings attrs) :
+    evalNonrecursiveStaticAttrBindingsWithFuel (fuel + 2) bindings = .ok attrs := by
+  induction hSubset generalizing fuel with
+  | nil =>
+      rfl
+  | static hValue hBindings ih =>
+      cases hValue with
+      | literal hLiteral =>
+          have hHead := evalLiteralUnaryBinarySubsetWithFuel_of_subset
+            (extra := fuel + 1) (LiteralUnaryBinarySubset.literal hLiteral)
+          simp [evalNonrecursiveStaticAttrBindingsWithFuel, hHead, ih]
+          rfl
+      | unary hInner hEval =>
+          have hHead := evalLiteralUnaryBinarySubsetWithFuel_of_subset
+            (extra := fuel) (LiteralUnaryBinarySubset.unary hInner hEval)
+          simp [evalNonrecursiveStaticAttrBindingsWithFuel, hHead, ih]
+          rfl
+      | binary hLeft hRight hEval =>
+          have hHead := evalLiteralUnaryBinarySubsetWithFuel_of_subset
+            (extra := fuel) (LiteralUnaryBinarySubset.binary hLeft hRight hEval)
+          simp [evalNonrecursiveStaticAttrBindingsWithFuel, hHead, ih]
+          rfl
+
+theorem evalNonrecursiveStaticAttrBindingsWithFuel_monotone {fuel extra : Nat}
+    {bindings : List Binding} {attrs : List (String × Value)}
+    (hSubset : NonrecursiveStaticAttrBindingsSubset bindings attrs)
+    (_h : evalNonrecursiveStaticAttrBindingsWithFuel (fuel + 2) bindings =
+      .ok attrs) :
+    evalNonrecursiveStaticAttrBindingsWithFuel (fuel + extra + 2) bindings =
+      .ok attrs := by
+  exact evalNonrecursiveStaticAttrBindingsWithFuel_of_subset
+    (fuel := fuel + extra) hSubset
+
+theorem evalNonrecursiveStaticAttrsetWithFuel_monotone {fuel extra : Nat}
+    {bindings : List Binding} {attrs : List (String × Value)}
+    (hSubset : NonrecursiveStaticAttrBindingsSubset bindings attrs)
+    (_h : evalNonrecursiveStaticAttrsetWithFuel (fuel + 2) bindings =
+      .ok (.attrset attrs)) :
+    evalNonrecursiveStaticAttrsetWithFuel (fuel + extra + 2) bindings =
+      .ok (.attrset attrs) := by
+  simp [evalNonrecursiveStaticAttrsetWithFuel,
+    evalNonrecursiveStaticAttrBindingsWithFuel_of_subset
+      (fuel := fuel + extra) hSubset]
+  rfl
+
 def paramEntryNames : List ParamEntry -> List String
   | [] => []
   | entry :: entries => entry.name :: paramEntryNames entries

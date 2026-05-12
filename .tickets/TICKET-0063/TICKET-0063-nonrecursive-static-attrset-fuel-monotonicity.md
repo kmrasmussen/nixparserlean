@@ -28,3 +28,27 @@ nonrecursive static attrsets with primitive restricted values.
 3. `lake build` passes.
 4. Fuel/eval manifests pass if executable behavior changes.
 5. Docs identify the next proof dependency.
+
+## Resolution
+
+Added a restricted non-recursive static attrset proof harness in
+`NixParserLean/CoreEval.lean`:
+
+- `evalNonrecursiveStaticAttrBindingsWithFuel`
+- `evalNonrecursiveStaticAttrsetWithFuel`
+- `NonrecursiveStaticAttrBindingsSubset`
+- `evalNonrecursiveStaticAttrBindingsWithFuel_of_subset`
+- `evalNonrecursiveStaticAttrBindingsWithFuel_monotone`
+- `evalNonrecursiveStaticAttrsetWithFuel_monotone`
+
+The theorem covers only non-recursive static bindings whose values are in the
+existing literal/unary/binary subset. It explicitly excludes recursive
+attrsets, thunks, dynamic bindings, inherited bindings, host imports,
+selection, conditionals, and full evaluator preservation.
+
+Updated proof/fuel docs to name determinism modulo fuel over the same
+restricted harnesses as the next proof dependency.
+
+Verification:
+
+- `nix develop -c lake build`

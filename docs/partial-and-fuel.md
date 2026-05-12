@@ -113,10 +113,12 @@ added. `evalLiteralUnaryBinarySubsetWithFuel_monotone` widens that harness with
 unary expressions over primitive literals.
 `evalLiteralUnaryBinaryListItemsWithFuel_monotone` adds the first recursive
 walker theorem for lists whose items are in the same literal/unary/binary
-subset. This still excludes closures, thunks, host imports, attrsets,
-selection, and conditionals; non-recursive static attrsets are the next
-reasonable widening target because they add binding structure without
-environment cycles.
+subset. `evalNonrecursiveStaticAttrsetWithFuel_monotone` adds the next
+restricted binding-structure theorem for non-recursive static attrsets whose
+values are in that same subset. This still excludes closures, thunks, host
+imports, dynamic bindings, inherited bindings, selection, conditionals, and
+recursive attrsets. The next proof dependency is a determinism statement over
+the same restricted harnesses before widening the subset again.
 
 The low-risk evaluator equality and parameter helpers are now total:
 

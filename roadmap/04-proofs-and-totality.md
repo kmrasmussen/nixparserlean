@@ -124,6 +124,8 @@ The next slice, `evalLiteralUnaryBinarySubsetWithFuel_monotone`, widened the
 same kind of total harness with unary expressions over primitive literals.
 `evalLiteralUnaryBinaryListItemsWithFuel_monotone` now adds list-item
 monotonicity for lists whose elements are in that restricted subset.
+`evalNonrecursiveStaticAttrsetWithFuel_monotone` adds a narrow non-recursive
+static attrset theorem for bindings whose values are in the same subset.
 
 Start with:
 
@@ -134,15 +136,14 @@ Start with:
 Then widen to:
 
 - lists; (landed for literal/unary/binary subset elements)
-- non-recursive attrsets;
+- non-recursive attrsets; (landed for static bindings with restricted values)
 - selection;
 - conditionals.
 
 Do not include recursive thunks until the environment model is proof-friendly.
 
-Recommended next proof ticket: non-recursive static attrset monotonicity. It is
-the smallest extension that adds binding structure while still avoiding
-recursive thunks and host imports.
+Recommended next proof ticket: determinism modulo fuel for the same restricted
+harnesses. Do that before widening into selection or conditionals.
 
 ## Milestone E: Determinism
 
