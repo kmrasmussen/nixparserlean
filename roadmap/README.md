@@ -25,6 +25,7 @@ ticket funnel.
 | [05-host-effects.md](05-host-effects.md) | Imports, paths, search paths, and effect boundaries |
 | [06-project-operations.md](06-project-operations.md) | Ticket, test, docs, blog, and commit discipline |
 | [07-next-ticket-candidates.md](07-next-ticket-candidates.md) | Ranked active funnel for the next tickets |
+| [08-semantic-lens-alpha-sprint.md](08-semantic-lens-alpha-sprint.md) | Ambitious sprint plan for `TICKET-0061` through `TICKET-0080` |
 
 ## How To Use This Roadmap
 
@@ -32,7 +33,9 @@ Read [VISION.md](VISION.md) before changing the roadmap. Start work sessions
 with [00-current-state.md](00-current-state.md) for facts, then
 [01-phase-plan.md](01-phase-plan.md) for direction. Use
 [07-next-ticket-candidates.md](07-next-ticket-candidates.md) to pick a narrow
-slice. The other files explain the strategic constraints behind each slice.
+slice, or [08-semantic-lens-alpha-sprint.md](08-semantic-lens-alpha-sprint.md)
+when working through the current 20-ticket sprint. The other files explain the
+strategic constraints behind each slice.
 
 Each implementation ticket should answer four questions:
 

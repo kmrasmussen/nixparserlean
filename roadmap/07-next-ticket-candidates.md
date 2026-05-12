@@ -5,6 +5,10 @@ This file is the active ticket funnel. It is not a second tracker; the
 page answers a different question: which ready tickets best advance the
 strategy, and why?
 
+The current sprint plan is
+[08-semantic-lens-alpha-sprint.md](08-semantic-lens-alpha-sprint.md), covering
+all ready tickets from `TICKET-0061` through `TICKET-0080`.
+
 The current strategic bias is:
 
 ```text
