@@ -2,3 +2,4 @@
 # parser command: lake exe nixparserlean --eval --fuel 1 --file
 e2e/corpus/smoke/eval-fuel-arithmetic.nix	eval-fail	fuel one can enter the binary expression but not evaluate both operands
 e2e/corpus/smoke/eval-fuel-arithmetic.nix	eval-fail	repeated low-fuel run remains deterministic
+e2e/corpus/smoke/eval-fuel-unary.nix	eval-fail	fuel one can enter the unary expression but not evaluate its operand

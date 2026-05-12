@@ -15,7 +15,7 @@ each driven by the same Rust runner with a different `--parser` command line:
 | `e2e/fuel-manifest.txt` | `lake exe nixparserlean --eval --fuel 0 --file` | fuel exhaustion at entry |
 | `e2e/fuel-low-manifest.txt` | `lake exe nixparserlean --eval --fuel 1 --file` | deterministic low-fuel failure |
 | `e2e/fuel-success-manifest.txt` | `lake exe nixparserlean --eval --fuel 2 --file` | sufficient-fuel success |
-| `e2e/fuel-high-manifest.txt` | `lake exe nixparserlean --eval --fuel 5 --file` | extra-fuel success for the primitive binary smoke |
+| `e2e/fuel-high-manifest.txt` | `lake exe nixparserlean --eval --fuel 5 --file` | extra-fuel success for primitive binary and unary smoke fixtures |
 | `e2e/json-manifest.txt` | `lake exe nixparserlean --format json --file` and desugar/eval JSON variants | JSON output contract |
 
 All manifests use the same row format. The `flake.nix` `checks.e2e-smoke`

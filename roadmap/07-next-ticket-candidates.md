@@ -8,9 +8,9 @@ next `.tickets` wave. Turn one candidate at a time into a real
 
 The first wave has been promoted to `.tickets`:
 
-- `TICKET-0052`: Host Value Slots For Imported Closures
-- `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops
-- `TICKET-0054`: Unary Primitive Fuel Monotonicity
+- `TICKET-0052`: Host Value Slots For Imported Closures (complete)
+- `TICKET-0053`: Fuel-Bound `parseAdd` And `parseMul` Loops (complete)
+- `TICKET-0054`: Unary Primitive Fuel Monotonicity (complete)
 - `TICKET-0055`: Relative Import Path Normalization Policy
 - `TICKET-0056`: Second External Corpus Wave
 

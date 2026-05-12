@@ -2,3 +2,4 @@
 # parser command: lake exe nixparserlean --eval --fuel 2 --file
 e2e/corpus/smoke/eval-fuel-arithmetic.nix	pass	fuel two evaluates a binary expression and its literal operands
 e2e/corpus/smoke/eval-fuel-arithmetic.nix	pass	repeated sufficient-fuel run remains deterministic
+e2e/corpus/smoke/eval-fuel-unary.nix	pass	fuel two evaluates a unary expression and its literal operand

@@ -109,19 +109,21 @@ parser becomes unmaintainable.
 Initial theorem target:
 
 ```text
-If eval fuel expr = ok value for literal/binary subset,
+If eval fuel expr = ok value for literal/binary/unary subset,
 then eval (fuel + extra) expr = ok value.
 ```
 
 Landed first slice: `evalLiteralBinarySubsetWithFuel_monotone` proves this for
 the total literal/binary proof harness in `CoreEval.lean`. The subset includes
 primitive literals and binary expressions whose operands are primitive literals.
+The next slice, `evalLiteralUnaryBinarySubsetWithFuel_monotone`, widens the
+same kind of total harness with unary expressions over primitive literals.
 
 Start with:
 
 - literals; (landed)
 - binary operators over primitive values; (landed for primitive literal operands)
-- unary operators.
+- unary operators. (landed for primitive literal operands)
 
 Then widen to:
 
@@ -132,9 +134,9 @@ Then widen to:
 
 Do not include recursive thunks until the environment model is proof-friendly.
 
-Recommended next proof ticket: unary primitive monotonicity. It is the smallest
-extension of the existing proof harness and does not require environments,
-thunks, lists, or attrsets.
+Recommended next proof ticket: primitive-list monotonicity. It is the smallest
+extension that adds a recursive evaluator walker while still avoiding
+environments, thunks, and attrsets.
 
 ## Milestone E: Determinism
 

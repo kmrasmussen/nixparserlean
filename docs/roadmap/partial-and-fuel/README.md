@@ -144,9 +144,11 @@ Phase 5 is gated on Phase 3 (desugaring must be total before eval theorems
 are worth stating) and benefits from Phase 2 (validator invariants become
 preservation lemmas).
 
-The next theorem target after the step-budget slice is fuel monotonicity for a
-small expression subset without recursive thunks. That subset can start with
-literals and binary expressions before widening to environments and closures.
+The fuel monotonicity subset now covers primitive literals, binary expressions
+over primitive literals, and unary expressions over primitive literals. The
+next theorem target should widen to a recursive walker without environments:
+lists of primitive literals first, then non-recursive static attrsets. Leave
+closures, thunks, and host imports out until environment invariants are explicit.
 
 Risk: high. This is where the project transitions from "model" to
 "verified model".
@@ -163,8 +165,9 @@ and should be tracked as separate tickets:
 - Preservation: `CoreValidate` invariants are preserved across every
   evaluation step.
 - Fuel monotonicity and determinism (from Phase 5).
-- First target: monotonicity for literals and binary expressions under the
-  entry-step fuel policy.
+- Landed first targets: monotonicity for literals, primitive binary
+  expressions, and primitive unary expressions under the entry-step fuel
+  policy.
 
 ## Cross-cutting concerns
 

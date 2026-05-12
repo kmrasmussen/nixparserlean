@@ -1,6 +1,7 @@
 # Current State
 
-This is a factual snapshot after the backlog through `TICKET-0051` was closed.
+This is a factual snapshot after the proof and roadmap work through
+`TICKET-0054`.
 
 ## Repository State
 
@@ -22,8 +23,8 @@ Recent work completed:
 - static selection-default lowering and empty static binding-name validation;
 - focused example suite wired into e2e manifests;
 - first checked desugar/core-validation bridge theorem;
-- first checked evaluator-fuel monotonicity slice for primitive literals and
-  primitive-literal binary expressions;
+- checked evaluator-fuel monotonicity slices for primitive literals,
+  primitive-literal binary expressions, and primitive-literal unary expressions;
 - host-effect evaluator shape, angle search-path design, parser termination
   strategy, and roadmap maintenance loop.
 
@@ -116,8 +117,10 @@ The pure evaluator supports a sizeable but intentionally bounded core fragment:
 
 Fuel is an entry-step budget: every entry into `Core.Eval.eval` spends one fuel
 step. Structural walkers spend fuel only when they evaluate contained
-expressions. The first checked monotonicity slice covers a total proof harness
-for primitive literals and primitive-literal binary expressions. Full evaluator
+expressions. The checked monotonicity proof harness now covers primitive
+literals, primitive-literal binary expressions, and primitive-literal unary
+expressions. The next useful widening target is a recursive walker without
+environment cycles, such as lists of primitive literals. Full evaluator
 monotonicity, determinism, and a small-step connection remain future work.
 
 ## Host Boundary
@@ -149,11 +152,11 @@ The current committed e2e manifests cover:
 - `e2e/manifest.txt`: 40 pass, 3 parse-fail, 9 validation-fail.
 - `e2e/desugar-manifest.txt`: 8 pass, 1 validation-fail.
 - `e2e/eval-manifest.txt`: 48 pass, 20 eval-fail.
-- `e2e/import-manifest.txt`: 5 pass, 4 eval-fail.
+- `e2e/import-manifest.txt`: 6 pass, 4 eval-fail.
 - `e2e/fuel-manifest.txt`: 1 eval-fail.
-- `e2e/fuel-low-manifest.txt`: 2 eval-fail.
-- `e2e/fuel-success-manifest.txt`: 2 pass.
-- `e2e/fuel-high-manifest.txt`: 2 pass.
+- `e2e/fuel-low-manifest.txt`: 3 eval-fail.
+- `e2e/fuel-success-manifest.txt`: 3 pass.
+- `e2e/fuel-high-manifest.txt`: 3 pass.
 - `e2e/core-validation-manifest.txt`: 1 core-fail.
 - `e2e/json-manifest.txt`: 1 pass.
 
@@ -169,7 +172,8 @@ manifest before and after adding rows.
 4. The core still contains surface-like forms (`with`, `assert`, selection
    defaults for dynamic paths) that should be lowered or justified before large
    preservation proofs.
-5. Fuel has only a first restricted monotonicity theorem; full evaluator
-   monotonicity, determinism, and small-step semantics are unproven.
+5. Fuel monotonicity is still restricted to primitive literal, primitive unary,
+   and primitive binary proof harnesses; full evaluator monotonicity,
+   determinism, and small-step semantics are unproven.
 6. External corpus coverage is green for the first pinned set, but still small
    relative to real nixpkgs.

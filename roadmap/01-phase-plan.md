@@ -66,13 +66,13 @@ Goal: turn the first monotonicity theorem into a growing semantic proof surface.
 
 Why after the first theorem:
 
-- The primitive literal/binary proof harness is checked.
+- The primitive literal/binary/unary proof harness is checked.
 - Fuel behavior has runtime e2e coverage at low, sufficient, and high fuel.
 - The next widening steps can stay small.
 
 Exit criteria:
 
-- Unary primitive monotonicity lands.
+- Unary primitive monotonicity lands. (complete)
 - List monotonicity lands for primitive literal elements.
 - Non-recursive static attrset monotonicity is stated or proven.
 - Determinism modulo fuel is stated for the same restricted subset.
