@@ -47,3 +47,5 @@ The next roadmap should therefore optimize for leverage:
   CLI behavior, core validation, evaluation, or the flake itself changes.
 - Keep `flagged.md` aligned with roadmap risk: either remove a caveat when it
   is fixed or narrow it so it remains useful.
+- Use `./scripts/open-tickets.sh` during maintenance passes to list any
+  non-completed `.tickets` entries.

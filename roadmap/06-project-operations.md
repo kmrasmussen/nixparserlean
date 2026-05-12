@@ -101,12 +101,35 @@ Good roadmap updates should:
 - keep current-state facts accurate;
 - narrow or remove stale caveats.
 
+Maintenance checklist for closing a ticket:
+
+1. Set `.tickets/TICKET-XXXX/ticket-state.json` to `completed`.
+2. Update the roadmap file that named or implied the work.
+3. Update docs that describe the changed behavior, test lane, proof surface, or
+   known limitation.
+4. Add a blog note for significant parser, evaluator, proof, corpus, or roadmap
+   movement.
+5. Run the relevant gate from the test policy above.
+6. Commit only that ticket's files.
+
+Open-ticket command:
+
+```sh
+./scripts/open-tickets.sh
+```
+
+The command prints non-completed tickets as `TICKET-XXXX<TAB>status`, or
+`all tickets completed` when the backlog is closed.
+
+When generating future tickets from the roadmap, keep the ticket narrow enough
+to land in one reviewable commit. A good ticket title names the artifact and
+the smallest useful behavior, for example `Fuel-Bound ParseAdd And ParseMul
+Loops`. The ticket body should include a problem, goal, in-scope list,
+out-of-scope list, and acceptance criteria with the expected e2e or build gate.
+
 ## Suggested Next Tickets
 
-1. External corpus blocker ratchet: spaced dynamic selection.
-2. Refresh stale docs after path/fuel/validator work.
-3. Quoted inherit names.
-4. Restricted static attrset desugar-core-validation theorem.
-5. Fuel monotonicity for literals and binary expressions.
-6. Imported function diagnostic fixture.
-7. Desugar walk explicit fuel.
+Refresh this list from `roadmap/01-phase-plan.md` and the milestone files after
+each maintenance pass. As of the current pass, recently completed suggestions
+have been retired from this section; new tickets should come from active
+milestones rather than this stale backlog.

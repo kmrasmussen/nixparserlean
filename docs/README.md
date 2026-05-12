@@ -34,6 +34,7 @@ of Nix expressions, with a separate Rust harness for end-to-end corpus testing.
 | [scaling-plan.md](scaling-plan.md) | Roadmap for growing the parser and corpus |
 | [design-notes.md](design-notes.md) | Implementation tradeoffs and the "why" behind specific choices |
 | [../roadmap/](../roadmap/) | Active long-horizon plans that span multiple tickets |
+| [../roadmap/06-project-operations.md](../roadmap/06-project-operations.md) | Ticket, roadmap, verification, and maintenance loop |
 
 ## Quick start
 
