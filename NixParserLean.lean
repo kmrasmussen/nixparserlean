@@ -1,5 +1,6 @@
 import NixParserLean.Core
 import NixParserLean.CoreEval
+import NixParserLean.CoreEval.Fuel
 import NixParserLean.CoreValidate
 import NixParserLean.Desugar
 import NixParserLean.HostEval

@@ -129,6 +129,7 @@ Concrete work:
 
 - `TICKET-0062`: List Fuel Monotonicity
 - `TICKET-0063`: Nonrecursive Static Attrset Fuel Monotonicity
+- `TICKET-0081`: Split Fuel Proof Module
 - `TICKET-0064`: Determinism Modulo Fuel Statement
 - `TICKET-0073`: Surface Attrpath Nonempty Proof
 

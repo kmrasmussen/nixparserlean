@@ -118,8 +118,9 @@ then eval (fuel + extra) expr = ok value.
 ```
 
 Landed first slice: `evalLiteralBinarySubsetWithFuel_monotone` proves this for
-the total literal/binary proof harness in `CoreEval.lean`. The subset includes
-primitive literals and binary expressions whose operands are primitive literals.
+the total literal/binary proof harness now housed in `CoreEval/Fuel.lean`. The
+subset includes primitive literals and binary expressions whose operands are
+primitive literals.
 The next slice, `evalLiteralUnaryBinarySubsetWithFuel_monotone`, widened the
 same kind of total harness with unary expressions over primitive literals.
 `evalLiteralUnaryBinaryListItemsWithFuel_monotone` now adds list-item
@@ -144,6 +145,10 @@ Do not include recursive thunks until the environment model is proof-friendly.
 
 Recommended next proof ticket: determinism modulo fuel for the same restricted
 harnesses. Do that before widening into selection or conditionals.
+
+The restricted fuel harness is intentionally split out of the runtime evaluator
+module. Future proof tickets should prefer extending `NixParserLean.CoreEval.Fuel`
+unless they need to change executable evaluation behavior.
 
 ## Milestone E: Determinism
 

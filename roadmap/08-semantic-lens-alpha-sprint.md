@@ -200,8 +200,8 @@ The safest critical path is:
 4. Complete host semantics: `TICKET-0070`, then `TICKET-0071`.
 5. Complete core policy: `TICKET-0065`, `TICKET-0066`, `TICKET-0075`,
    `TICKET-0080`.
-6. Complete proof growth: `TICKET-0062`, `TICKET-0063`, `TICKET-0064`,
-   `TICKET-0073`.
+6. Complete proof growth: `TICKET-0062`, `TICKET-0063`, `TICKET-0081`,
+   `TICKET-0064`, `TICKET-0073`.
 7. Complete parser totality: `TICKET-0069`, after the position contract is
    clear.
 8. Complete durability work: `TICKET-0077`, `TICKET-0078`, `TICKET-0079`,

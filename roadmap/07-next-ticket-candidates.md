@@ -99,6 +99,7 @@ executable subsets.
 
 - `TICKET-0062`: List Fuel Monotonicity
 - `TICKET-0063`: Nonrecursive Static Attrset Fuel Monotonicity
+- `TICKET-0081`: Split Fuel Proof Module
 - `TICKET-0064`: Determinism Modulo Fuel Statement
 - `TICKET-0073`: Surface Attrpath Nonempty Proof
 
@@ -106,6 +107,8 @@ Why this order:
 
 - Lists are the smallest recursive evaluator walker that avoids environments.
 - Nonrecursive static attrsets add binding structure without thunks.
+- The proof module split keeps later proof tickets from repeatedly crowding
+  the runtime evaluator module.
 - Determinism should be stated for the same subset before growing further.
 - Attrpath facts feed desugar/core validation reasoning.
 
