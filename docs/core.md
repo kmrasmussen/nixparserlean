@@ -213,6 +213,18 @@ paths, nested paths, non-null values, recursive attrsets, duplicate bindings,
 and the full surface validator. Those exclusions keep the theorem connected to
 real code while leaving the broader preservation theorem for later tickets.
 
+The static selection-default simplification has a narrower checked shape
+theorem:
+
+```lean
+lowerSelectDefault_static_nonempty_selection_default_shape
+```
+
+It states that, once a path is known to be static and non-empty, the lowering
+helper produces `ifThenElse (hasAttr base path) (select base path none)
+default`. This does not prove evaluator equivalence for every expression; it
+only pins down the restricted core shape used by desugaring.
+
 ## Values
 
 The evaluator's value type is:

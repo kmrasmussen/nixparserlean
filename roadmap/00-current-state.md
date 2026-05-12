@@ -1,14 +1,14 @@
 # Current State
 
-This is a factual snapshot after the parser scanner totality work through
-`TICKET-0058`.
+This is a factual snapshot after the static selection-default proof work
+through `TICKET-0059`.
 
 ## Repository State
 
 - Branch: `master`.
-- All `.tickets/TICKET-0001` through `.tickets/TICKET-0058` are marked
+- All `.tickets/TICKET-0001` through `.tickets/TICKET-0059` are marked
   `completed`.
-- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0059`.
+- `./scripts/open-tickets.sh` reports the next ready ticket as `TICKET-0060`.
 - `nix flake check` remains the ordinary network-free local gate; the external
   corpus stays outside it.
 
@@ -24,7 +24,8 @@ Recent work completed:
   escaped indented interpolation;
 - static selection-default lowering and empty static binding-name validation;
 - focused example suite wired into e2e manifests;
-- first checked desugar/core-validation bridge theorem;
+- first checked desugar/core-validation bridge theorem and static
+  selection-default lowering shape theorem;
 - checked evaluator-fuel monotonicity slices for primitive literals,
   primitive-literal binary expressions, and primitive-literal unary expressions;
 - host-effect evaluator shape, angle search-path design, parser termination
@@ -103,7 +104,9 @@ Current important behavior:
 The main surface-to-core walk is total through explicit desugar fuel. The proof
 surface includes lemmas about static path top-level names, nested static path
 shape, empty-path rejection, static merge behavior, and one
-desugar/core-validation bridge for a restricted static attrset slice.
+desugar/core-validation bridge for a restricted static attrset slice. Static
+selection-default lowering also has a checked shape theorem for static
+non-empty paths; evaluator preservation remains future work.
 
 ## Evaluation
 

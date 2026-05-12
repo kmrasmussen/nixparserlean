@@ -91,8 +91,21 @@ def staticAttrPath? (path : List Core.AttrPathPart) : Bool :=
   | some (_ :: _) => true
   | _ => false
 
--- TODO theorem: for static non-empty paths, the selection-default lowering
--- below preserves evaluator results relative to Core.Expr.select with default.
+def lowerSelectDefault (base : Core.Expr) (path : List Core.AttrPathPart)
+    (defaultExpr : Core.Expr) : Core.Expr :=
+  if staticAttrPath? path then
+    .ifThenElse (.hasAttr base path) (.select base path none) defaultExpr
+  else
+    .select base path (some defaultExpr)
+
+theorem lowerSelectDefault_static_nonempty_selection_default_shape
+    {base defaultExpr : Core.Expr} {path : List Core.AttrPathPart}
+    (hStatic : staticAttrPath? path = true) :
+    lowerSelectDefault base path defaultExpr =
+      .ifThenElse (.hasAttr base path) (.select base path none) defaultExpr := by
+  unfold lowerSelectDefault
+  rw [hStatic]
+  simp
 
 def defaultDesugarFuel : Nat := 100000
 
@@ -240,11 +253,8 @@ def exprFuel : Nat -> Expr -> M Core.Expr
         | some defaultExpr => pure (some (← exprFuel fuel defaultExpr))
       match default? with
       | some defaultExpr =>
-          if staticAttrPath? path then
-            -- Static defaults lower away from the core select-default branch.
-            pure (.ifThenElse (.hasAttr base path) (.select base path none) defaultExpr)
-          else
-            pure (.select base path (some defaultExpr))
+          -- Static defaults lower away from the core select-default branch.
+          pure (lowerSelectDefault base path defaultExpr)
       | none => pure (.select base path none)
   | fuel + 1, .hasAttr base path => do
       pure (.hasAttr (← exprFuel fuel base) (← attrPathPartsFuel fuel path.parts))

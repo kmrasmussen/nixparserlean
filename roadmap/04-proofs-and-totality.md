@@ -11,6 +11,7 @@ Already present:
 - nested static attrpath shape theorem;
 - empty static path rejection theorem;
 - merge helper theorems for static binding names;
+- static non-empty selection-default lowering shape theorem;
 - total low-risk evaluator helpers;
 - total fuel-bounded surface and core validators;
 - total fuel-bounded desugar walk;
@@ -18,7 +19,7 @@ Already present:
 
 Remaining broad `partial` islands:
 
-- parser expression and scanner helpers;
+- parser expression loops and list/binding-style parser helpers;
 - host import resolution/reification walk;
 - evaluator and related environment/thunk functions.
 

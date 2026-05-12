@@ -105,7 +105,7 @@ parallel-friendly backlog:
 
 - `TICKET-0057`: Comment And Whitespace Scanner Totality (complete)
 - `TICKET-0058`: String Scanner Totality (complete)
-- `TICKET-0059`: Static Selection Default Preservation Theorem
+- `TICKET-0059`: Static Selection Default Preservation Theorem (complete as a shape theorem)
 - `TICKET-0060`: Core `with` Decision
 - `TICKET-0061`: Angle Search Path Prototype
 - `TICKET-0062`: List Fuel Monotonicity
@@ -148,6 +148,9 @@ Gate: `lake build`, default parser manifest, external manifest.
 
 Goal: prove the TODO around static selection-default lowering in
 `Desugar.lean`.
+
+Status: complete as `lowerSelectDefault_static_nonempty_selection_default_shape`,
+which proves the restricted lowering shape but not full evaluator preservation.
 
 Gate: `lake build`, desugar manifest.
 

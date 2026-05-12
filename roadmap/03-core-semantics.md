@@ -68,13 +68,17 @@ Candidate lowering targets:
 Static selection defaults now lower away for static non-empty paths: desugaring
 uses `hasAttr` plus `select` inside `ifThenElse`, while dynamic-path defaults
 retain the existing core select-default branch.
+The helper `lowerSelectDefault` has a checked shape theorem,
+`lowerSelectDefault_static_nonempty_selection_default_shape`, for the static
+non-empty restriction. This is not a full evaluator-preservation theorem; it
+only proves the core expression shape selected by the lowering helper.
 
 Follow-up simplifications remain:
 
 - decide whether `with` lowers away or becomes a stable core environment rule;
 - decide whether dynamic selection defaults need a no-duplication core helper;
-- prove the static selection-default preservation claim named in
-  `NixParserLean/Desugar.lean`.
+- connect the static selection-default shape theorem to evaluator behavior for
+  a restricted pure subset.
 
 Recommended next core ticket: make a `with` decision. Either keep it as a
 permanent core environment form with a documented invariant, or lower it into a
