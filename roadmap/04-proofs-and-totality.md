@@ -143,8 +143,12 @@ Then widen to:
 
 Do not include recursive thunks until the environment model is proof-friendly.
 
-Recommended next proof ticket: determinism modulo fuel for the same restricted
-harnesses. Do that before widening into selection or conditionals.
+Determinism modulo fuel has now landed for the same restricted harnesses. The
+current theorems are same-fuel function determinism statements, including
+`evalLiteralUnaryBinarySubsetWithFuel_deterministic`,
+`evalLiteralUnaryBinaryListItemsWithFuel_deterministic`, and
+`evalNonrecursiveStaticAttrsetWithFuel_deterministic`. They should be widened
+or re-proved if this evaluator fragment later becomes relational.
 
 The restricted fuel harness is intentionally split out of the runtime evaluator
 module. Future proof tickets should prefer extending `NixParserLean.CoreEval.Fuel`
@@ -163,6 +167,10 @@ If eval fuel expr = ok v1 and eval fuel expr = ok v2, then v1 = v2.
 
 This may be trivial by rewriting for the current functional evaluator, but it
 becomes more useful if a small-step relation is introduced later.
+
+Landed first slice: same-fuel determinism for the restricted
+literal/unary/binary, list-item, and non-recursive static attrset harnesses in
+`NixParserLean.CoreEval.Fuel`.
 
 ## Milestone F: Preservation
 

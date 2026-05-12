@@ -119,8 +119,17 @@ subset. `evalNonrecursiveStaticAttrsetWithFuel_monotone` adds the next
 restricted binding-structure theorem for non-recursive static attrsets whose
 values are in that same subset. This still excludes closures, thunks, host
 imports, dynamic bindings, inherited bindings, selection, conditionals, and
-recursive attrsets. The next proof dependency is a determinism statement over
-the same restricted harnesses before widening the subset again.
+recursive attrsets.
+
+The same module also carries first determinism checks for those harnesses:
+`evalLiteralBinarySubsetWithFuel_deterministic`,
+`evalLiteralUnaryBinarySubsetWithFuel_deterministic`,
+`evalLiteralUnaryBinaryListItemsWithFuel_deterministic`,
+`evalNonrecursiveStaticAttrBindingsWithFuel_deterministic`, and
+`evalNonrecursiveStaticAttrsetWithFuel_deterministic`. These same-fuel theorems
+are currently direct function determinism facts. They are still useful theorem
+targets because a later relational evaluator should preserve the same shape
+with a more meaningful proof.
 
 The low-risk evaluator equality and parameter helpers are now total:
 

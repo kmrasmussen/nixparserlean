@@ -294,6 +294,48 @@ theorem evalNonrecursiveStaticAttrsetWithFuel_monotone {fuel extra : Nat}
       (fuel := fuel + extra) hSubset]
   rfl
 
+private theorem okResult_deterministic {α : Type} {result : M α} {left right : α}
+    (hLeft : result = .ok left) (hRight : result = .ok right) :
+    left = right := by
+  rw [hLeft] at hRight
+  cases hRight
+  rfl
+
+theorem evalLiteralBinarySubsetWithFuel_deterministic {fuel : Nat} {expr : Expr}
+    {left right : Value}
+    (hLeft : evalLiteralBinarySubsetWithFuel fuel expr = .ok left)
+    (hRight : evalLiteralBinarySubsetWithFuel fuel expr = .ok right) :
+    left = right := by
+  exact okResult_deterministic hLeft hRight
+
+theorem evalLiteralUnaryBinarySubsetWithFuel_deterministic {fuel : Nat}
+    {expr : Expr} {left right : Value}
+    (hLeft : evalLiteralUnaryBinarySubsetWithFuel fuel expr = .ok left)
+    (hRight : evalLiteralUnaryBinarySubsetWithFuel fuel expr = .ok right) :
+    left = right := by
+  exact okResult_deterministic hLeft hRight
+
+theorem evalLiteralUnaryBinaryListItemsWithFuel_deterministic {fuel : Nat}
+    {items : List Expr} {left right : List Value}
+    (hLeft : evalLiteralUnaryBinaryListItemsWithFuel fuel items = .ok left)
+    (hRight : evalLiteralUnaryBinaryListItemsWithFuel fuel items = .ok right) :
+    left = right := by
+  exact okResult_deterministic hLeft hRight
+
+theorem evalNonrecursiveStaticAttrBindingsWithFuel_deterministic {fuel : Nat}
+    {bindings : List Binding} {left right : List (String × Value)}
+    (hLeft : evalNonrecursiveStaticAttrBindingsWithFuel fuel bindings = .ok left)
+    (hRight : evalNonrecursiveStaticAttrBindingsWithFuel fuel bindings = .ok right) :
+    left = right := by
+  exact okResult_deterministic hLeft hRight
+
+theorem evalNonrecursiveStaticAttrsetWithFuel_deterministic {fuel : Nat}
+    {bindings : List Binding} {left right : Value}
+    (hLeft : evalNonrecursiveStaticAttrsetWithFuel fuel bindings = .ok left)
+    (hRight : evalNonrecursiveStaticAttrsetWithFuel fuel bindings = .ok right) :
+    left = right := by
+  exact okResult_deterministic hLeft hRight
+
 end Eval
 end Core
 end NixParserLean
