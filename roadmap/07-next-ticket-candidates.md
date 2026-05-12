@@ -100,6 +100,33 @@ Gate: external manifest. Do not add this to ordinary flake checks.
 
 ## Second Wave
 
+The second wave has also been promoted to `.tickets` and expanded into a
+parallel-friendly backlog:
+
+- `TICKET-0057`: Comment And Whitespace Scanner Totality
+- `TICKET-0058`: String Scanner Totality
+- `TICKET-0059`: Static Selection Default Preservation Theorem
+- `TICKET-0060`: Core `with` Decision
+- `TICKET-0061`: Angle Search Path Prototype
+- `TICKET-0062`: List Fuel Monotonicity
+- `TICKET-0063`: Nonrecursive Static Attrset Fuel Monotonicity
+- `TICKET-0064`: Determinism Modulo Fuel Statement
+- `TICKET-0065`: Core `assert` Decision
+- `TICKET-0066`: Dynamic Selection Default Policy
+- `TICKET-0067`: External Corpus Lane Split Design
+- `TICKET-0068`: Structured Parse Error Position Contract
+- `TICKET-0069`: Parser Select Loop Totality
+- `TICKET-0070`: Host Import Cycle Normalization Implementation
+- `TICKET-0071`: Store Path Inertness Fixtures
+- `TICKET-0072`: JSON Error Output Contract
+- `TICKET-0073`: Surface Attrpath Nonempty Proof
+- `TICKET-0074`: External Corpus Hash Enforcement
+- `TICKET-0075`: Builtins Environment Shape
+- `TICKET-0076`: Roadmap Ticket Batch Maintenance
+
+Use the ticket files as the source of truth for implementation. This section
+now serves as a historical map from roadmap candidates to promoted tickets.
+
 ### Comment And Whitespace Scanner Totality
 
 Goal: move `skipLineComment`, `skipBlockComment`, and `skipSpace` off

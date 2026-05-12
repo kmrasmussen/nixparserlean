@@ -17,7 +17,7 @@ Why now:
 
 Exit criteria:
 
-- 5-8 new tickets exist, each with a clear acceptance gate.
+- A broad queue of new tickets exists, each with a clear acceptance gate.
 - Each ticket maps back to one roadmap milestone or design document.
 - No ticket tries to solve parser totality, host imports, or evaluator proofs
   all at once.
